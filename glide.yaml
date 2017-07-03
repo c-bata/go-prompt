@@ -1,0 +1,8 @@
+package: github.com/c-bata/go-prompt
+import:
+- package: github.com/pkg/term
+  subpackages:
+  - termios
+- package: golang.org/x/tools
+  subpackages:
+  - cmd/stringer
