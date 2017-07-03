@@ -5,6 +5,9 @@ import (
 	"unsafe"
 )
 
+// GetWinSize returns winsize struct which is the response of ioctl(2).
+var GetWinSize = getWinSize
+
 // Winsize is winsize struct got from the ioctl(2) system call.
 type Winsize struct {
 	Row uint16
@@ -13,12 +16,11 @@ type Winsize struct {
 	Y   uint16 // pixel value
 }
 
-// GetWinSize returns winsize struct which is the response of ioctl(2).
-func GetWinSize() (ws *Winsize) {
+func getWinSize(fileno int) (ws *Winsize) {
 	ws = &Winsize{}
 	retCode, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
-		uintptr(syscall.Stdin),
+		uintptr(fileno),
 		uintptr(syscall.TIOCGWINSZ),
 		uintptr(unsafe.Pointer(ws)))
 
