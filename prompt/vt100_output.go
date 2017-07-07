@@ -34,12 +34,49 @@ func (w *VT100Writer) Flush() error {
 	return nil
 }
 
+/* Erase */
+
 func (w *VT100Writer) Clear() {
-	syscall.Write(w.fd, []byte{0x1b, 0x5b, 0x02, 0x6a, 0x1b, 0x63})
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x02, 0x6a, 0x1b, 0x63})
+	return
+}
+
+func (w *VT100Writer) EraseScreen() {
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x32, 0x4a})
+	return
+}
+
+func (w *VT100Writer) EraseDown() {
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x4a})
+	return
+}
+
+func (w *VT100Writer) EraseEndOfLine() {
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x4b})
 	return
 }
 
 /* Cursor */
+
+func (w *VT100Writer) ShowCursor() {
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x3f, 0x31, 0x32, 0x6c, 0x1b, 0x5b, 0x3f, 0x32, 0x35, 0x68})
+}
+
+func (w *VT100Writer) HideCursor() {
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x3f, 0x32, 0x35, 0x6c})
+	return
+}
+
+func (w *VT100Writer) CursorGoTo(row, col int) {
+	r := strconv.Itoa(row)
+	c := strconv.Itoa(col)
+	w.WriteRaw([]byte{0x1b, 0x5b})
+	w.WriteRaw([]byte(r))
+	w.WriteRaw([]byte{0x3b})
+	w.WriteRaw([]byte(c))
+	w.WriteRaw([]byte{0x48})
+	return
+}
 
 func (w *VT100Writer) CursorUp(n int) {
 	if n < 0 {
