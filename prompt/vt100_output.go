@@ -36,13 +36,13 @@ func (w *VT100Writer) Flush() error {
 
 /* Erase */
 
-func (w *VT100Writer) Clear() {
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x02, 0x6a, 0x1b, 0x63})
+func (w *VT100Writer) EraseScreen() {
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x32, 0x4a})
 	return
 }
 
-func (w *VT100Writer) EraseScreen() {
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x32, 0x4a})
+func (w *VT100Writer) EraseUp() {
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x31, 0x4a})
 	return
 }
 
@@ -51,8 +51,18 @@ func (w *VT100Writer) EraseDown() {
 	return
 }
 
+func (w *VT100Writer) EraseStartOfLine() {
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x31, 0x4b})
+	return
+}
+
 func (w *VT100Writer) EraseEndOfLine() {
 	w.WriteRaw([]byte{0x1b, 0x5b, 0x4b})
+	return
+}
+
+func (w *VT100Writer) EraseLine() {
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x32, 0x4b})
 	return
 }
 
@@ -123,6 +133,35 @@ func (w *VT100Writer) CursorBackward(n int) {
 	w.WriteRaw([]byte{0x1b, 0x5b})
 	w.WriteRaw([]byte(s))
 	w.WriteRaw([]byte{0x44})
+	return
+}
+
+func (w *VT100Writer) AskForCPR() {
+	// CPR: Cursor Position Request.
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x36, 0x6e})
+	w.Flush()
+	return
+}
+
+func (w *VT100Writer) SaveCursor() {
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x73})
+	return
+}
+
+func (w *VT100Writer) UnSaveCursor() {
+	w.WriteRaw([]byte{0x1b, 0x5b, 0x75})
+	return
+}
+
+/* Scrolling */
+
+func (w *VT100Writer) ScrollDown() {
+	w.WriteRaw([]byte{0x1b, 0x44})
+	return
+}
+
+func (w *VT100Writer) ScrollUp() {
+	w.WriteRaw([]byte{0x1b, 0x4d})
 	return
 }
 
