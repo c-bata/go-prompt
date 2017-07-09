@@ -43,13 +43,19 @@ func main() {
 		} else if ac.Key == prompt.Enter || ac.Key == prompt.ControlJ {
 			buffer.InsertText("\n", false, true)
 		} else if ac.Key == prompt.Left {
-			buffer.CursorLeft(1)
+			l := buffer.CursorLeft(1)
+			if l == 0 {
+				continue
+			}
 			out.CursorDown(1)
 			out.CursorBackward(1)
 			out.EraseDown()
 			out.CursorUp(1)
 		} else if ac.Key == prompt.Right {
-			buffer.CursorRight(1)
+			l := buffer.CursorRight(1)
+			if l == 0 {
+				continue
+			}
 			out.CursorDown(1)
 			out.EraseDown()
 			out.CursorForward(1)
