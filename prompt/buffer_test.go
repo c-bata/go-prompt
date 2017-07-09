@@ -32,9 +32,15 @@ func TestBuffer_CursorMovement(t *testing.T) {
 	b := NewBuffer()
 	b.InsertText("some_text", false, true)
 
-	b.CursorLeft(1)
-	b.CursorLeft(2)
-	b.CursorRight(1)
+	if l := b.CursorLeft(1); l != 1 {
+		t.Errorf("Should be 1, but got %d", l)
+	}
+	if l := b.CursorLeft(2); l != 2 {
+		t.Errorf("Should be 2, but got %d", l)
+	}
+	if l := b.CursorRight(1); l != 1 {
+		t.Errorf("Should be 1, but got %d", l)
+	}
 	b.InsertText("A", false, true)
 	if b.Text() != "some_teAxt" {
 		t.Errorf("Text should be %#v, got %#v", "some_teAxt", b.Text())

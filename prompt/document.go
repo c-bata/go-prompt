@@ -51,7 +51,7 @@ func (d *Document) FindStartOfPreviousWord() int {
 	// Reverse the text before the cursor, in order to do an efficient backwards search.
 	x := d.TextBeforeCursor()
 	l := len(x)
-	for i := l - 1; i > 0; i-- {
+	for i := l; i > 0; i-- {
 		if x[i-1:i] == " " {
 			return i
 		}

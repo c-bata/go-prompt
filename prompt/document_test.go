@@ -31,38 +31,89 @@ func TestDocument_TextBeforeCursor(t *testing.T) {
 }
 
 func TestDocument_TextAfterCursor(t *testing.T) {
-	d := &Document{
-		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("line 1\n" + "lin"),
+	pattern := []struct{
+		document *Document
+		expected string
+	} {
+		{
+			document: &Document{
+				Text:           "line 1\nline 2\nline 3\nline 4\n",
+				CursorPosition: len("line 1\n" + "lin"),
+			},
+			expected: "e 2\nline 3\nline 4\n",
+		},
+		{
+			document: &Document{
+				Text:           "",
+				CursorPosition: 0,
+			},
+			expected: "",
+		},
 	}
-	ac := d.TextAfterCursor()
-	ex := "e 2\nline 3\nline 4\n"
-	if ac != ex {
-		t.Errorf("Should be %#v, got %#v", ex, ac)
+
+	for _, p := range pattern {
+		ac := p.document.TextAfterCursor()
+		if ac != p.expected {
+			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+		}
 	}
 }
 
 func TestDocument_GetWordBeforeCursor(t *testing.T) {
-	d := &Document{
-		Text:           "apple bana",
-		CursorPosition: len("apple bana"),
+	pattern := []struct{
+		document *Document
+		expected string
+	} {
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple bana"),
+			},
+			expected: "bana",
+		},
+		{
+			document: &Document{
+				Text:           "apple ",
+				CursorPosition: len("apple "),
+			},
+			expected: "",
+		},
 	}
-	ac := d.GetWordBeforeCursor()
-	ex := "bana"
-	if ac != ex {
-		t.Errorf("Should be %#v, got %#v", ex, ac)
+
+	for _, p := range pattern {
+		ac := p.document.GetWordBeforeCursor()
+		if ac != p.expected {
+			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+		}
 	}
 }
 
 func TestDocument_FindStartOfPreviousWord(t *testing.T) {
-	d := &Document{
-		Text:           "apple bana",
-		CursorPosition: len("apple bana"),
+	pattern := []struct{
+		document *Document
+		expected int
+	} {
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple bana"),
+			},
+			expected: len("apple "),
+		},
+		{
+			document: &Document{
+				Text:           "apple ",
+				CursorPosition: len("apple "),
+			},
+			expected: len("apple "),
+		},
 	}
-	ac := d.FindStartOfPreviousWord()
-	ex := len("apple ")
-	if ac != ex {
-		t.Errorf("Should be %#v, got %#v", ex, ac)
+
+	for _, p := range pattern {
+		ac := p.document.FindStartOfPreviousWord()
+		if ac != p.expected {
+			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+		}
 	}
 }
 

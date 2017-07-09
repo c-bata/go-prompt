@@ -114,7 +114,7 @@ func (w *VT100Writer) CursorDown(n int) {
 
 func (w *VT100Writer) CursorForward(n int) {
 	if n < 0 {
-		w.CursorBackward(n)
+		w.CursorBackward(-n)
 		return
 	}
 	s := strconv.Itoa(n)
@@ -126,7 +126,7 @@ func (w *VT100Writer) CursorForward(n int) {
 
 func (w *VT100Writer) CursorBackward(n int) {
 	if n < 0 {
-		w.CursorForward(n)
+		w.CursorForward(-n)
 		return
 	}
 	s := strconv.Itoa(n)

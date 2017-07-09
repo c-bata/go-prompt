@@ -79,31 +79,33 @@ func main() {
 		}
 
 		// Display completions
-		out.SetColor("white", "teal")
+		if w := buffer.Document().GetWordBeforeCursor(); w != "" {
+			out.SetColor("white", "teal")
 
-		out.CursorDown(1)
-		out.Write([]byte(" Foo "))
-		out.SetColor("white", "darkGray")
-		out.Write([]byte(" "))
-		out.SetColor("white", "teal")
-		out.CursorBackward(len("foo") + 3)
+			out.CursorDown(1)
+			out.Write([]byte(" Foo "))
+			out.SetColor("white", "darkGray")
+			out.Write([]byte(" "))
+			out.SetColor("white", "teal")
+			out.CursorBackward(len("foo") + 3)
 
-		out.CursorDown(1)
-		out.Write([]byte(" Hello "))
-		out.SetColor("white", "darkGray")
-		out.Write([]byte(" "))
-		out.SetColor("white", "teal")
-		out.CursorBackward(len("Hello") + 3)
+			out.CursorDown(1)
+			out.Write([]byte(" Hello "))
+			out.SetColor("white", "darkGray")
+			out.Write([]byte(" "))
+			out.SetColor("white", "teal")
+			out.CursorBackward(len("Hello") + 3)
 
-		out.CursorDown(1)
-		out.Write([]byte(" World "))
-		out.SetColor("white", "darkGray")
-		out.Write([]byte(" "))
-		out.SetColor("white", "teal")
-		out.CursorBackward(len("World") + 3)
+			out.CursorDown(1)
+			out.Write([]byte(" World "))
+			out.SetColor("white", "darkGray")
+			out.Write([]byte(" "))
+			out.SetColor("white", "teal")
+			out.CursorBackward(len("World") + 3)
 
-		out.CursorUp(3)
-		out.SetColor("default", "default")
+			out.CursorUp(3)
+			out.SetColor("default", "default")
+		}
 
 		out.Flush()
 	}
