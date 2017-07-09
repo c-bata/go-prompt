@@ -179,6 +179,8 @@ func (w *VT100Writer) ClearTitle() {
 	return
 }
 
+/* utility */
+
 func NewVT100Writer() *VT100Writer {
 	return &VT100Writer{
 		fd: syscall.Stdout,
@@ -205,4 +207,72 @@ func byteFilter(buf []byte, fn ...func(b byte) bool) []byte {
 		}
 	}
 	return byteFilter(ret, fn[1:]...)
+}
+
+/* colors */
+
+func (w *VT100Writer) SetColor(fg, bg string) (ok bool) {
+	f, ok := ForegroundANSIColors[fg]
+	if !ok {
+		return
+	}
+	b, ok := BackgroundANSIColors[bg]
+	if !ok {
+		return
+	}
+	syscall.Write(syscall.Stdout, []byte{0x1b, 0x5b, 0x33, 0x39, 0x3b, 0x34, 0x39, 0x6d})
+	w.WriteRaw([]byte{0x1b, 0x5b})
+	w.WriteRaw(f)
+	w.WriteRaw([]byte{0x3b})
+	w.WriteRaw(b)
+	w.WriteRaw([]byte{0x6d})
+	return
+}
+
+var ForegroundANSIColors = map[string][]byte{
+	"default": []byte{0x33, 0x39}, // 39
+
+	// Low intensity.
+	"black":     []byte{0x33, 0x30}, // 30
+	"darkRed":   []byte{0x33, 0x31}, // 31
+	"darkGreen": []byte{0x33, 0x32}, // 32
+	"brown":     []byte{0x33, 0x33}, // 33
+	"darkBlue":  []byte{0x33, 0x34}, // 34
+	"purple":    []byte{0x33, 0x35}, // 35
+	"teal":      []byte{0x33, 0x36}, //36
+	"lightGray": []byte{0x33, 0x37}, //37
+
+	// High intensity.
+	"darkGray":  []byte{0x39, 0x30}, // 90
+	"red":       []byte{0x39, 0x31}, // 91
+	"green":     []byte{0x39, 0x32}, // 92
+	"yellow":    []byte{0x39, 0x33}, // 93
+	"blue":      []byte{0x39, 0x34}, // 94
+	"fuchsia":   []byte{0x39, 0x35}, // 95
+	"turquoise": []byte{0x39, 0x36}, // 96
+	"white":     []byte{0x39, 0x37}, // 97
+}
+
+var BackgroundANSIColors = map[string][]byte{
+	"default": []byte{0x34, 0x39}, // 49
+
+	// Low intensity.
+	"black":     []byte{0x34, 0x30}, // 40
+	"darkRed":   []byte{0x34, 0x31}, // 41
+	"darkGreen": []byte{0x34, 0x32}, // 42
+	"brown":     []byte{0x34, 0x33}, // 43
+	"darkBlue":  []byte{0x34, 0x34}, // 44
+	"purple":    []byte{0x34, 0x35}, // 45
+	"teal":      []byte{0x34, 0x36}, // 46
+	"lightGray": []byte{0x34, 0x37}, // 47
+
+	// High intensity
+	"darkGray":  []byte{0x31, 0x30, 0x30}, // 100
+	"red":       []byte{0x31, 0x30, 0x31}, // 101
+	"green":     []byte{0x31, 0x30, 0x32}, // 102
+	"yellow":    []byte{0x31, 0x30, 0x33}, // 103
+	"blue":      []byte{0x31, 0x30, 0x34}, // 104
+	"fuchsia":   []byte{0x31, 0x30, 0x35}, // 105
+	"turquoise": []byte{0x31, 0x30, 0x36}, // 106
+	"white":     []byte{0x31, 0x30, 0x37}, // 107
 }

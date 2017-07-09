@@ -19,6 +19,16 @@ func main() {
 	defer fmt.Println("\nexited!")
 	out.SetTitle("はろー")
 
+	out.ScrollDown()
+	out.ScrollDown()
+	out.ScrollDown()
+	out.ScrollDown()
+	out.ScrollUp()
+	out.ScrollUp()
+	out.ScrollUp()
+	out.ScrollUp()
+	out.Flush()
+
 	bufCh := make(chan []byte, 128)
 	go readBuffer(bufCh)
 
@@ -50,10 +60,6 @@ func main() {
 			out.EraseDown()
 		} else if ac.Key == prompt.Right {
 			buffer.CursorRight(1)
-		} else if ac.Key == prompt.Up {
-			buffer.CursorUp(1)
-		} else if ac.Key == prompt.Down {
-			buffer.CursorDown(1)
 		} else if ac.Key == prompt.ControlT {
 			enterAlternateScreen(syscall.Stdout)
 		} else if ac.Key == prompt.ControlC {
@@ -67,16 +73,31 @@ func main() {
 		}
 
 		// Display completions
+		out.SetColor("white", "teal")
+
 		out.CursorDown(1)
-		out.Write([]byte("Foo"))
-		out.CursorBackward(len("foo"))
+		out.Write([]byte(" Foo "))
+		out.SetColor("white", "darkGray")
+		out.Write([]byte(" "))
+		out.SetColor("white", "teal")
+		out.CursorBackward(len("foo") + 3)
+
 		out.CursorDown(1)
-		out.Write([]byte("Hello"))
-		out.CursorBackward(len("Hello"))
+		out.Write([]byte(" Hello "))
+		out.SetColor("white", "darkGray")
+		out.Write([]byte(" "))
+		out.SetColor("white", "teal")
+		out.CursorBackward(len("Hello") + 3)
+
 		out.CursorDown(1)
-		out.Write([]byte("World"))
-		out.CursorBackward(len("World"))
+		out.Write([]byte(" World "))
+		out.SetColor("white", "darkGray")
+		out.Write([]byte(" "))
+		out.SetColor("white", "teal")
+		out.CursorBackward(len("World") + 3)
+
 		out.CursorUp(3)
+		out.SetColor("default", "default")
 
 		out.Flush()
 	}
