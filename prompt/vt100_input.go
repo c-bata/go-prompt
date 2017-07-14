@@ -53,7 +53,7 @@ func (t *VT100Parser) GetASCIICode(b []byte) *ASCIICode {
 }
 
 // GetWinSize returns winsize struct which is the response of ioctl(2).
-func (t *VT100Parser) GetWinSize() (row, col uint16) {
+func (t *VT100Parser) GetWinSize() *WinSize {
 	ws := &ioctlWinsize{}
 	retCode, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
@@ -64,7 +64,10 @@ func (t *VT100Parser) GetWinSize() (row, col uint16) {
 	if int(retCode) == -1 {
 		panic(errno)
 	}
-	return ws.Row, ws.Col
+	return &WinSize{
+		Row: ws.Row,
+		Col: ws.Col,
+	}
 }
 
 var asciiSequences []*ASCIICode = []*ASCIICode{

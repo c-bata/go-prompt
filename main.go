@@ -3,18 +3,18 @@ package main
 import (
 	"fmt"
 	"syscall"
+	"os"
+	"os/signal"
 
 	"github.com/c-bata/go-prompt-toolkit/prompt"
 )
 
-func enterAlternateScreen(fd int) {
-	syscall.Write(fd, []byte{0x1b, 0x5b, 0x3f, 0x01, 0x00, 0x04, 0x09, 0x68, 0x1b, 0x5b, 0x48})
-}
-
 func scroll(out *prompt.VT100Writer, lines int) {
 	for i := 0; i < lines; i++ {
 		out.ScrollDown()
-		defer out.ScrollUp()
+	}
+	for i := 0; i < lines; i++ {
+		out.ScrollUp()
 	}
 	return
 }
@@ -23,8 +23,14 @@ func main() {
 	in := prompt.NewVT100Parser()
 	in.Setup()
 	defer in.TearDown()
-	defer fmt.Println("\nexited!")
+	defer fmt.Println("\nGoodbye!")
 	out := prompt.NewVT100Writer()
+
+	renderer := prompt.Render{
+		Prefix: ">>> ",
+		Out:    out,
+	}
+
 	out.SetTitle("はろー")
 	scroll(out, 7)
 	out.Flush()
@@ -32,68 +38,27 @@ func main() {
 	bufCh := make(chan []byte, 128)
 	go readBuffer(bufCh)
 
+	winSizeCh := make(chan *prompt.WinSize, 128)
+	go updateWindowSize(in, winSizeCh)
+
 	buffer := prompt.NewBuffer()
 
 	for {
 		b := <-bufCh
-		if ac := in.GetASCIICode(b); ac == nil {
-			out.EraseDown()
-			out.WriteRaw(b)
+		ac := in.GetASCIICode(b)
+		if ac == nil {
 			buffer.InsertText(string(b), false, true)
-		} else if ac.Key == prompt.Enter || ac.Key == prompt.ControlJ {
 			out.EraseDown()
-			out.WriteStr(buffer.Document().TextAfterCursor())
-
-			out.WriteStr("\n>>> Your input: '")
-			out.WriteStr(buffer.Text())
-			out.WriteStr("' <<<\n")
-			buffer = prompt.NewBuffer()
-		} else if ac.Key == prompt.Left {
-			l := buffer.CursorLeft(1)
-			if l == 0 {
-				continue
-			}
-			out.EraseLine()
-			out.EraseDown()
-			after := buffer.Document().CurrentLine()
-			out.WriteStr(after)
-			out.CursorBackward(len(after) - buffer.CursorPosition)
-		} else if ac.Key == prompt.Right {
-			l := buffer.CursorRight(1)
-			if l == 0 {
-				continue
-			}
-
-			out.CursorForward(l)
 			out.WriteRaw(b)
-			out.EraseDown()
 			after := buffer.Document().TextAfterCursor()
 			out.WriteStr(after)
-		} else if ac.Key == prompt.Backspace {
-			deleted := buffer.DeleteBeforeCursor(1)
-			if deleted == "" {
-				continue
-			}
-			out.CursorBackward(1)
-			out.EraseDown()
-
-			after := buffer.Document().TextAfterCursor()
-			out.WriteStr(after)
-		} else if ac.Key == prompt.Tab || ac.Key == prompt.ControlI {
-		} else if ac.Key == prompt.BackTab {
-		} else if ac.Key == prompt.Right {
-			buffer.CursorRight(1)
-		} else if ac.Key == prompt.ControlT {
-			enterAlternateScreen(syscall.Stdout)
 		} else if ac.Key == prompt.ControlC {
 			out.EraseDown()
 			out.ClearTitle()
 			out.Flush()
 			return
-		} else if ac.Key == prompt.Up || ac.Key == prompt.Down {
 		} else {
-			out.WriteRaw(b)
-			//buffer.InsertText(ac.Key.String(), false, true)
+			prompt.InputHandler(ac, buffer, out)
 		}
 
 		// Display completions
@@ -132,6 +97,8 @@ func main() {
 			out.SetColor("default", "default")
 		}
 
+		completions := []string{"select", "insert", "update", "where"}
+		renderer.Render(buffer, completions)
 		scroll(out, 4)
 		out.Flush()
 	}
@@ -143,6 +110,39 @@ func readBuffer(bufCh chan []byte) {
 	for {
 		if n, err := syscall.Read(syscall.Stdin, buf); err == nil {
 			bufCh <- buf[:n]
+		}
+	}
+}
+
+func updateWindowSize(in *prompt.VT100Parser, winSizeCh chan *prompt.WinSize) {
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(
+		sigCh,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+		syscall.SIGWINCH,
+	)
+
+	for {
+		s := <-sigCh
+		switch s {
+		// kill -SIGHUP XXXX
+		case syscall.SIGHUP:
+
+			// kill -SIGINT XXXX or Ctrl+c
+		case syscall.SIGINT:
+
+			// kill -SIGTERM XXXX
+		case syscall.SIGTERM:
+
+			// kill -SIGQUIT XXXX
+		case syscall.SIGQUIT:
+
+		case syscall.SIGWINCH:
+			winSizeCh <- in.GetWinSize()
+		default:
 		}
 	}
 }
