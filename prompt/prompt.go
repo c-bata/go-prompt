@@ -17,7 +17,7 @@ type Prompt struct {
 	title     string
 	executor  Executor
 	completer Completer
-	chosen    int
+	chosen    int  // -1 means nothing one is chosen.
 }
 
 func (p *Prompt) Run() {
@@ -37,8 +37,21 @@ func (p *Prompt) Run() {
 			p.renderer.Erase(p.buf)
 			ac := p.in.GetASCIICode(b)
 			if ac == nil {
+				if p.chosen != -1 {
+					c := p.completer(p.buf)[p.chosen]
+					w := p.buf.Document().GetWordBeforeCursor()
+					p.buf.DeleteBeforeCursor(len([]rune(w)))
+					p.buf.InsertText(c, false, true)
+				}
+				p.chosen = -1
 				p.buf.InsertText(string(b), false, true)
 			} else if ac.Key == ControlJ || ac.Key == Enter {
+				if p.chosen != -1 {
+					c := p.completer(p.buf)[p.chosen]
+					w := p.buf.Document().GetWordBeforeCursor()
+					p.buf.DeleteBeforeCursor(len([]rune(w)))
+					p.buf.InsertText(c, false, true)
+				}
 				res := p.executor(p.buf)
 				p.renderer.BreakLine(p.buf, res)
 				p.buf = NewBuffer()
