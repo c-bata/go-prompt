@@ -13,8 +13,14 @@ func (r *Render) Setup() {
 	if r.Title != "" {
 		r.out.SetTitle(r.Title)
 	}
-	r.out.WriteStr(r.Prefix)
+	r.renderPrefix()
 	r.out.Flush()
+}
+
+func (r *Render) renderPrefix() {
+	r.out.SetColor("green", "default")
+	r.out.WriteStr(r.Prefix)
+	r.out.SetColor("default", "default")
 }
 
 func (r *Render) TearDown() {
@@ -85,7 +91,7 @@ func (r *Render) Erase(buffer *Buffer) {
 	r.out.CursorBackward(len(r.Prefix))
 	r.out.CursorBackward(buffer.CursorPosition + 100)
 	r.out.EraseDown()
-	r.out.WriteStr(r.Prefix)
+	r.renderPrefix()
 	r.out.Flush()
 	return
 }
@@ -108,7 +114,7 @@ func (r *Render) BreakLine(buffer *Buffer, result string) {
 	r.out.WriteStr("\n")
 	r.out.WriteStr(result)
 	r.out.WriteStr("\n")
-	r.out.WriteStr(r.Prefix)
+	r.renderPrefix()
 }
 
 func formatCompletions(words []string) (new []string, width int) {
