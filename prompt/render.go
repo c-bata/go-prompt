@@ -23,7 +23,7 @@ func (r *Render) TearDown() {
 	r.out.Flush()
 }
 
-func (r *Render) PrepareArea(lines int) {
+func (r *Render) prepareArea(lines int) {
 	for i := 0; i < lines; i++ {
 		r.out.ScrollDown()
 	}
@@ -45,7 +45,7 @@ func (r *Render) RenderCompletion(words []string) {
 	}
 	formatted, width := formatCompletions(words)
 	l := len(formatted)
-	r.PrepareArea(l)
+	r.prepareArea(l)
 
 	r.out.SetColor("white", "teal")
 	for i := 0; i < l; i++ {

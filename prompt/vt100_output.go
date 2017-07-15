@@ -113,7 +113,9 @@ func (w *VT100Writer) CursorDown(n int) {
 }
 
 func (w *VT100Writer) CursorForward(n int) {
-	if n < 0 {
+	if n == 0 {
+		return
+	} else if n < 0 {
 		w.CursorBackward(-n)
 		return
 	}
@@ -125,7 +127,9 @@ func (w *VT100Writer) CursorForward(n int) {
 }
 
 func (w *VT100Writer) CursorBackward(n int) {
-	if n < 0 {
+	if n == 0 {
+		return
+	} else if n < 0 {
 		w.CursorForward(-n)
 		return
 	}
