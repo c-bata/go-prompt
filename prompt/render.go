@@ -51,10 +51,14 @@ func (r *Render) RenderCompletion(words []string) {
 	r.out.SetColor("white", "teal")
 	for i := 0; i < l; i++ {
 		r.out.CursorDown(1)
+		if i == int(r.chosen) {
+			r.out.SetColor("white", "turquoise")
+		} else {
+			r.out.SetColor("black", "cyan")
+		}
 		r.out.WriteStr(" " + formatted[i] + " ")
 		r.out.SetColor("white", "darkGray")
 		r.out.Write([]byte(" "))
-		r.out.SetColor("white", "teal")
 		r.out.CursorBackward(width + 3)
 	}
 
