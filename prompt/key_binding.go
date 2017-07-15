@@ -4,16 +4,6 @@ var InputHandler = defaultHandler
 
 func defaultHandler(ac *ASCIICode, buffer *Buffer, out *VT100Writer) {
 	switch ac.Key {
-	case ControlJ: // this is equivalent with Enter Key.
-		fallthrough
-	case Enter:
-		out.EraseDown()
-		out.WriteStr(buffer.Document().TextAfterCursor())
-
-		out.WriteStr("\n>>> Your input: '")
-		out.WriteStr(buffer.Text())
-		out.WriteStr("' <<<\n")
-		buffer = NewBuffer()
 	case Left:
 		l := buffer.CursorLeft(1)
 		if l == 0 {
