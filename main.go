@@ -7,7 +7,7 @@ import (
 )
 
 func executor(b *prompt.Buffer) string {
-	r := "\n>>> Your input: '" + b.Text() + "' <<<\n"
+	r := "Your input: " + b.Text()
 	return r
 }
 
@@ -20,8 +20,8 @@ func completer(b *prompt.Buffer) []string {
 }
 
 func main() {
-	pt := prompt.NewPrompt(executor, completer)
+	pt := prompt.NewPrompt(executor, completer, 8)
 	defer fmt.Println("\nGoodbye!")
-	fmt.Print("Hello! This is a example appication using prompt-toolkit.\n\n")
+	fmt.Print("Hello! This is a example appication using prompt-toolkit.\n")
 	pt.Run()
 }

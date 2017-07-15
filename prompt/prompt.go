@@ -1,9 +1,9 @@
 package prompt
 
 import (
-	"syscall"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -23,7 +23,6 @@ func (p *Prompt) Run() {
 	p.setUp()
 	defer p.tearDown()
 
-
 	bufCh := make(chan []byte, 128)
 	go readBuffer(bufCh)
 
@@ -33,7 +32,7 @@ func (p *Prompt) Run() {
 
 	for {
 		select {
-		case b := <- bufCh:
+		case b := <-bufCh:
 			p.renderer.Erase(p.buf)
 			ac := p.in.GetASCIICode(b)
 			if ac == nil {
@@ -42,7 +41,7 @@ func (p *Prompt) Run() {
 				res := p.executor(p.buf)
 				p.renderer.BreakLine(p.buf, res)
 				p.buf = NewBuffer()
-			} else if ac.Key == ControlC {
+			} else if ac.Key == ControlC || ac.Key == ControlD {
 				return
 			} else {
 				InputHandler(ac, p.buf)
@@ -50,9 +49,9 @@ func (p *Prompt) Run() {
 
 			completions := p.completer(p.buf)
 			p.renderer.Render(p.buf, completions)
-		case w := <- winSizeCh:
+		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
-		case e := <- exitCh:
+		case e := <-exitCh:
 			if e {
 				return
 			}
@@ -119,16 +118,17 @@ func handleSignals(in *VT100Parser, exitCh chan bool, winSizeCh chan *WinSize) {
 	}
 }
 
-func NewPrompt(executor Executor, completer Completer) *Prompt {
+func NewPrompt(executor Executor, completer Completer, maxCompletions uint8) *Prompt {
 	return &Prompt{
 		in: NewVT100Parser(),
 		renderer: &Render{
-			Prefix: ">>> ",
-			out:    NewVT100Writer(),
+			Prefix:         ">>> ",
+			out:            NewVT100Writer(),
+			maxCompletions: maxCompletions,
 		},
-		title: "Hello! this is prompt toolkit",
-		buf: NewBuffer(),
-		executor: executor,
+		title:     "Hello! this is prompt toolkit",
+		buf:       NewBuffer(),
+		executor:  executor,
 		completer: completer,
 	}
 }

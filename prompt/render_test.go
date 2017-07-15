@@ -1,12 +1,12 @@
 package prompt
 
 import (
-	"testing"
 	"reflect"
+	"testing"
 )
 
 func TestFormatCompletion(t *testing.T) {
-	in := []string {
+	in := []string{
 		"select",
 		"from",
 		"insert",

@@ -1,20 +1,21 @@
 package prompt
 
-
 type Render struct {
-	Prefix string
-	Title  string
-	out    *VT100Writer
-	row    uint16
-	col    uint16 // sigwinchで送られてくる列数を常に見ながら、prefixのlengthとbufferのcursor positionを比べて、completionの表示位置をずらす
-	chosen uint8 // the index number of a chosen completion
+	Prefix         string
+	Title          string
+	out            *VT100Writer
+	row            uint16
+	col            uint16 // sigwinchで送られてくる列数を常に見ながら、prefixのlengthとbufferのcursor positionを比べて、completionの表示位置をずらす
+	chosen         uint8  // the index number of a chosen completion
+	maxCompletions uint8
 }
 
 func (r *Render) Setup() {
 	if r.Title != "" {
 		r.out.SetTitle(r.Title)
-		r.out.Flush()
 	}
+	r.out.WriteStr(r.Prefix)
+	r.out.Flush()
 }
 
 func (r *Render) TearDown() {
@@ -63,8 +64,11 @@ func (r *Render) RenderCompletion(words []string) {
 }
 
 func (r *Render) Erase(buffer *Buffer) {
+	r.out.CursorBackward(len(r.Prefix))
 	r.out.CursorBackward(buffer.CursorPosition)
 	r.out.EraseDown()
+	r.out.WriteStr(r.Prefix)
+	r.out.Flush()
 	return
 }
 
@@ -78,7 +82,10 @@ func (r *Render) Render(buffer *Buffer, completions []string) {
 
 func (r *Render) BreakLine(buffer *Buffer, result string) {
 	r.out.WriteStr(buffer.Document().Text)
+	r.out.WriteStr("\n")
 	r.out.WriteStr(result)
+	r.out.WriteStr("\n")
+	r.out.WriteStr(r.Prefix)
 }
 
 func formatCompletions(words []string) ([]string, int) {

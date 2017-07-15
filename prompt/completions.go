@@ -2,7 +2,7 @@ package prompt
 
 type Completion struct {
 	// The new string that will be inserted into document.
-	text          string
+	text string
 	// Position relative to the cursor position where the new text will start.
 	startPosition int
 }
@@ -13,7 +13,7 @@ func (c *Completion) NewCompletionFromPosition(position int) *Completion {
 	}
 
 	return &Completion{
-		text: c.text[position - c.startPosition:],
+		text: c.text[position-c.startPosition:],
 	}
 }
 

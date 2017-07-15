@@ -31,10 +31,10 @@ func TestDocument_TextBeforeCursor(t *testing.T) {
 }
 
 func TestDocument_TextAfterCursor(t *testing.T) {
-	pattern := []struct{
+	pattern := []struct {
 		document *Document
 		expected string
-	} {
+	}{
 		{
 			document: &Document{
 				Text:           "line 1\nline 2\nline 3\nline 4\n",
@@ -60,10 +60,10 @@ func TestDocument_TextAfterCursor(t *testing.T) {
 }
 
 func TestDocument_GetWordBeforeCursor(t *testing.T) {
-	pattern := []struct{
+	pattern := []struct {
 		document *Document
 		expected string
-	} {
+	}{
 		{
 			document: &Document{
 				Text:           "apple bana",
@@ -89,10 +89,10 @@ func TestDocument_GetWordBeforeCursor(t *testing.T) {
 }
 
 func TestDocument_FindStartOfPreviousWord(t *testing.T) {
-	pattern := []struct{
+	pattern := []struct {
 		document *Document
 		expected int
-	} {
+	}{
 		{
 			document: &Document{
 				Text:           "apple bana",
