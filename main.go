@@ -15,7 +15,32 @@ func completer(b *prompt.Buffer) []string {
 	if w := b.Document().GetWordBeforeCursor(); w == "" {
 		return []string{}
 	} else {
-		return []string{"select", "from", "insert", "where"}
+		if []rune(w)[0] == []rune("s")[0] {
+			return []string{"select"}
+		} else if []rune(w)[0] == []rune("w")[0] {
+			return []string{"where"}
+		} else if []rune(w)[0] == []rune("d")[0] {
+			return []string{"drop", "delete"}
+		} else if []rune(w)[0] == []rune("f")[0] {
+			return []string{"from"}
+		}
+	}
+	return []string{
+		"select",
+		"select",
+		"select",
+		"select",
+		"select",
+		"select",
+		"select",
+		"select",
+		"select",
+		"select",
+		"select",
+		"select",
+		"select",
+		"select",
+		"select",
 	}
 }
 

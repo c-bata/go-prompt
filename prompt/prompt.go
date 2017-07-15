@@ -76,6 +76,9 @@ func (p *Prompt) Run() {
 			p.renderer.Render(p.buf, completions, p.chosen)
 		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
+			p.renderer.Erase(p.buf)
+			completions := p.completer(p.buf)
+			p.renderer.Render(p.buf, completions, p.chosen)
 		case e := <-exitCh:
 			if e {
 				return
@@ -89,6 +92,7 @@ func (p *Prompt) Run() {
 func (p *Prompt) setUp() {
 	p.in.Setup()
 	p.renderer.Setup()
+	p.renderer.UpdateWinSize(p.in.GetWinSize())
 }
 
 func (p *Prompt) tearDown() {
@@ -143,7 +147,7 @@ func handleSignals(in *VT100Parser, exitCh chan bool, winSizeCh chan *WinSize) {
 	}
 }
 
-func NewPrompt(executor Executor, completer Completer, maxCompletions uint8) *Prompt {
+func NewPrompt(executor Executor, completer Completer, maxCompletions uint16) *Prompt {
 	return &Prompt{
 		in: NewVT100Parser(),
 		renderer: &Render{

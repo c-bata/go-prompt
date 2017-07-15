@@ -6,7 +6,7 @@ type Render struct {
 	out            *VT100Writer
 	row            uint16
 	col            uint16 // sigwinchで送られてくる列数を常に見ながら、prefixのlengthとbufferのcursor positionを比べて、completionの表示位置をずらす
-	maxCompletions uint8
+	maxCompletions uint16
 }
 
 func (r *Render) Setup() {
@@ -39,13 +39,25 @@ func (r *Render) UpdateWinSize(ws *WinSize) {
 	return
 }
 
-func (r *Render) RenderCompletion(words []string, chosen int) {
-	if len(words) == 0 {
+func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
+	if l := len(words); l == 0 {
 		return
+	} else if l > int(r.maxCompletions) - 2 || l >= int(r.row) - 2 {
+		if r.maxCompletions > r.row {
+			words = words[:int(r.row) - 2]
+		} else {
+			words = words[:int(r.maxCompletions) - 2]
+		}
 	}
+
 	formatted, width := formatCompletions(words)
 	l := len(formatted)
 	r.prepareArea(l)
+
+	d := (len(r.Prefix) + len(buf.Document().TextBeforeCursor())) % int(r.col)
+	if d + width + 3 > int(r.col) {
+		r.out.CursorBackward(d + width + 3 - int(r.col))
+	}
 
 	r.out.SetColor("white", "teal")
 	for i := 0; i < l; i++ {
@@ -59,6 +71,9 @@ func (r *Render) RenderCompletion(words []string, chosen int) {
 		r.out.SetColor("white", "darkGray")
 		r.out.Write([]byte(" "))
 		r.out.CursorBackward(width + 3)
+	}
+	if d + width + 3 > int(r.col) {
+		r.out.CursorForward(d + width + 3 - int(r.col))
 	}
 
 	r.out.CursorUp(l)
@@ -79,7 +94,7 @@ func (r *Render) Render(buffer *Buffer, completions []string, chosen int) {
 	line := buffer.Document().CurrentLine()
 	r.out.WriteStr(line)
 	r.out.CursorBackward(len(line) - buffer.CursorPosition)
-	r.RenderCompletion(completions, chosen)
+	r.renderCompletion(buffer, completions, chosen)
 	if chosen != -1 {
 		c := completions[chosen]
 		r.out.CursorBackward(len([]rune(buffer.Document().GetWordBeforeCursor())))
