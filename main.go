@@ -12,11 +12,12 @@ func executor(b *prompt.Buffer) string {
 }
 
 func completer(b *prompt.Buffer) []string {
-	return []string{"foo", "bar", "baz"}
+	return []string{"select", "from", "insert", "where"}
 }
 
 func main() {
-	pt := prompt.NewPrompt(executor)
+	pt := prompt.NewPrompt(executor, completer)
 	defer fmt.Println("\nGoodbye!")
+	fmt.Print("Hello! This is a example appication using prompt-toolkit.\n\n")
 	pt.Run()
 }

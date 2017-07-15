@@ -8,14 +8,16 @@ import (
 )
 
 type Executor func(*Buffer) string
+type Completer func(*Buffer) []string
 
 type Prompt struct {
-	in       *VT100Parser
-	out      *VT100Writer
-	buf      *Buffer
-	renderer *Render
-	title    string
-	executor Executor
+	in        *VT100Parser
+	out       *VT100Writer
+	buf       *Buffer
+	renderer  *Render
+	title     string
+	executor  Executor
+	completer Completer
 }
 
 func (p *Prompt) Run() {
@@ -54,7 +56,8 @@ func (p *Prompt) Run() {
 
 			// Display completions
 			if w := p.buf.Document().GetWordBeforeCursor(); w != "" {
-				p.renderer.RenderCompletion([]string{})
+				completions := p.completer(p.buf)
+				p.renderer.RenderCompletion(completions)
 			}
 
 			completions := []string{"select", "insert", "update", "where"}
@@ -133,7 +136,7 @@ func handleSignals(in *VT100Parser, exitCh chan bool, winSizeCh chan *WinSize) {
 	}
 }
 
-func NewPrompt(executor Executor) *Prompt {
+func NewPrompt(executor Executor, completer Completer) *Prompt {
 	out := NewVT100Writer()
 	return &Prompt{
 		in: NewVT100Parser(),
@@ -145,5 +148,6 @@ func NewPrompt(executor Executor) *Prompt {
 		title: "Hello! this is prompt toolkit",
 		buf: NewBuffer(),
 		executor: executor,
+		completer: completer,
 	}
 }
