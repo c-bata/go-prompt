@@ -17,6 +17,7 @@ type Prompt struct {
 	title     string
 	executor  Executor
 	completer Completer
+	chosen    int
 }
 
 func (p *Prompt) Run() {
@@ -41,14 +42,25 @@ func (p *Prompt) Run() {
 				res := p.executor(p.buf)
 				p.renderer.BreakLine(p.buf, res)
 				p.buf = NewBuffer()
+				p.chosen = -1
 			} else if ac.Key == ControlC || ac.Key == ControlD {
 				return
+			} else if ac.Key == BackTab || ac.Key == Up {
+				p.chosen -= 1
+			} else if ac.Key == Tab || ac.Key == ControlI || ac.Key == Down {
+				p.chosen += 1
 			} else {
 				InputHandler(ac, p.buf)
+				p.chosen = -1
 			}
 
 			completions := p.completer(p.buf)
-			p.renderer.Render(p.buf, completions)
+			if p.chosen >= len(completions) {
+				p.chosen = -1
+			} else if p.chosen < -1 {
+				p.chosen = len(completions) - 1
+			}
+			p.renderer.Render(p.buf, completions, p.chosen)
 		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
 		case e := <-exitCh:
@@ -130,5 +142,6 @@ func NewPrompt(executor Executor, completer Completer, maxCompletions uint8) *Pr
 		buf:       NewBuffer(),
 		executor:  executor,
 		completer: completer,
+		chosen: -1,
 	}
 }

@@ -6,7 +6,6 @@ type Render struct {
 	out            *VT100Writer
 	row            uint16
 	col            uint16 // sigwinchで送られてくる列数を常に見ながら、prefixのlengthとbufferのcursor positionを比べて、completionの表示位置をずらす
-	chosen         uint8  // the index number of a chosen completion
 	maxCompletions uint8
 }
 
@@ -40,7 +39,7 @@ func (r *Render) UpdateWinSize(ws *WinSize) {
 	return
 }
 
-func (r *Render) RenderCompletion(words []string) {
+func (r *Render) RenderCompletion(words []string, chosen int) {
 	if len(words) == 0 {
 		return
 	}
@@ -51,7 +50,7 @@ func (r *Render) RenderCompletion(words []string) {
 	r.out.SetColor("white", "teal")
 	for i := 0; i < l; i++ {
 		r.out.CursorDown(1)
-		if i == int(r.chosen) {
+		if i == chosen {
 			r.out.SetColor("white", "turquoise")
 		} else {
 			r.out.SetColor("black", "cyan")
@@ -76,11 +75,11 @@ func (r *Render) Erase(buffer *Buffer) {
 	return
 }
 
-func (r *Render) Render(buffer *Buffer, completions []string) {
+func (r *Render) Render(buffer *Buffer, completions []string, chosen int) {
 	line := buffer.Document().CurrentLine()
 	r.out.WriteStr(line)
 	r.out.CursorBackward(len(line) - buffer.CursorPosition)
-	r.RenderCompletion(completions)
+	r.RenderCompletion(completions, chosen)
 	r.out.Flush()
 }
 
