@@ -1,10 +1,26 @@
 package prompt
 
+
 type Render struct {
 	Prefix string
+	Title  string
 	out    *VT100Writer
 	row    uint16
 	col    uint16 // sigwinchで送られてくる列数を常に見ながら、prefixのlengthとbufferのcursor positionを比べて、completionの表示位置をずらす
+	chosen uint8 // the index number of a chosen completion
+}
+
+func (r *Render) Setup() {
+	if r.Title != "" {
+		r.out.SetTitle(r.Title)
+		r.out.Flush()
+	}
+}
+
+func (r *Render) TearDown() {
+	r.out.ClearTitle()
+	r.out.EraseDown()
+	r.out.Flush()
 }
 
 func (r *Render) PrepareArea(lines int) {
@@ -24,6 +40,9 @@ func (r *Render) UpdateWinSize(ws *WinSize) {
 }
 
 func (r *Render) RenderCompletion(words []string) {
+	if len(words) == 0 {
+		return
+	}
 	formatted, width := formatCompletions(words)
 	l := len(formatted)
 	r.PrepareArea(l)
@@ -43,6 +62,25 @@ func (r *Render) RenderCompletion(words []string) {
 	return
 }
 
+func (r *Render) Erase(buffer *Buffer) {
+	r.out.CursorBackward(buffer.CursorPosition)
+	r.out.EraseDown()
+	return
+}
+
+func (r *Render) Render(buffer *Buffer, completions []string) {
+	line := buffer.Document().CurrentLine()
+	r.out.WriteStr(line)
+	r.out.CursorBackward(len(line) - buffer.CursorPosition)
+	r.RenderCompletion(completions)
+	r.out.Flush()
+}
+
+func (r *Render) BreakLine(buffer *Buffer, result string) {
+	r.out.WriteStr(buffer.Document().Text)
+	r.out.WriteStr(result)
+}
+
 func formatCompletions(words []string) ([]string, int) {
 	num := len(words)
 	width := 0
@@ -60,8 +98,4 @@ func formatCompletions(words []string) ([]string, int) {
 		}
 	}
 	return words, width
-}
-
-func (r *Render) Render(buffer *Buffer, completions []string) {
-	r.out.Flush()
 }

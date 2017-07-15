@@ -2,39 +2,14 @@ package prompt
 
 var InputHandler = defaultHandler
 
-func defaultHandler(ac *ASCIICode, buffer *Buffer, out *VT100Writer) {
+func defaultHandler(ac *ASCIICode, buffer *Buffer) {
 	switch ac.Key {
 	case Left:
-		l := buffer.CursorLeft(1)
-		if l == 0 {
-			return
-		}
-		out.EraseLine()
-		out.EraseDown()
-		after := buffer.Document().CurrentLine()
-		out.WriteStr(after)
-		out.CursorBackward(len(after) - buffer.CursorPosition)
+		buffer.CursorLeft(1)
 	case Right:
-		l := buffer.CursorRight(1)
-		if l == 0 {
-			return
-		}
-
-		out.CursorForward(l)
-		out.WriteRaw(ac.ASCIICode)
-		out.EraseDown()
-		after := buffer.Document().TextAfterCursor()
-		out.WriteStr(after)
+		buffer.CursorRight(1)
 	case Backspace:
-		deleted := buffer.DeleteBeforeCursor(1)
-		if deleted == "" {
-			return
-		}
-		out.CursorBackward(1)
-		out.EraseDown()
-
-		after := buffer.Document().TextAfterCursor()
-		out.WriteStr(after)
+		buffer.DeleteBeforeCursor(1)
 	case ControlI: // this is equivalent with TabKey.
 		fallthrough
 	case Tab:

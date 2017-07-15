@@ -12,7 +12,11 @@ func executor(b *prompt.Buffer) string {
 }
 
 func completer(b *prompt.Buffer) []string {
-	return []string{"select", "from", "insert", "where"}
+	if w := b.Document().GetWordBeforeCursor(); w == "" {
+		return []string{}
+	} else {
+		return []string{"select", "from", "insert", "where"}
+	}
 }
 
 func main() {

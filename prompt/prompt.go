@@ -12,7 +12,6 @@ type Completer func(*Buffer) []string
 
 type Prompt struct {
 	in        *VT100Parser
-	out       *VT100Writer
 	buf       *Buffer
 	renderer  *Render
 	title     string
@@ -35,34 +34,22 @@ func (p *Prompt) Run() {
 	for {
 		select {
 		case b := <- bufCh:
+			p.renderer.Erase(p.buf)
 			ac := p.in.GetASCIICode(b)
 			if ac == nil {
 				p.buf.InsertText(string(b), false, true)
-				p.out.EraseDown()
-				p.out.WriteRaw(b)
-				after := p.buf.Document().TextAfterCursor()
-				p.out.WriteStr(after)
 			} else if ac.Key == ControlJ || ac.Key == Enter {
-				p.out.EraseDown()
-				p.out.WriteStr(p.buf.Document().TextAfterCursor())
 				res := p.executor(p.buf)
-				p.out.WriteStr(res)
+				p.renderer.BreakLine(p.buf, res)
 				p.buf = NewBuffer()
 			} else if ac.Key == ControlC {
 				return
 			} else {
-				InputHandler(ac, p.buf, p.out)
+				InputHandler(ac, p.buf)
 			}
 
-			// Display completions
-			if w := p.buf.Document().GetWordBeforeCursor(); w != "" {
-				completions := p.completer(p.buf)
-				p.renderer.RenderCompletion(completions)
-			}
-
-			completions := []string{"select", "insert", "update", "where"}
+			completions := p.completer(p.buf)
 			p.renderer.Render(p.buf, completions)
-			p.out.Flush()
 		case w := <- winSizeCh:
 			p.renderer.UpdateWinSize(w)
 		case e := <- exitCh:
@@ -77,16 +64,12 @@ func (p *Prompt) Run() {
 
 func (p *Prompt) setUp() {
 	p.in.Setup()
-	if p.title != "" {
-		p.out.SetTitle(p.title)
-	}
+	p.renderer.Setup()
 }
 
 func (p *Prompt) tearDown() {
 	p.in.TearDown()
-	p.out.ClearTitle()
-	p.out.EraseDown()
-	p.out.Flush()
+	p.renderer.TearDown()
 }
 
 func readBuffer(bufCh chan []byte) {
@@ -137,13 +120,11 @@ func handleSignals(in *VT100Parser, exitCh chan bool, winSizeCh chan *WinSize) {
 }
 
 func NewPrompt(executor Executor, completer Completer) *Prompt {
-	out := NewVT100Writer()
 	return &Prompt{
 		in: NewVT100Parser(),
-		out: out,
 		renderer: &Render{
 			Prefix: ">>> ",
-			out:    out,
+			out:    NewVT100Writer(),
 		},
 		title: "Hello! this is prompt toolkit",
 		buf: NewBuffer(),

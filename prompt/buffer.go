@@ -99,17 +99,17 @@ func (b *Buffer) setDocument(d *Document) {
 }
 
 // CursorLeft move to left on the current line.
-func (b *Buffer) CursorLeft(count int) int {
+func (b *Buffer) CursorLeft(count int) {
 	l := b.Document().GetCursorLeftPosition(count)
 	b.CursorPosition += l
-	return -l
+	return
 }
 
 // CursorRight move to right on the current line.
-func (b *Buffer) CursorRight(count int) int {
+func (b *Buffer) CursorRight(count int) {
 	l := b.Document().GetCursorRightPosition(count)
 	b.CursorPosition += l
-	return l
+	return
 }
 
 // CursorUp move cursor to the previous line.
