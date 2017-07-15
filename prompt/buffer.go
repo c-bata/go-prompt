@@ -37,22 +37,22 @@ func (b *Buffer) Document() (d *Document) {
 
 // InsertText insert string from current line.
 func (b *Buffer) InsertText(v string, overwrite bool, moveCursor bool) {
-	ot := b.Text()
+	or := []rune(b.Text())
 	oc := b.CursorPosition
 
 	if overwrite {
-		overwritten := ot[oc : oc+len(v)]
+		overwritten := string(or[oc : oc+len(v)])
 		if strings.Contains(overwritten, "\n") {
 			i := strings.IndexAny(overwritten, "\n")
 			overwritten = overwritten[:i]
 		}
-		b.setText(ot[:oc] + v + ot[oc+len(overwritten):])
+		b.setText(string(or[:oc]) + v + string(or[oc+len(overwritten):]))
 	} else {
-		b.setText(ot[:oc] + v + ot[oc:])
+		b.setText(string(or[:oc]) + v + string(or[oc:]))
 	}
 
 	if moveCursor {
-		b.CursorPosition += len(v)
+		b.CursorPosition += len([]rune(v))
 	}
 
 	// TODO: Fire onTextInsert event.
@@ -63,7 +63,7 @@ func (b *Buffer) InsertText(v string, overwrite bool, moveCursor bool) {
 // (When doing this, make sure that the cursor_position is valid for this text.
 // text/cursor_position should be consistent at any time, otherwise set a Document instead.)
 func (b *Buffer) setText(v string) {
-	if b.CursorPosition > len(v) {
+	if b.CursorPosition > len([]rune(v)) {
 		panic("The length of input value should be shorter than the position of cursor.")
 	}
 	// TODO: Add checking that the buffer is read only?
@@ -143,16 +143,17 @@ func (b *Buffer) DeleteBeforeCursor(count int) (deleted string) {
 	if count <= 0 {
 		panic("The count argument on DeleteBeforeCursor should grater than 0.")
 	}
+	r := []rune(b.Text())
 
 	if b.CursorPosition > 0 {
 		start := b.CursorPosition - count
 		if start < 0 {
 			start = 0
 		}
-		deleted = b.Text()[start:b.CursorPosition]
+		deleted = string(r[start:b.CursorPosition])
 		b.setDocument(&Document{
-			Text:           b.Text()[:start] + b.Text()[b.CursorPosition:],
-			CursorPosition: b.CursorPosition - len(deleted),
+			Text:           string(r[:start]) + string(r[b.CursorPosition:]),
+			CursorPosition: b.CursorPosition - len([]rune(deleted)),
 		})
 	}
 	return
@@ -169,9 +170,10 @@ func (b *Buffer) NewLine(copyMargin bool) {
 
 // Delete specified number of characters and Return the deleted text.
 func (b *Buffer) Delete(count int) (deleted string) {
-	if b.CursorPosition < len(b.Text()) {
+	r := []rune(b.Text())
+	if b.CursorPosition < len(r) {
 		deleted = b.Document().TextAfterCursor()[:count]
-		b.setText(b.Text()[:b.CursorPosition] + b.Text()[b.CursorPosition+len(deleted):])
+		b.setText(string(r[:b.CursorPosition]) + string(r[b.CursorPosition+len(deleted):]))
 	}
 	return
 }

@@ -62,6 +62,17 @@ func TestBuffer_CursorMovement(t *testing.T) {
 	// TODO: Going right already at right end.
 }
 
+func TestBuffer_CursorMovement_WithMultiByte(t *testing.T) {
+	b := NewBuffer()
+	b.InsertText("あいうえお", false, true)
+	if l := b.CursorLeft(1); l != 1 {
+		t.Errorf("Should be 1, but got %d", l)
+	}
+	if l := b.Document().TextAfterCursor(); l != "お" {
+		t.Errorf("Should be 'お', but got %s", l)
+	}
+}
+
 func TestBuffer_CursorUp(t *testing.T) {
 	b := NewBuffer()
 	b.InsertText("long line1\nline2", false, true)

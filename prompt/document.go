@@ -30,12 +30,14 @@ func (d *Document) GetCharRelativeToCursor(offset int) (r rune) {
 
 // TextBeforeCursor returns the text before the cursor.
 func (d *Document) TextBeforeCursor() string {
-	return d.Text[:d.CursorPosition]
+	r := []rune(d.Text)
+	return string(r[:d.CursorPosition])
 }
 
 // TextAfterCursor returns the text after the cursor.
 func (d *Document) TextAfterCursor() string {
-	return d.Text[d.CursorPosition:]
+	r := []rune(d.Text)
+	return string(r[d.CursorPosition:])
 }
 
 // GetWordBeforeCursor returns the word before the cursor.
@@ -238,7 +240,7 @@ func (d *Document) OnLastLine() bool {
 
 // GetEndOfLinePosition returns relative position for the end of this line.
 func (d *Document) GetEndOfLinePosition() int {
-	return len(d.CurrentLineAfterCursor())
+	return len([]rune(d.CurrentLineAfterCursor()))
 }
 
 func (d *Document) leadingWhitespaceInCurrentLine() (margin string) {
