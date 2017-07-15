@@ -4,6 +4,7 @@ import (
 	"syscall"
 	"os"
 	"os/signal"
+	"time"
 )
 
 type Executor func(*Buffer) string
@@ -27,40 +28,47 @@ func (p *Prompt) Run() {
 
 	exitCh := make(chan bool, 16)
 	winSizeCh := make(chan *WinSize, 128)
-	go updateWindowSize(p.in, exitCh, winSizeCh)
+	go handleSignals(p.in, exitCh, winSizeCh)
 
 	for {
-		b := <-bufCh
-		ac := p.in.GetASCIICode(b)
-		if ac == nil {
-			p.buf.InsertText(string(b), false, true)
-			p.out.EraseDown()
-			p.out.WriteRaw(b)
-			after := p.buf.Document().TextAfterCursor()
-			p.out.WriteStr(after)
-		} else if ac.Key == ControlJ || ac.Key == Enter {
-			p.out.EraseDown()
-			p.out.WriteStr(p.buf.Document().TextAfterCursor())
-			res := p.executor(p.buf)
-			p.out.WriteStr(res)
-			p.buf = NewBuffer()
-		} else if ac.Key == ControlC {
-			p.out.EraseDown()
-			p.out.ClearTitle()
+		select {
+		case b := <- bufCh:
+			ac := p.in.GetASCIICode(b)
+			if ac == nil {
+				p.buf.InsertText(string(b), false, true)
+				p.out.EraseDown()
+				p.out.WriteRaw(b)
+				after := p.buf.Document().TextAfterCursor()
+				p.out.WriteStr(after)
+			} else if ac.Key == ControlJ || ac.Key == Enter {
+				p.out.EraseDown()
+				p.out.WriteStr(p.buf.Document().TextAfterCursor())
+				res := p.executor(p.buf)
+				p.out.WriteStr(res)
+				p.buf = NewBuffer()
+			} else if ac.Key == ControlC {
+				return
+			} else {
+				InputHandler(ac, p.buf, p.out)
+			}
+
+			// Display completions
+			if w := p.buf.Document().GetWordBeforeCursor(); w != "" {
+				p.renderer.RenderCompletion([]string{})
+			}
+
+			completions := []string{"select", "insert", "update", "where"}
+			p.renderer.Render(p.buf, completions)
 			p.out.Flush()
-			return
-		} else {
-			InputHandler(ac, p.buf, p.out)
+		case w := <- winSizeCh:
+			p.renderer.UpdateWinSize(w)
+		case e := <- exitCh:
+			if e {
+				return
+			}
+		default:
+			time.Sleep(10 * time.Millisecond)
 		}
-
-		// Display completions
-		if w := p.buf.Document().GetWordBeforeCursor(); w != "" {
-			p.renderer.RenderCompletion([]string{})
-		}
-
-		completions := []string{"select", "insert", "update", "where"}
-		p.renderer.Render(p.buf, completions)
-		p.out.Flush()
 	}
 }
 
@@ -73,9 +81,10 @@ func (p *Prompt) setUp() {
 
 func (p *Prompt) tearDown() {
 	p.in.TearDown()
+	p.out.ClearTitle()
+	p.out.EraseDown()
+	p.out.Flush()
 }
-
-func (p *Prompt) handleSignal() {}
 
 func readBuffer(bufCh chan []byte) {
 	buf := make([]byte, 1024)
@@ -87,7 +96,7 @@ func readBuffer(bufCh chan []byte) {
 	}
 }
 
-func updateWindowSize(in *VT100Parser, exitCh chan bool, winSizeCh chan *WinSize) {
+func handleSignals(in *VT100Parser, exitCh chan bool, winSizeCh chan *WinSize) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(
 		sigCh,

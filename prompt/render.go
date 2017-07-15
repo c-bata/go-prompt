@@ -17,7 +17,7 @@ func (r *Render) PrepareArea(lines int) {
 	return
 }
 
-func (r *Render) UpdateWinSize(ws WinSize) {
+func (r *Render) UpdateWinSize(ws *WinSize) {
 	r.row = ws.Row
 	r.col = ws.Col
 	return
