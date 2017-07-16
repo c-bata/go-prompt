@@ -3,6 +3,22 @@
 Library for building powerful interactive command lines in Golang.
 
 
+## Options
+
+![options](./_resources/prompt-options.png)
+
+#### `ParserOption(x ConsoleParser)`
+#### `WriterOption(x ConsoleWriter)`
+#### `TitleOption(x string)`
+#### `PrefixOption(x string)`
+#### `PrefixColorOption(x string)`
+#### `CompletionTextColor(x string)`
+#### `CompletionBackgroundColor(x string)`
+#### `SelectedCompletionTextColor(x string)`
+#### `SelectedCompletionBackgroundColor(x string)`
+#### `MaxCompletionsOption(x uint16)`
+
+
 ## Similar Projects
 
 * [jonathanslenders/python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit): **go-prompt-toolkit** is inspired by this library.
