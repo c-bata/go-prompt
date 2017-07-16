@@ -274,3 +274,9 @@ func byteFilter(buf []byte, fn ...func(b byte) bool) []byte {
 }
 
 var _ ConsoleWriter = &VT100Writer{}
+
+func NewVT100StandardOutputWriter() *VT100Writer {
+	return &VT100Writer{
+		fd: syscall.Stdout,
+	}
+}

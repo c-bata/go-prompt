@@ -4,10 +4,11 @@ import "github.com/c-bata/go-prompt-toolkit/prompt"
 
 func main() {
 	l := 20
-	out := prompt.NewVT100Writer()
+	out := prompt.NewVT100StandardOutputWriter()
+	out.EraseScreen()
 	for i := 0; i < l; i++ {
 		out.CursorGoTo(i, 0)
-		out.WriteStr("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+		out.WriteStr("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 	}
 
 

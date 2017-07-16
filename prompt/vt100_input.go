@@ -206,3 +206,9 @@ var asciiSequences []*ASCIICode = []*ASCIICode{
 }
 
 var _ ConsoleParser = &VT100Parser{}
+
+func NewVT100StandardInputParser() *VT100Parser {
+	return &VT100Parser{
+		fd: syscall.Stdin,
+	}
+}
