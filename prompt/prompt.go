@@ -11,7 +11,7 @@ type Executor func(*Buffer) string
 type Completer func(*Buffer) []string
 
 type Prompt struct {
-	in        *VT100Parser
+	in        ConsoleParser
 	buf       *Buffer
 	renderer  *Render
 	title     string
@@ -110,7 +110,7 @@ func readBuffer(bufCh chan []byte) {
 	}
 }
 
-func handleSignals(in *VT100Parser, exitCh chan bool, winSizeCh chan *WinSize) {
+func handleSignals(in ConsoleParser, exitCh chan bool, winSizeCh chan *WinSize) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(
 		sigCh,
@@ -144,21 +144,5 @@ func handleSignals(in *VT100Parser, exitCh chan bool, winSizeCh chan *WinSize) {
 			winSizeCh <- in.GetWinSize()
 		default:
 		}
-	}
-}
-
-func NewPrompt(executor Executor, completer Completer, maxCompletions uint16) *Prompt {
-	return &Prompt{
-		in: NewVT100Parser(),
-		renderer: &Render{
-			Prefix:         ">>> ",
-			out:            NewVT100Writer(),
-			maxCompletions: maxCompletions,
-		},
-		title:     "Hello! this is prompt toolkit",
-		buf:       NewBuffer(),
-		executor:  executor,
-		completer: completer,
-		chosen: -1,
 	}
 }

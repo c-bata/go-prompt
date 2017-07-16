@@ -45,7 +45,12 @@ func completer(b *prompt.Buffer) []string {
 }
 
 func main() {
-	pt := prompt.NewPrompt(executor, completer, 8)
+	pt := prompt.NewPrompt(
+		executor,
+		completer,
+		prompt.MaxCompletionsOption(8),
+		prompt.PrefixOption("> "),
+	)
 	defer fmt.Println("\nGoodbye!")
 	fmt.Print("Hello! This is a example appication using prompt-toolkit.\n")
 	pt.Run()

@@ -3,9 +3,9 @@ package prompt
 type Render struct {
 	Prefix         string
 	Title          string
-	out            *VT100Writer
+	out            ConsoleWriter
 	row            uint16
-	col            uint16 // sigwinchで送られてくる列数を常に見ながら、prefixのlengthとbufferのcursor positionを比べて、completionの表示位置をずらす
+	col            uint16
 	maxCompletions uint16
 }
 
