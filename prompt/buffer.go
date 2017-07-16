@@ -9,7 +9,6 @@ type Buffer struct {
 	workingLines    []string // The working lines. Similar to history
 	workingIndex    int
 	CursorPosition  int
-	selectionState  *SelectionState
 	cacheDocument   *Document // TODO: More effective cache using Queue or map. See https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/prompt_toolkit/cache.py#L55-L93
 	preferredColumn int       // Remember the original column for the next up/down movement.
 }
@@ -19,17 +18,14 @@ func (b *Buffer) Text() string {
 	return b.workingLines[b.workingIndex]
 }
 
-// Document method to return document instance from the current text,
-// cursor position and selection state.
+// Document method to return document instance from the current text and cursor position.
 func (b *Buffer) Document() (d *Document) {
 	if b.cacheDocument == nil ||
 		b.cacheDocument.Text != b.Text() ||
-		b.cacheDocument.CursorPosition != b.CursorPosition ||
-		b.cacheDocument.selectionState != b.cacheDocument.selectionState {
+		b.cacheDocument.CursorPosition != b.CursorPosition {
 		b.cacheDocument = &Document{
 			Text:           b.Text(),
 			CursorPosition: b.CursorPosition,
-			selectionState: b.selectionState,
 		}
 	}
 	return b.cacheDocument

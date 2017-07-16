@@ -9,7 +9,6 @@ import (
 type Document struct {
 	Text           string
 	CursorPosition int
-	selectionState *SelectionState
 }
 
 // GetCharRelativeToCursor return character relative to cursor position, or empty string
