@@ -58,5 +58,5 @@ type ConsoleWriter interface {
 
 	/* colors */
 
-	SetColor(fg, bg string) (ok bool)
+	SetColor(fg, bg Color) (ok bool)
 }

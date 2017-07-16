@@ -185,7 +185,7 @@ func (w *VT100Writer) ClearTitle() {
 
 /* colors */
 
-func (w *VT100Writer) SetColor(fg, bg string) (ok bool) {
+func (w *VT100Writer) SetColor(fg, bg Color) (ok bool) {
 	f, ok := foregroundANSIColors[fg]
 	if !ok {
 		return
@@ -203,52 +203,52 @@ func (w *VT100Writer) SetColor(fg, bg string) (ok bool) {
 	return
 }
 
-var foregroundANSIColors = map[string][]byte{
-	"default": {0x33, 0x39}, // 39
+var foregroundANSIColors = map[Color][]byte{
+	DefaultColor: {0x33, 0x39}, // 39
 
 	// Low intensity.
-	"black":     {0x33, 0x30}, // 30
-	"darkRed":   {0x33, 0x31}, // 31
-	"darkGreen": {0x33, 0x32}, // 32
-	"brown":     {0x33, 0x33}, // 33
-	"darkBlue":  {0x33, 0x34}, // 34
-	"purple":    {0x33, 0x35}, // 35
-	"cyan":      {0x33, 0x36}, //36
-	"lightGray": {0x33, 0x37}, //37
+	Black:     {0x33, 0x30}, // 30
+	DarkRed:   {0x33, 0x31}, // 31
+	DarkGreen: {0x33, 0x32}, // 32
+	Brown:     {0x33, 0x33}, // 33
+	DarkBlue:  {0x33, 0x34}, // 34
+	Purple:    {0x33, 0x35}, // 35
+	Cyan:      {0x33, 0x36}, //36
+	LightGray: {0x33, 0x37}, //37
 
 	// High intensity.
-	"darkGray":  {0x39, 0x30}, // 90
-	"red":       {0x39, 0x31}, // 91
-	"green":     {0x39, 0x32}, // 92
-	"yellow":    {0x39, 0x33}, // 93
-	"blue":      {0x39, 0x34}, // 94
-	"fuchsia":   {0x39, 0x35}, // 95
-	"turquoise": {0x39, 0x36}, // 96
-	"white":     {0x39, 0x37}, // 97
+	DarkGray:  {0x39, 0x30}, // 90
+	Red:       {0x39, 0x31}, // 91
+	Green:     {0x39, 0x32}, // 92
+	Yellow:    {0x39, 0x33}, // 93
+	Blue:      {0x39, 0x34}, // 94
+	Fuchsia:   {0x39, 0x35}, // 95
+	Turquoise: {0x39, 0x36}, // 96
+	White:     {0x39, 0x37}, // 97
 }
 
-var backgroundANSIColors = map[string][]byte{
-	"default": {0x34, 0x39}, // 49
+var backgroundANSIColors = map[Color][]byte{
+	DefaultColor: {0x34, 0x39}, // 49
 
 	// Low intensity.
-	"black":     {0x34, 0x30}, // 40
-	"darkRed":   {0x34, 0x31}, // 41
-	"darkGreen": {0x34, 0x32}, // 42
-	"brown":     {0x34, 0x33}, // 43
-	"darkBlue":  {0x34, 0x34}, // 44
-	"purple":    {0x34, 0x35}, // 45
-	"cyan":      {0x34, 0x36}, // 46
-	"lightGray": {0x34, 0x37}, // 47
+	Black:     {0x34, 0x30}, // 40
+	DarkRed:   {0x34, 0x31}, // 41
+	DarkGreen: {0x34, 0x32}, // 42
+	Brown:     {0x34, 0x33}, // 43
+	DarkBlue:  {0x34, 0x34}, // 44
+	Purple:    {0x34, 0x35}, // 45
+	Cyan:      {0x34, 0x36}, // 46
+	LightGray: {0x34, 0x37}, // 47
 
 	// High intensity
-	"darkGray":  {0x31, 0x30, 0x30}, // 100
-	"red":       {0x31, 0x30, 0x31}, // 101
-	"green":     {0x31, 0x30, 0x32}, // 102
-	"yellow":    {0x31, 0x30, 0x33}, // 103
-	"blue":      {0x31, 0x30, 0x34}, // 104
-	"fuchsia":   {0x31, 0x30, 0x35}, // 105
-	"turquoise": {0x31, 0x30, 0x36}, // 106
-	"white":     {0x31, 0x30, 0x37}, // 107
+	DarkGray:  {0x31, 0x30, 0x30}, // 100
+	Red:       {0x31, 0x30, 0x31}, // 101
+	Green:     {0x31, 0x30, 0x32}, // 102
+	Yellow:    {0x31, 0x30, 0x33}, // 103
+	Blue:      {0x31, 0x30, 0x34}, // 104
+	Fuchsia:   {0x31, 0x30, 0x35}, // 105
+	Turquoise: {0x31, 0x30, 0x36}, // 106
+	White:     {0x31, 0x30, 0x37}, // 107
 }
 
 func writeFilter(buf byte) bool {

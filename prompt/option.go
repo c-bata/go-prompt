@@ -32,9 +32,37 @@ func PrefixOption(x string) option {
 	}
 }
 
-func PrefixColorOption(x string) option {
+func PrefixColorOption(x Color) option {
 	return func(p *Prompt) error {
 		p.renderer.prefixColor = x
+		return nil
+	}
+}
+
+func CompletionTextColor(x Color) option {
+	return func(p *Prompt) error {
+		p.renderer.completionTextColor = x
+		return nil
+	}
+}
+
+func CompletionBackgroundColor(x Color) option {
+	return func(p *Prompt) error {
+		p.renderer.completionBGColor = x
+		return nil
+	}
+}
+
+func SelectedCompletionTextColor(x Color) option {
+	return func(p *Prompt) error {
+		p.renderer.selectedCompletionTextColor = x
+		return nil
+	}
+}
+
+func SelectedCompletionBackgroundColor(x Color) option {
+	return func(p *Prompt) error {
+		p.renderer.selectedCompletionBGColor = x
 		return nil
 	}
 }
@@ -51,8 +79,12 @@ func NewPrompt(executor Executor, completer Completer, opts ...option) *Prompt {
 		in: &VT100Parser{fd: syscall.Stdin},
 		renderer: &Render{
 			prefix:      "> ",
-			prefixColor: "green",
 			out:         &VT100Writer{fd: syscall.Stdout},
+			prefixColor: Green,
+			completionTextColor: White,
+			completionBGColor: Cyan,
+			selectedCompletionTextColor: Black,
+			selectedCompletionBGColor: Turquoise,
 		},
 		buf:       NewBuffer(),
 		executor:  executor,

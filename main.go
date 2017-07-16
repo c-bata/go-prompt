@@ -50,8 +50,10 @@ func main() {
 		completer,
 		prompt.MaxCompletionsOption(8),
 		prompt.PrefixOption(">>> "),
-		prompt.PrefixColorOption("blue"),
-		prompt.TitleOption("Hello! this is prompt toolkit"),
+		prompt.PrefixColorOption(prompt.Blue),
+		prompt.TitleOption("SQLITE CLI"),
+		prompt.CompletionTextColor(prompt.Black),
+		prompt.SelectedCompletionTextColor(prompt.White),
 	)
 	defer fmt.Println("\nGoodbye!")
 	fmt.Print("Hello! This is a example appication using prompt-toolkit.\n")

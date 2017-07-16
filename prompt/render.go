@@ -2,12 +2,18 @@ package prompt
 
 type Render struct {
 	prefix         string
-	prefixColor    string
 	title          string
 	out            ConsoleWriter
 	row            uint16
 	col            uint16
 	maxCompletions uint16
+	// colors
+	prefixColor                 Color
+	textColor                   Color
+	completionTextColor         Color
+	completionBGColor           Color
+	selectedCompletionTextColor Color
+	selectedCompletionBGColor   Color
 }
 
 func (r *Render) Setup() {
@@ -19,9 +25,9 @@ func (r *Render) Setup() {
 }
 
 func (r *Render) renderPrefix() {
-	r.out.SetColor(r.prefixColor, "default")
+	r.out.SetColor(r.prefixColor, DefaultColor)
 	r.out.WriteStr(r.prefix)
-	r.out.SetColor("default", "default")
+	r.out.SetColor(DefaultColor, DefaultColor)
 }
 
 func (r *Render) TearDown() {
@@ -66,16 +72,16 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 		r.out.CursorBackward(d + width + 3 - int(r.col))
 	}
 
-	r.out.SetColor("white", "teal")
+	r.out.SetColor(White, Cyan)
 	for i := 0; i < l; i++ {
 		r.out.CursorDown(1)
 		if i == chosen {
-			r.out.SetColor("black", "turquoise")
+			r.out.SetColor(r.selectedCompletionTextColor, r.selectedCompletionBGColor)
 		} else {
-			r.out.SetColor("white", "cyan")
+			r.out.SetColor(r.completionTextColor, r.completionBGColor)
 		}
 		r.out.WriteStr(" " + formatted[i] + " ")
-		r.out.SetColor("white", "darkGray")
+		r.out.SetColor(White, DarkGray)
 		r.out.Write([]byte(" "))
 		r.out.CursorBackward(width + 3)
 	}
@@ -84,7 +90,7 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 	}
 
 	r.out.CursorUp(l)
-	r.out.SetColor("default", "default")
+	r.out.SetColor(DefaultColor, DefaultColor)
 	return
 }
 
