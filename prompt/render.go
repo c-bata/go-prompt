@@ -1,15 +1,17 @@
 package prompt
 
 type Render struct {
+	out            ConsoleWriter
 	prefix         string
 	title          string
-	out            ConsoleWriter
 	row            uint16
 	col            uint16
 	maxCompletions uint16
 	// colors
 	prefixColor                 Color
 	textColor                   Color
+	outputTextColor             Color
+	completedTextColor          Color
 	completionTextColor         Color
 	completionBGColor           Color
 	selectedCompletionTextColor Color
@@ -104,22 +106,27 @@ func (r *Render) Erase(buffer *Buffer) {
 
 func (r *Render) Render(buffer *Buffer, completions []string, chosen int) {
 	line := buffer.Document().CurrentLine()
+	r.out.SetColor(r.textColor, DefaultColor)
 	r.out.WriteStr(line)
+	r.out.SetColor(DefaultColor, DefaultColor)
 	r.out.CursorBackward(len(line) - buffer.CursorPosition)
 	r.renderCompletion(buffer, completions, chosen)
 	if chosen != -1 {
 		c := completions[chosen]
 		r.out.CursorBackward(len([]rune(buffer.Document().GetWordBeforeCursor())))
+		r.out.SetColor(r.completedTextColor, DefaultColor)
 		r.out.WriteStr(c)
+		r.out.SetColor(DefaultColor, DefaultColor)
 	}
 	r.out.Flush()
 }
 
 func (r *Render) BreakLine(buffer *Buffer, result string) {
-	r.out.WriteStr(buffer.Document().Text)
-	r.out.WriteStr("\n")
-	r.out.WriteStr(result)
-	r.out.WriteStr("\n")
+	r.out.SetColor(r.textColor, DefaultColor)
+	r.out.WriteStr(buffer.Document().Text + "\n")
+	r.out.SetColor(r.outputTextColor, DefaultColor)
+	r.out.WriteStr(result + "\n")
+	r.out.SetColor(DefaultColor, DefaultColor)
 	r.renderPrefix()
 }
 

@@ -50,8 +50,10 @@ func main() {
 		completer,
 		prompt.MaxCompletionsOption(8),
 		prompt.PrefixOption(">>> "),
-		prompt.PrefixColorOption(prompt.Blue),
 		prompt.TitleOption("SQLITE CLI"),
+		prompt.TextColorOption(prompt.Red),
+		prompt.ResultTextColorOption(prompt.DarkGray),
+		prompt.CompletedTextColorOption(prompt.Green),
 		prompt.CompletionTextColor(prompt.Black),
 		prompt.SelectedCompletionTextColor(prompt.White),
 	)
