@@ -3,6 +3,12 @@
 Library for building powerful interactive command lines in Golang.
 
 
+## Similar Projects
+
+* [jonathanslenders/python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit): **go-prompt-toolkit** is inspired by this library.
+* [peterh/liner](https://github.com/peterh/liner): The most similar project is probably **liner** in Golang.
+
+
 ## LICENSE
 
 ```
