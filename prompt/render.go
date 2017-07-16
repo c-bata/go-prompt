@@ -69,9 +69,9 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 	for i := 0; i < l; i++ {
 		r.out.CursorDown(1)
 		if i == chosen {
-			r.out.SetColor("white", "turquoise")
+			r.out.SetColor("black", "turquoise")
 		} else {
-			r.out.SetColor("black", "cyan")
+			r.out.SetColor("white", "cyan")
 		}
 		r.out.WriteStr(" " + formatted[i] + " ")
 		r.out.SetColor("white", "darkGray")
