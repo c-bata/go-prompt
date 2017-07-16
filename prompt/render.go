@@ -56,7 +56,7 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 		}
 	}
 
-	formatted, width := formatCompletions(words)
+	formatted, width := formatCompletions(words, int(r.col) - len(r.Prefix) - 3)
 	l := len(formatted)
 	r.prepareArea(l)
 
@@ -88,8 +88,7 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 }
 
 func (r *Render) Erase(buffer *Buffer) {
-	r.out.CursorBackward(len(r.Prefix))
-	r.out.CursorBackward(buffer.CursorPosition + 100)
+	r.out.CursorBackward(int(r.col))
 	r.out.EraseDown()
 	r.renderPrefix()
 	r.out.Flush()
@@ -117,7 +116,7 @@ func (r *Render) BreakLine(buffer *Buffer, result string) {
 	r.renderPrefix()
 }
 
-func formatCompletions(words []string) (new []string, width int) {
+func formatCompletions(words []string, max int) (new []string, width int) {
 	num := len(words)
 	new = make([]string, num)
 	width = 0
@@ -128,11 +127,21 @@ func formatCompletions(words []string) (new []string, width int) {
 		}
 	}
 
+	if width > max {
+		width = max
+	}
+
 	for i := 0; i < num; i++ {
-		spaces := width - len([]rune(words[i]))
-		new[i] = words[i]
-		for j := 0; j < spaces; j++ {
-			new[i] += " "
+		if l := len(words[i]); l > width {
+			new[i] = words[i][:width - 3] + "..."
+		} else if l < width  {
+			spaces := width - len([]rune(words[i]))
+			new[i] = words[i]
+			for j := 0; j < spaces; j++ {
+				new[i] += " "
+			}
+		} else {
+			new[i] = words[i]
 		}
 	}
 	return
