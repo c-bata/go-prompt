@@ -50,6 +50,7 @@ func main() {
 		completer,
 		prompt.MaxCompletionsOption(8),
 		prompt.PrefixOption(">>> "),
+		prompt.PrefixColorOption("blue"),
 		prompt.TitleOption("Hello! this is prompt toolkit"),
 	)
 	defer fmt.Println("\nGoodbye!")

@@ -27,7 +27,14 @@ func TitleOption(x string) option {
 
 func PrefixOption(x string) option {
 	return func(p *Prompt) error {
-		p.renderer.Prefix = x
+		p.renderer.prefix = x
+		return nil
+	}
+}
+
+func PrefixColorOption(x string) option {
+	return func(p *Prompt) error {
+		p.renderer.prefixColor = x
 		return nil
 	}
 }
@@ -43,8 +50,9 @@ func NewPrompt(executor Executor, completer Completer, opts ...option) *Prompt {
 	pt := &Prompt{
 		in: &VT100Parser{fd: syscall.Stdin},
 		renderer: &Render{
-			Prefix:         "> ",
-			out:            &VT100Writer{fd: syscall.Stdout},
+			prefix:      "> ",
+			prefixColor: "green",
+			out:         &VT100Writer{fd: syscall.Stdout},
 		},
 		title:     "",
 		buf:       NewBuffer(),

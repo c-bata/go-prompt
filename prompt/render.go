@@ -1,7 +1,8 @@
 package prompt
 
 type Render struct {
-	Prefix         string
+	prefix         string
+	prefixColor    string
 	Title          string
 	out            ConsoleWriter
 	row            uint16
@@ -18,8 +19,8 @@ func (r *Render) Setup() {
 }
 
 func (r *Render) renderPrefix() {
-	r.out.SetColor("green", "default")
-	r.out.WriteStr(r.Prefix)
+	r.out.SetColor(r.prefixColor, "default")
+	r.out.WriteStr(r.prefix)
 	r.out.SetColor("default", "default")
 }
 
@@ -56,11 +57,11 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 		}
 	}
 
-	formatted, width := formatCompletions(words, int(r.col) - len(r.Prefix) - 3)
+	formatted, width := formatCompletions(words, int(r.col) - len(r.prefix) - 3)
 	l := len(formatted)
 	r.prepareArea(l)
 
-	d := (len(r.Prefix) + len(buf.Document().TextBeforeCursor())) % int(r.col)
+	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor())) % int(r.col)
 	if d + width + 3 > int(r.col) {
 		r.out.CursorBackward(d + width + 3 - int(r.col))
 	}
