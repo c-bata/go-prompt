@@ -20,7 +20,7 @@ func WriterOption(x ConsoleWriter) option {
 
 func TitleOption(x string) option {
 	return func(p *Prompt) error {
-		p.title = x
+		p.renderer.title = x
 		return nil
 	}
 }
@@ -54,7 +54,6 @@ func NewPrompt(executor Executor, completer Completer, opts ...option) *Prompt {
 			prefixColor: "green",
 			out:         &VT100Writer{fd: syscall.Stdout},
 		},
-		title:     "",
 		buf:       NewBuffer(),
 		executor:  executor,
 		completer: completer,

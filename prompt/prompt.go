@@ -14,7 +14,6 @@ type Prompt struct {
 	in        ConsoleParser
 	buf       *Buffer
 	renderer  *Render
-	title     string
 	executor  Executor
 	completer Completer
 	chosen    int  // -1 means nothing one is chosen.

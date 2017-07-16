@@ -3,7 +3,7 @@ package prompt
 type Render struct {
 	prefix         string
 	prefixColor    string
-	Title          string
+	title          string
 	out            ConsoleWriter
 	row            uint16
 	col            uint16
@@ -11,8 +11,8 @@ type Render struct {
 }
 
 func (r *Render) Setup() {
-	if r.Title != "" {
-		r.out.SetTitle(r.Title)
+	if r.title != "" {
+		r.out.SetTitle(r.title)
 	}
 	r.renderPrefix()
 	r.out.Flush()
