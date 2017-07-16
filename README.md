@@ -2,6 +2,48 @@
 
 Library for building powerful interactive command lines in Golang.
 
+![demo](./_resources/demo.gif)
+
+## Usage
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/c-bata/go-prompt-toolkit/prompt"
+)
+
+func executor(s string) string {
+    r := "Your input: " + s
+    return r
+}
+
+func completer(s string) []string {
+    // Return the completion items by checking user input.
+    return []string{
+        "users",
+        "articles",
+        "comments",
+        "groups",
+        "tags",
+    }
+}
+
+func main() {
+    pt := prompt.NewPrompt(
+        executor,
+        completer,
+        prompt.MaxCompletionsOption(8),
+        prompt.PrefixOption(">>> "),
+        prompt.PrefixColorOption("blue"),
+        prompt.TitleOption("SQLITE CLI"),
+    )
+    defer fmt.Println("\nGoodbye!")
+    pt.Run()
+}
+```
+
 
 ## Options
 
@@ -19,10 +61,16 @@ Library for building powerful interactive command lines in Golang.
 #### `MaxCompletionsOption(x uint16)`
 
 
-## Similar Projects
+## Related projects.
+
+#### Similar Projects
 
 * [jonathanslenders/python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit): **go-prompt-toolkit** is inspired by this library.
 * [peterh/liner](https://github.com/peterh/liner): The most similar project is probably **liner** in Golang.
+
+#### Projects using go-prompt-toolkit
+
+* kube-prompt : This is available soon...
 
 
 ## LICENSE
