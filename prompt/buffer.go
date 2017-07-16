@@ -9,7 +9,7 @@ type Buffer struct {
 	workingLines    []string // The working lines. Similar to history
 	workingIndex    int
 	CursorPosition  int
-	cacheDocument   *Document // TODO: More effective cache using Queue or map. See https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/prompt_toolkit/cache.py#L55-L93
+	cacheDocument   *Document
 	preferredColumn int       // Remember the original column for the next up/down movement.
 }
 
@@ -50,9 +50,6 @@ func (b *Buffer) InsertText(v string, overwrite bool, moveCursor bool) {
 	if moveCursor {
 		b.CursorPosition += len([]rune(v))
 	}
-
-	// TODO: Fire onTextInsert event.
-	// https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/prompt_toolkit/buffer.py#L1063-L1065
 }
 
 // SetText method to set text and update CursorPosition.
@@ -62,8 +59,6 @@ func (b *Buffer) setText(v string) {
 	if b.CursorPosition > len([]rune(v)) {
 		panic("The length of input value should be shorter than the position of cursor.")
 	}
-	// TODO: Add checking that the buffer is read only?
-	// https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/prompt_toolkit/buffer.py#L374-L376
 	o := b.workingLines[b.workingIndex]
 	b.workingLines[b.workingIndex] = v
 
