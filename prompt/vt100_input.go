@@ -13,14 +13,6 @@ type VT100Parser struct {
 	origTermios syscall.Termios
 }
 
-// winsize is winsize struct got from the ioctl(2) system call.
-type ioctlWinsize struct {
-	Row uint16
-	Col uint16
-	X   uint16 // pixel value
-	Y   uint16 // pixel value
-}
-
 func (t *VT100Parser) Setup() error {
 	return t.setRawMode()
 }
@@ -50,6 +42,14 @@ func (t *VT100Parser) GetASCIICode(b []byte) *ASCIICode {
 		}
 	}
 	return nil
+}
+
+// winsize is winsize struct got from the ioctl(2) system call.
+type ioctlWinsize struct {
+	Row uint16
+	Col uint16
+	X   uint16 // pixel value
+	Y   uint16 // pixel value
 }
 
 // GetWinSize returns winsize struct which is the response of ioctl(2).
@@ -205,8 +205,4 @@ var asciiSequences []*ASCIICode = []*ASCIICode{
 	{Key: Ignore, ASCIICode: []byte{0x1b, 0x5b, 0x46}}, // Linux console
 }
 
-func NewVT100Parser() *VT100Parser {
-	return &VT100Parser{
-		fd: syscall.Stdin,
-	}
-}
+var _ ConsoleParser = &VT100Parser{}

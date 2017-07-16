@@ -1,5 +1,7 @@
 package prompt
 
+import "syscall"
+
 type option func(prompt *Prompt) error
 
 func ParserOption(x ConsoleParser) option {
@@ -39,12 +41,12 @@ func MaxCompletionsOption(x uint16) option {
 
 func NewPrompt(executor Executor, completer Completer, opts ...option) *Prompt {
 	pt := &Prompt{
-		in: NewVT100Parser(),
+		in: &VT100Parser{fd: syscall.Stdin},
 		renderer: &Render{
-			Prefix:         ">>> ",
-			out:            NewVT100Writer(),
+			Prefix:         "> ",
+			out:            &VT100Writer{fd: syscall.Stdout},
 		},
-		title:     "Hello! this is prompt toolkit",
+		title:     "",
 		buf:       NewBuffer(),
 		executor:  executor,
 		completer: completer,

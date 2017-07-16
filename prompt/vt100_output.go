@@ -183,12 +183,72 @@ func (w *VT100Writer) ClearTitle() {
 	return
 }
 
-/* utility */
+/* colors */
 
-func NewVT100Writer() *VT100Writer {
-	return &VT100Writer{
-		fd: syscall.Stdout,
+func (w *VT100Writer) SetColor(fg, bg string) (ok bool) {
+	f, ok := foregroundANSIColors[fg]
+	if !ok {
+		return
 	}
+	b, ok := backgroundANSIColors[bg]
+	if !ok {
+		return
+	}
+	syscall.Write(syscall.Stdout, []byte{0x1b, 0x5b, 0x33, 0x39, 0x3b, 0x34, 0x39, 0x6d})
+	w.WriteRaw([]byte{0x1b, 0x5b})
+	w.WriteRaw(f)
+	w.WriteRaw([]byte{0x3b})
+	w.WriteRaw(b)
+	w.WriteRaw([]byte{0x6d})
+	return
+}
+
+var foregroundANSIColors = map[string][]byte{
+	"default": {0x33, 0x39}, // 39
+
+	// Low intensity.
+	"black":     {0x33, 0x30}, // 30
+	"darkRed":   {0x33, 0x31}, // 31
+	"darkGreen": {0x33, 0x32}, // 32
+	"brown":     {0x33, 0x33}, // 33
+	"darkBlue":  {0x33, 0x34}, // 34
+	"purple":    {0x33, 0x35}, // 35
+	"cyan":      {0x33, 0x36}, //36
+	"lightGray": {0x33, 0x37}, //37
+
+	// High intensity.
+	"darkGray":  {0x39, 0x30}, // 90
+	"red":       {0x39, 0x31}, // 91
+	"green":     {0x39, 0x32}, // 92
+	"yellow":    {0x39, 0x33}, // 93
+	"blue":      {0x39, 0x34}, // 94
+	"fuchsia":   {0x39, 0x35}, // 95
+	"turquoise": {0x39, 0x36}, // 96
+	"white":     {0x39, 0x37}, // 97
+}
+
+var backgroundANSIColors = map[string][]byte{
+	"default": {0x34, 0x39}, // 49
+
+	// Low intensity.
+	"black":     {0x34, 0x30}, // 40
+	"darkRed":   {0x34, 0x31}, // 41
+	"darkGreen": {0x34, 0x32}, // 42
+	"brown":     {0x34, 0x33}, // 43
+	"darkBlue":  {0x34, 0x34}, // 44
+	"purple":    {0x34, 0x35}, // 45
+	"cyan":      {0x34, 0x36}, // 46
+	"lightGray": {0x34, 0x37}, // 47
+
+	// High intensity
+	"darkGray":  {0x31, 0x30, 0x30}, // 100
+	"red":       {0x31, 0x30, 0x31}, // 101
+	"green":     {0x31, 0x30, 0x32}, // 102
+	"yellow":    {0x31, 0x30, 0x33}, // 103
+	"blue":      {0x31, 0x30, 0x34}, // 104
+	"fuchsia":   {0x31, 0x30, 0x35}, // 105
+	"turquoise": {0x31, 0x30, 0x36}, // 106
+	"white":     {0x31, 0x30, 0x37}, // 107
 }
 
 func writeFilter(buf byte) bool {
@@ -213,70 +273,4 @@ func byteFilter(buf []byte, fn ...func(b byte) bool) []byte {
 	return byteFilter(ret, fn[1:]...)
 }
 
-/* colors */
-
-func (w *VT100Writer) SetColor(fg, bg string) (ok bool) {
-	f, ok := ForegroundANSIColors[fg]
-	if !ok {
-		return
-	}
-	b, ok := BackgroundANSIColors[bg]
-	if !ok {
-		return
-	}
-	syscall.Write(syscall.Stdout, []byte{0x1b, 0x5b, 0x33, 0x39, 0x3b, 0x34, 0x39, 0x6d})
-	w.WriteRaw([]byte{0x1b, 0x5b})
-	w.WriteRaw(f)
-	w.WriteRaw([]byte{0x3b})
-	w.WriteRaw(b)
-	w.WriteRaw([]byte{0x6d})
-	return
-}
-
-var ForegroundANSIColors = map[string][]byte{
-	"default": {0x33, 0x39}, // 39
-
-	// Low intensity.
-	"black":     {0x33, 0x30}, // 30
-	"darkRed":   {0x33, 0x31}, // 31
-	"darkGreen": {0x33, 0x32}, // 32
-	"brown":     {0x33, 0x33}, // 33
-	"darkBlue":  {0x33, 0x34}, // 34
-	"purple":    {0x33, 0x35}, // 35
-	"cyan":      {0x33, 0x36}, //36
-	"lightGray": {0x33, 0x37}, //37
-
-	// High intensity.
-	"darkGray":  {0x39, 0x30}, // 90
-	"red":       {0x39, 0x31}, // 91
-	"green":     {0x39, 0x32}, // 92
-	"yellow":    {0x39, 0x33}, // 93
-	"blue":      {0x39, 0x34}, // 94
-	"fuchsia":   {0x39, 0x35}, // 95
-	"turquoise": {0x39, 0x36}, // 96
-	"white":     {0x39, 0x37}, // 97
-}
-
-var BackgroundANSIColors = map[string][]byte{
-	"default": {0x34, 0x39}, // 49
-
-	// Low intensity.
-	"black":     {0x34, 0x30}, // 40
-	"darkRed":   {0x34, 0x31}, // 41
-	"darkGreen": {0x34, 0x32}, // 42
-	"brown":     {0x34, 0x33}, // 43
-	"darkBlue":  {0x34, 0x34}, // 44
-	"purple":    {0x34, 0x35}, // 45
-	"cyan":      {0x34, 0x36}, // 46
-	"lightGray": {0x34, 0x37}, // 47
-
-	// High intensity
-	"darkGray":  {0x31, 0x30, 0x30}, // 100
-	"red":       {0x31, 0x30, 0x31}, // 101
-	"green":     {0x31, 0x30, 0x32}, // 102
-	"yellow":    {0x31, 0x30, 0x33}, // 103
-	"blue":      {0x31, 0x30, 0x34}, // 104
-	"fuchsia":   {0x31, 0x30, 0x35}, // 105
-	"turquoise": {0x31, 0x30, 0x36}, // 106
-	"white":     {0x31, 0x30, 0x37}, // 107
-}
+var _ ConsoleWriter = &VT100Writer{}

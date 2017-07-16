@@ -49,7 +49,8 @@ func main() {
 		executor,
 		completer,
 		prompt.MaxCompletionsOption(8),
-		prompt.PrefixOption("> "),
+		prompt.PrefixOption(">>> "),
+		prompt.TitleOption("Hello! this is prompt toolkit"),
 	)
 	defer fmt.Println("\nGoodbye!")
 	fmt.Print("Hello! This is a example appication using prompt-toolkit.\n")
