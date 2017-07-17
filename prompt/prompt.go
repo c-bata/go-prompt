@@ -39,7 +39,9 @@ func (p *Prompt) Run() {
 				if p.chosen != -1 {
 					c := p.completer(p.buf)[p.chosen]
 					w := p.buf.Document().GetWordBeforeCursor()
-					p.buf.DeleteBeforeCursor(len([]rune(w)))
+					if w != "" {
+						p.buf.DeleteBeforeCursor(len([]rune(w)))
+					}
 					p.buf.InsertText(c, false, true)
 				}
 				p.chosen = -1
