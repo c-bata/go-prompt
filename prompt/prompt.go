@@ -60,7 +60,11 @@ func (p *Prompt) Run() {
 				p.renderer.BreakLine(p.buf, res)
 				p.buf = NewBuffer()
 				p.selected = -1
-			} else if ac.Key == ControlC || ac.Key == ControlD {
+			} else if ac.Key == ControlC {
+				p.renderer.BreakLine(p.buf, "")
+				p.buf = NewBuffer()
+				p.selected = -1
+			} else if ac.Key == ControlD {
 				return
 			} else if ac.Key == BackTab || ac.Key == Up {
 				p.selected -= 1

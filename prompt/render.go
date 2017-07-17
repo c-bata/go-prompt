@@ -149,13 +149,16 @@ func (r *Render) BreakLine(buffer *Buffer, result string) {
 	r.out.EraseDown()
 	r.renderPrefix()
 
-	// Rendering
+	// Render Line Break
 	r.out.SetColor(r.inputTextColor, r.inputBGColor)
 	r.out.WriteStr(buffer.Document().Text + "\n")
-	r.out.SetColor(r.outputTextColor, r.outputBGColor)
-	r.out.WriteStr(result + "\n")
+
+	// Render Result
+	if result != "" {
+		r.out.SetColor(r.outputTextColor, r.outputBGColor)
+		r.out.WriteStr(result + "\n")
+	}
 	r.out.SetColor(DefaultColor, DefaultColor)
-	r.renderPrefix()
 }
 
 func formatCompletions(words []string, max int, prefix string, suffix string) (new []string, width int) {
