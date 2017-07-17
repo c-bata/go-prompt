@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-type Executor func(*Buffer) string
-type Completer func(*Buffer) []string
+type Executor func(string) string
+type Completer func(string) []string
 
 type Prompt struct {
 	in             ConsoleParser
@@ -23,7 +23,7 @@ type Prompt struct {
 func (p *Prompt) Run() {
 	p.setUp()
 	defer p.tearDown()
-	p.renderer.Render(p.buf, p.completer(p.buf), p.maxCompletions, p.selected)
+	p.renderer.Render(p.buf, p.completer(p.buf.Text()), p.maxCompletions, p.selected)
 
 	bufCh := make(chan []byte, 128)
 	go readBuffer(bufCh)
@@ -38,7 +38,7 @@ func (p *Prompt) Run() {
 			ac := p.in.GetASCIICode(b)
 			if ac == nil {
 				if p.selected != -1 {
-					c := p.completer(p.buf)[p.selected]
+					c := p.completer(p.buf.Text())[p.selected]
 					w := p.buf.Document().GetWordBeforeCursor()
 					if w != "" {
 						p.buf.DeleteBeforeCursor(len([]rune(w)))
@@ -49,14 +49,14 @@ func (p *Prompt) Run() {
 				p.buf.InsertText(string(b), false, true)
 			} else if ac.Key == ControlJ || ac.Key == Enter {
 				if p.selected != -1 {
-					c := p.completer(p.buf)[p.selected]
+					c := p.completer(p.buf.Text())[p.selected]
 					w := p.buf.Document().GetWordBeforeCursor()
 					if w != "" {
 						p.buf.DeleteBeforeCursor(len([]rune(w)))
 					}
 					p.buf.InsertText(c, false, true)
 				}
-				res := p.executor(p.buf)
+				res := p.executor(p.buf.Text())
 				p.renderer.BreakLine(p.buf, res)
 				p.buf = NewBuffer()
 				p.selected = -1
@@ -71,12 +71,12 @@ func (p *Prompt) Run() {
 				p.selected = -1
 			}
 
-			completions := p.completer(p.buf)
+			completions := p.completer(p.buf.Text())
 			p.updateSelectedCompletion(completions)
 			p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
 		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
-			completions := p.completer(p.buf)
+			completions := p.completer(p.buf.Text())
 			p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
 		case e := <-exitCh:
 			if e {

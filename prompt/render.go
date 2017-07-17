@@ -117,7 +117,7 @@ func (r *Render) Render(buffer *Buffer, completions []string, maxCompletions uin
 	r.out.EraseDown()
 
 	// prepare area
-	line := buffer.Document().CurrentLine()
+	line := buffer.Text()
 	h := ((len(r.prefix) + len(line)) / int(r.col)) + 1 + int(maxCompletions)
 	if h > int(r.row) {
 		r.renderWindowTooSmall()

@@ -6,15 +6,12 @@ import (
 	"github.com/c-bata/go-prompt-toolkit/prompt"
 )
 
-func executor(b *prompt.Buffer) string {
-	r := "Your input: " + b.Text()
+func executor(t string) string {
+	r := "Your input: " + t
 	return r
 }
 
-func completer(b *prompt.Buffer) []string {
-	if w := b.Document().GetWordBeforeCursor(); w == "" {
-		return []string{}
-	}
+func completer(t string) []string {
 	return []string{
 		"users",
 		"sites",
