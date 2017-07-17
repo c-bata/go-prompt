@@ -43,13 +43,13 @@ func main() {
 	for {
 		b := <-bufCh
 		if ac := parser.GetASCIICode(b); ac == nil {
-			fmt.Println(string(b))
+			fmt.Printf("Key '%s' data:'%#v'\n", string(b), b)
 		} else {
 			if ac.Key == prompt.ControlC {
 				fmt.Println("exit.")
 				return
 			}
-			fmt.Println(ac.Key)
+			fmt.Printf("Key '%s' data:'%#v'\n", ac.Key, b)
 		}
 		fmt.Print("> ")
 	}
