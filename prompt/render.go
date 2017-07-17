@@ -1,5 +1,9 @@
 package prompt
 
+import "strings"
+
+const scrollBarWidth = 1
+
 type Render struct {
 	out            ConsoleWriter
 	prefix         string
@@ -70,13 +74,18 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 		words = words[:max]
 	}
 
-	formatted, width := formatCompletions(words, int(r.col) - len(r.prefix) - 3)
+	formatted, width := formatCompletions(
+		words,
+		int(r.col) - len(r.prefix) - scrollBarWidth,
+		" ",
+		" ",
+	)
 	l := len(formatted)
 	r.prepareArea(l)
 
 	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor())) % int(r.col)
-	if d + width + 3 > int(r.col) {
-		r.out.CursorBackward(d + width + 3 - int(r.col))
+	if d + width + scrollBarWidth > int(r.col) {
+		r.out.CursorBackward(d + width + 1 - int(r.col))
 	}
 
 	r.out.SetColor(White, Cyan)
@@ -87,13 +96,13 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 		} else {
 			r.out.SetColor(r.suggestionTextColor, r.suggestionBGColor)
 		}
-		r.out.WriteStr(" " + formatted[i] + " ")
+		r.out.WriteStr(formatted[i])
 		r.out.SetColor(White, DarkGray)
 		r.out.Write([]byte(" "))
-		r.out.CursorBackward(width + 3)
+		r.out.CursorBackward(width + scrollBarWidth)
 	}
-	if d + width + 3 > int(r.col) {
-		r.out.CursorForward(d + width + 3 - int(r.col))
+	if d + width + scrollBarWidth > int(r.col) {
+		r.out.CursorForward(d + width + scrollBarWidth - int(r.col))
 	}
 
 	r.out.CursorUp(l)
@@ -135,7 +144,7 @@ func (r *Render) BreakLine(buffer *Buffer, result string) {
 	r.renderPrefix()
 }
 
-func formatCompletions(words []string, max int) (new []string, width int) {
+func formatCompletions(words []string, max int, prefix string, suffix string) (new []string, width int) {
 	num := len(words)
 	new = make([]string, num)
 	width = 0
@@ -146,22 +155,20 @@ func formatCompletions(words []string, max int) (new []string, width int) {
 		}
 	}
 
-	if width > max {
-		width = max
+	if len(prefix) + width + len(suffix) > max {
+		width = max - len(prefix) - len(suffix)
 	}
 
 	for i := 0; i < num; i++ {
 		if l := len(words[i]); l > width {
-			new[i] = words[i][:width - 3] + "..."
+			new[i] = prefix + words[i][:width - len("...")] + "..." + suffix
 		} else if l < width  {
-			spaces := width - len([]rune(words[i]))
-			new[i] = words[i]
-			for j := 0; j < spaces; j++ {
-				new[i] += " "
-			}
+			spaces := strings.Repeat(" ", width - len([]rune(words[i])))
+			new[i] = prefix + words[i] + spaces + suffix
 		} else {
-			new[i] = words[i]
+			new[i] = prefix + words[i] + suffix
 		}
 	}
+	width += len(prefix) + len(suffix)
 	return
 }

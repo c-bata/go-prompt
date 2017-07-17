@@ -6,24 +6,43 @@ import (
 )
 
 func TestFormatCompletion(t *testing.T) {
-	in := []string{
-		"select",
-		"from",
-		"insert",
-		"where",
-	}
-	ex := []string{
-		"select",
-		"from  ",
-		"insert",
-		"where ",
+	scenarioTable := [] struct {
+		scenario string
+		completions []string
+		prefix string
+		suffix string
+		expected []string
+		maxWidth int
+		expectedWidth int
+	} {
+		{
+			scenario: "",
+			completions: []string{
+				"select",
+				"from",
+				"insert",
+				"where",
+			},
+			prefix: " ",
+			suffix: " ",
+			expected: []string{
+				" select ",
+				" from   ",
+				" insert ",
+				" where  ",
+			},
+			maxWidth: 20,
+			expectedWidth: 8,
+		},
 	}
 
-	ac, width := formatCompletions(in)
-	if !reflect.DeepEqual(ac, ex) {
-		t.Errorf("Should be %#v, but got %#v", ex, ac)
-	}
-	if width != 6 {
-		t.Errorf("Should be %#v, but got %#v", 4, width)
+	for _, s := range scenarioTable {
+		ac, width := formatCompletions(s.completions, s.maxWidth, s.prefix, s.suffix)
+		if !reflect.DeepEqual(ac, s.expected) {
+			t.Errorf("Should be %#v, but got %#v", s.expected, ac)
+		}
+		if width != s.expectedWidth {
+			t.Errorf("Should be %#v, but got %#v", s.expectedWidth, width)
+		}
 	}
 }
