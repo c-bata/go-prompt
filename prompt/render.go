@@ -8,14 +8,18 @@ type Render struct {
 	col            uint16
 	maxCompletions uint16
 	// colors
-	prefixColor                 Color
-	textColor                   Color
+	prefixTextColor             Color
+	prefixBGColor               Color
+	inputTextColor              Color
+	inputBGColor                Color
 	outputTextColor             Color
-	completedTextColor          Color
-	completionTextColor         Color
-	completionBGColor           Color
-	selectedCompletionTextColor Color
-	selectedCompletionBGColor   Color
+	outputBGColor               Color
+	previewSuggestionTextColor  Color
+	previewSuggestionBGColor    Color
+	suggestionTextColor         Color
+	suggestionBGColor           Color
+	selectedSuggestionTextColor Color
+	selectedSuggestionBGColor   Color
 }
 
 func (r *Render) Setup() {
@@ -27,7 +31,7 @@ func (r *Render) Setup() {
 }
 
 func (r *Render) renderPrefix() {
-	r.out.SetColor(r.prefixColor, DefaultColor)
+	r.out.SetColor(r.prefixTextColor, r.prefixBGColor)
 	r.out.WriteStr(r.prefix)
 	r.out.SetColor(DefaultColor, DefaultColor)
 }
@@ -79,9 +83,9 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 	for i := 0; i < l; i++ {
 		r.out.CursorDown(1)
 		if i == chosen {
-			r.out.SetColor(r.selectedCompletionTextColor, r.selectedCompletionBGColor)
+			r.out.SetColor(r.selectedSuggestionTextColor, r.selectedSuggestionBGColor)
 		} else {
-			r.out.SetColor(r.completionTextColor, r.completionBGColor)
+			r.out.SetColor(r.suggestionTextColor, r.suggestionBGColor)
 		}
 		r.out.WriteStr(" " + formatted[i] + " ")
 		r.out.SetColor(White, DarkGray)
@@ -107,7 +111,7 @@ func (r *Render) Erase(buffer *Buffer) {
 
 func (r *Render) Render(buffer *Buffer, completions []string, chosen int) {
 	line := buffer.Document().CurrentLine()
-	r.out.SetColor(r.textColor, DefaultColor)
+	r.out.SetColor(r.inputTextColor, r.inputBGColor)
 	r.out.WriteStr(line)
 	r.out.SetColor(DefaultColor, DefaultColor)
 	r.out.CursorBackward(len(line) - buffer.CursorPosition)
@@ -115,7 +119,7 @@ func (r *Render) Render(buffer *Buffer, completions []string, chosen int) {
 	if chosen != -1 {
 		c := completions[chosen]
 		r.out.CursorBackward(len([]rune(buffer.Document().GetWordBeforeCursor())))
-		r.out.SetColor(r.completedTextColor, DefaultColor)
+		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor)
 		r.out.WriteStr(c)
 		r.out.SetColor(DefaultColor, DefaultColor)
 	}
@@ -123,9 +127,9 @@ func (r *Render) Render(buffer *Buffer, completions []string, chosen int) {
 }
 
 func (r *Render) BreakLine(buffer *Buffer, result string) {
-	r.out.SetColor(r.textColor, DefaultColor)
+	r.out.SetColor(r.inputTextColor, r.inputBGColor)
 	r.out.WriteStr(buffer.Document().Text + "\n")
-	r.out.SetColor(r.outputTextColor, DefaultColor)
+	r.out.SetColor(r.outputTextColor, r.outputBGColor)
 	r.out.WriteStr(result + "\n")
 	r.out.SetColor(DefaultColor, DefaultColor)
 	r.renderPrefix()

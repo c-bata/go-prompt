@@ -1,10 +1,19 @@
 # go-prompt-toolkit
 
-Library for building powerful interactive command lines in Golang.
-
 ![demo](./_resources/demo.gif)
 
-## Usage
+Library for building powerful interactive command lines in Golang.
+
+#### Similar Projects
+
+* [jonathanslenders/python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit): **go-prompt-toolkit** is inspired by this library.
+* [peterh/liner](https://github.com/peterh/liner): The most similar project in golang is **liner** that I've ever seen.
+
+#### Projects using go-prompt-toolkit
+
+* kube-prompt : This is available soon...
+
+## Getting Started
 
 ```go
 package main
@@ -45,28 +54,23 @@ func main() {
 
 ![options](./_resources/prompt-options.png)
 
-#### `ParserOption(x ConsoleParser)`
-#### `WriterOption(x ConsoleWriter)`
-#### `TitleOption(x string)`
-#### `PrefixOption(x string)`
-#### `PrefixColorOption(x string)`
-#### `CompletionTextColor(x string)`
-#### `CompletionBackgroundColor(x string)`
-#### `SelectedCompletionTextColor(x string)`
-#### `SelectedCompletionBackgroundColor(x string)`
-#### `MaxCompletionsOption(x uint16)`
-
-
-## Related projects.
-
-#### Similar Projects
-
-* [jonathanslenders/python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit): **go-prompt-toolkit** is inspired by this library.
-* [peterh/liner](https://github.com/peterh/liner): The most similar project in golang is **liner** that I've ever seen.
-
-#### Projects using go-prompt-toolkit
-
-* kube-prompt : This is available soon...
+#### `OptionParser(x ConsoleParser)`
+#### `OptionWriter(x ConsoleWriter)`
+#### `OptionTitle(x string)`
+#### `OptionPrefix(x string)`
+#### `OptionPrefixTextColor(x Color)`
+#### `OptionPrefixBackgroundColor(x Color)`
+#### `OptionInputTextColor(x Color)`
+#### `OptionInputBGColor(x Color)`
+#### `OptionPreviewSuggestionTextColor(x Color)`
+#### `OptionPreviewSuggestionBGColor(x Color)`
+#### `OptionOutputTextColor(x Color)`
+#### `OptionOutputBGColor(x Color)`
+#### `OptionSuggestionTextColor(x Color)`
+#### `OptionSuggestionBGColor(x Color)`
+#### `OptionSelectedSuggestionTextColor(x Color)`
+#### `OptionSelectedSuggestionBGColor(x Color)`
+#### `OptionMaxCompletions(x uint16)`
 
 
 ## LICENSE

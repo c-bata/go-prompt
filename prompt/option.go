@@ -4,91 +4,119 @@ import "syscall"
 
 type option func(prompt *Prompt) error
 
-func ParserOption(x ConsoleParser) option {
+func OptionParser(x ConsoleParser) option {
 	return func(p *Prompt) error {
 		p.in = x
 		return nil
 	}
 }
 
-func WriterOption(x ConsoleWriter) option {
+func OptionWriter(x ConsoleWriter) option {
 	return func(p *Prompt) error {
 		p.renderer.out = x
 		return nil
 	}
 }
 
-func TitleOption(x string) option {
+func OptionTitle(x string) option {
 	return func(p *Prompt) error {
 		p.renderer.title = x
 		return nil
 	}
 }
 
-func PrefixOption(x string) option {
+func OptionPrefix(x string) option {
 	return func(p *Prompt) error {
 		p.renderer.prefix = x
 		return nil
 	}
 }
 
-func PrefixColorOption(x Color) option {
+func OptionPrefixTextColor(x Color) option {
 	return func(p *Prompt) error {
-		p.renderer.prefixColor = x
+		p.renderer.prefixTextColor = x
 		return nil
 	}
 }
 
-func TextColorOption(x Color) option {
+func OptionPrefixBackgroundColor(x Color) option {
 	return func(p *Prompt) error {
-		p.renderer.textColor = x
+		p.renderer.prefixBGColor = x
 		return nil
 	}
 }
 
-func CompletedTextColorOption(x Color) option {
+func OptionInputTextColor(x Color) option {
 	return func(p *Prompt) error {
-		p.renderer.completedTextColor = x
+		p.renderer.inputTextColor = x
 		return nil
 	}
 }
 
-func ResultTextColorOption(x Color) option {
+func OptionInputBGColor(x Color) option {
+	return func(p *Prompt) error {
+		p.renderer.inputBGColor = x
+		return nil
+	}
+}
+
+func OptionPreviewSuggestionTextColor(x Color) option {
+	return func(p *Prompt) error {
+		p.renderer.previewSuggestionTextColor = x
+		return nil
+	}
+}
+
+func OptionPreviewSuggestionBGColor(x Color) option {
+	return func(p *Prompt) error {
+		p.renderer.previewSuggestionBGColor = x
+		return nil
+	}
+}
+
+func OptionOutputTextColor(x Color) option {
 	return func(p *Prompt) error {
 		p.renderer.outputTextColor = x
 		return nil
 	}
 }
 
-func CompletionTextColor(x Color) option {
+func OptionOutputBGColor(x Color) option {
 	return func(p *Prompt) error {
-		p.renderer.completionTextColor = x
+		p.renderer.outputBGColor = x
 		return nil
 	}
 }
 
-func CompletionBackgroundColor(x Color) option {
+func OptionSuggestionTextColor(x Color) option {
 	return func(p *Prompt) error {
-		p.renderer.completionBGColor = x
+		p.renderer.suggestionTextColor = x
 		return nil
 	}
 }
 
-func SelectedCompletionTextColor(x Color) option {
+func OptionSuggestionBGColor(x Color) option {
 	return func(p *Prompt) error {
-		p.renderer.selectedCompletionTextColor = x
+		p.renderer.suggestionBGColor = x
 		return nil
 	}
 }
 
-func SelectedCompletionBackgroundColor(x Color) option {
+func OptionSelectedSuggestionTextColor(x Color) option {
 	return func(p *Prompt) error {
-		p.renderer.selectedCompletionBGColor = x
+		p.renderer.selectedSuggestionTextColor = x
 		return nil
 	}
 }
 
-func MaxCompletionsOption(x uint16) option {
+func OptionSelectedSuggestionBGColor(x Color) option {
+	return func(p *Prompt) error {
+		p.renderer.selectedSuggestionBGColor = x
+		return nil
+	}
+}
+
+func OptionMaxCompletions(x uint16) option {
 	return func(p *Prompt) error {
 		p.renderer.maxCompletions = x
 		return nil
@@ -99,16 +127,21 @@ func NewPrompt(executor Executor, completer Completer, opts ...option) *Prompt {
 	pt := &Prompt{
 		in: &VT100Parser{fd: syscall.Stdin},
 		renderer: &Render{
-			prefix:      "> ",
-			out:         &VT100Writer{fd: syscall.Stdout},
-			prefixColor: Blue,
-			textColor: DefaultColor,
-			outputTextColor: DefaultColor,
-			completedTextColor: Green,
-			completionTextColor: White,
-			completionBGColor: Cyan,
-			selectedCompletionTextColor: Black,
-			selectedCompletionBGColor: Turquoise,
+			prefix:                      "> ",
+			out:                         &VT100Writer{fd: syscall.Stdout},
+			prefixTextColor:             Blue,
+			prefixBGColor:               DefaultColor,
+			inputTextColor:              DefaultColor,
+			inputBGColor:                DefaultColor,
+			outputTextColor:             DefaultColor,
+			outputBGColor:               DefaultColor,
+			previewSuggestionTextColor:  Green,
+			previewSuggestionBGColor:    DefaultColor,
+			suggestionTextColor:         White,
+			suggestionBGColor:           Cyan,
+			selectedSuggestionTextColor: Black,
+			selectedSuggestionBGColor:   Turquoise,
+			maxCompletions:              10,
 		},
 		buf:       NewBuffer(),
 		executor:  executor,
