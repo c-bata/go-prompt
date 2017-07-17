@@ -26,9 +26,8 @@ type Render struct {
 func (r *Render) Setup() {
 	if r.title != "" {
 		r.out.SetTitle(r.title)
+		r.out.Flush()
 	}
-	r.renderPrefix()
-	r.out.Flush()
 }
 
 func (r *Render) renderPrefix() {
@@ -59,6 +58,15 @@ func (r *Render) UpdateWinSize(ws *WinSize) {
 	return
 }
 
+func (r *Render) renderWindowTooSmall() {
+	r.out.CursorGoTo(0, 0)
+	r.out.EraseScreen()
+	r.out.SetColor(DarkRed, White)
+	r.out.WriteStr("Your console window is too small...")
+	r.out.Flush()
+	return
+}
+
 func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selected int) {
 	if max > r.row {
 		max = r.row
@@ -77,7 +85,6 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selec
 		" ",
 	)
 	l := len(formatted)
-	r.prepareArea(l)
 
 	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor())) % int(r.col)
 	if d + width > int(r.col) {
@@ -104,16 +111,23 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selec
 	return
 }
 
-func (r *Render) Erase(buffer *Buffer) {
+func (r *Render) Render(buffer *Buffer, completions []string, maxCompletions uint16, selected int) {
+	// Erasing
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
 	r.out.EraseDown()
-	r.renderPrefix()
-	r.out.Flush()
-	return
-}
 
-func (r *Render) Render(buffer *Buffer, completions []string, maxCompletions uint16, selected int) {
+	// prepare area
 	line := buffer.Document().CurrentLine()
+	h := ((len(r.prefix) + len(line)) / int(r.col)) + 1 + int(maxCompletions)
+	if h > int(r.row) {
+		r.renderWindowTooSmall()
+		return
+	}
+	r.prepareArea(h)
+
+	// Rendering
+	r.renderPrefix()
+
 	r.out.SetColor(r.inputTextColor, r.inputBGColor)
 	r.out.WriteStr(line)
 	r.out.SetColor(DefaultColor, DefaultColor)
@@ -130,6 +144,12 @@ func (r *Render) Render(buffer *Buffer, completions []string, maxCompletions uin
 }
 
 func (r *Render) BreakLine(buffer *Buffer, result string) {
+	// Erasing
+	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
+	r.out.EraseDown()
+	r.renderPrefix()
+
+	// Rendering
 	r.out.SetColor(r.inputTextColor, r.inputBGColor)
 	r.out.WriteStr(buffer.Document().Text + "\n")
 	r.out.SetColor(r.outputTextColor, r.outputBGColor)

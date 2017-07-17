@@ -23,6 +23,7 @@ type Prompt struct {
 func (p *Prompt) Run() {
 	p.setUp()
 	defer p.tearDown()
+	p.renderer.Render(p.buf, p.completer(p.buf), p.maxCompletions, p.selected)
 
 	bufCh := make(chan []byte, 128)
 	go readBuffer(bufCh)
@@ -34,7 +35,6 @@ func (p *Prompt) Run() {
 	for {
 		select {
 		case b := <-bufCh:
-			p.renderer.Erase(p.buf)
 			ac := p.in.GetASCIICode(b)
 			if ac == nil {
 				if p.selected != -1 {
@@ -76,7 +76,6 @@ func (p *Prompt) Run() {
 			p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
 		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
-			p.renderer.Erase(p.buf)
 			completions := p.completer(p.buf)
 			p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
 		case e := <-exitCh:
@@ -105,6 +104,7 @@ func (p *Prompt) setUp() {
 	p.in.Setup()
 	p.renderer.Setup()
 	p.renderer.UpdateWinSize(p.in.GetWinSize())
+	p.selected = -1 // -1 means nothing one is selected.
 }
 
 func (p *Prompt) tearDown() {
