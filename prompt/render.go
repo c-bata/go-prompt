@@ -111,7 +111,7 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 }
 
 func (r *Render) Erase(buffer *Buffer) {
-	r.out.CursorBackward(int(r.col))
+	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
 	r.out.EraseDown()
 	r.renderPrefix()
 	r.out.Flush()
