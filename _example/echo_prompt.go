@@ -26,7 +26,8 @@ func main() {
 		completer,
 		prompt.OptionMaxCompletions(8),
 		prompt.OptionPrefix(">>> "),
-		prompt.OptionTitle("SQLITE CLI"),
+		prompt.OptionTitle("sqlite3-cli"),
+		prompt.OptionOutputTextColor(prompt.DarkGray),
 	)
 	defer fmt.Println("\nGoodbye!")
 	pt.Run()
