@@ -14,30 +14,26 @@ import (
     "github.com/c-bata/go-prompt-toolkit/prompt"
 )
 
-func executor(s string) string {
-    r := "Your input: " + s
-    return r
+// executor executes command and return the output string.
+// 1. Execute sql
+// 2. Get response and return output
+func executor(sql string) string {
+    res := "something response from db."
+    return res // this is printed in console.
 }
 
-func completer(s string) []string {
-    // Return the completion items by checking user input.
-    return []string{
-        "users",
-        "articles",
-        "comments",
-        "groups",
-        "tags",
-    }
+// completer returns the completion items from user input.
+func completer(sql string) []string {
+    return []string{"users", "articles", "comments", "groups", "tags"}
 }
 
 func main() {
     pt := prompt.NewPrompt(
         executor,
         completer,
-        prompt.MaxCompletionsOption(8),
-        prompt.PrefixOption(">>> "),
-        prompt.PrefixColorOption("blue"),
-        prompt.TitleOption("SQLITE CLI"),
+        prompt.OptionTitle("sqlite3-prompt"),
+        prompt.OptionPrefix(">>> "),
+        prompt.OptionPrefixColor("blue"),
     )
     defer fmt.Println("\nGoodbye!")
     pt.Run()
