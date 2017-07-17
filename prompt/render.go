@@ -2,8 +2,6 @@ package prompt
 
 import "strings"
 
-const scrollBarWidth = 1
-
 type Render struct {
 	out            ConsoleWriter
 	prefix         string
@@ -76,7 +74,7 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 
 	formatted, width := formatCompletions(
 		words,
-		int(r.col) - len(r.prefix) - scrollBarWidth,
+		int(r.col) - len(r.prefix),
 		" ",
 		" ",
 	)
@@ -84,8 +82,8 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 	r.prepareArea(l)
 
 	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor())) % int(r.col)
-	if d + width + scrollBarWidth > int(r.col) {
-		r.out.CursorBackward(d + width + 1 - int(r.col))
+	if d + width > int(r.col) {
+		r.out.CursorBackward(d + width - int(r.col))
 	}
 
 	r.out.SetColor(White, Cyan)
@@ -97,12 +95,10 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 			r.out.SetColor(r.suggestionTextColor, r.suggestionBGColor)
 		}
 		r.out.WriteStr(formatted[i])
-		r.out.SetColor(White, DarkGray)
-		r.out.Write([]byte(" "))
-		r.out.CursorBackward(width + scrollBarWidth)
+		r.out.CursorBackward(width)
 	}
-	if d + width + scrollBarWidth > int(r.col) {
-		r.out.CursorForward(d + width + scrollBarWidth - int(r.col))
+	if d + width > int(r.col) {
+		r.out.CursorForward(d + width - int(r.col))
 	}
 
 	r.out.CursorUp(l)
