@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/c-bata/go-prompt-toolkit/prompt"
+	"github.com/c-bata/go-prompt-toolkit"
 )
 
 func executor(t string) string {
