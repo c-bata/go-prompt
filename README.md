@@ -62,7 +62,7 @@ func main() {
 #### Similar Projects
 
 * [jonathanslenders/python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit): **go-prompt-toolkit** is inspired by this library.
-* [peterh/liner](https://github.com/peterh/liner): The most similar project is probably **liner** in Golang.
+* [peterh/liner](https://github.com/peterh/liner): The most similar project in golang is **liner** that I've ever seen.
 
 #### Projects using go-prompt-toolkit
 
