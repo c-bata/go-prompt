@@ -64,5 +64,3 @@ func FilterContains(completions []string, sub string, ignoreCase bool) []string 
 	}
 	return ret
 }
-
-

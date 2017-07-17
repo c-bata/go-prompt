@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"syscall"
 
-	"github.com/c-bata/go-prompt-toolkit/prompt"
+	"github.com/c-bata/go-prompt-toolkit"
 	"github.com/pkg/term/termios"
 )
 

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/c-bata/go-prompt-toolkit/prompt"
+import "github.com/c-bata/go-prompt-toolkit"
 
 func main() {
 	l := 20
@@ -10,7 +10,6 @@ func main() {
 		out.CursorGoTo(i, 0)
 		out.WriteStr("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 	}
-
 
 	out.CursorGoTo(5, 10)
 	out.EraseLine()

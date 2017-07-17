@@ -89,7 +89,7 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selec
 	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor())) % int(r.col)
 	if d == 0 { // the cursor is on right end.
 		r.out.CursorBackward(width)
-	} else if d + width > int(r.col) {
+	} else if d+width > int(r.col) {
 		r.out.CursorBackward(d + width - int(r.col))
 	}
 

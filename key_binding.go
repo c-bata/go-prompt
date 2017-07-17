@@ -16,7 +16,6 @@ func defaultHandler(ac *ASCIICode, buffer *Buffer) {
 		break
 	case ControlT:
 		break
-		return
 	case Up:
 		break
 	case Down:
