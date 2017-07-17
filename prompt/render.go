@@ -3,11 +3,11 @@ package prompt
 import "strings"
 
 type Render struct {
-	out            ConsoleWriter
-	prefix         string
-	title          string
-	row            uint16
-	col            uint16
+	out    ConsoleWriter
+	prefix string
+	title  string
+	row    uint16
+	col    uint16
 	// colors
 	prefixTextColor             Color
 	prefixBGColor               Color
@@ -80,14 +80,14 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selec
 
 	formatted, width := formatCompletions(
 		words,
-		int(r.col) - len(r.prefix),
+		int(r.col)-len(r.prefix),
 		" ",
 		" ",
 	)
 	l := len(formatted)
 
 	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor())) % int(r.col)
-	if d + width > int(r.col) {
+	if d+width > int(r.col) {
 		r.out.CursorBackward(d + width - int(r.col))
 	}
 
@@ -102,7 +102,7 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selec
 		r.out.WriteStr(formatted[i])
 		r.out.CursorBackward(width)
 	}
-	if d + width > int(r.col) {
+	if d+width > int(r.col) {
 		r.out.CursorForward(d + width - int(r.col))
 	}
 
@@ -172,15 +172,15 @@ func formatCompletions(words []string, max int, prefix string, suffix string) (n
 		}
 	}
 
-	if len(prefix) + width + len(suffix) > max {
+	if len(prefix)+width+len(suffix) > max {
 		width = max - len(prefix) - len(suffix)
 	}
 
 	for i := 0; i < num; i++ {
 		if l := len(words[i]); l > width {
-			new[i] = prefix + words[i][:width - len("...")] + "..." + suffix
-		} else if l < width  {
-			spaces := strings.Repeat(" ", width - len([]rune(words[i])))
+			new[i] = prefix + words[i][:width-len("...")] + "..." + suffix
+		} else if l < width {
+			spaces := strings.Repeat(" ", width-len([]rune(words[i])))
 			new[i] = prefix + words[i] + spaces + suffix
 		} else {
 			new[i] = prefix + words[i] + suffix

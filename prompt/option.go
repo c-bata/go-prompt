@@ -142,11 +142,11 @@ func NewPrompt(executor Executor, completer Completer, opts ...option) *Prompt {
 			selectedSuggestionTextColor: Black,
 			selectedSuggestionBGColor:   Turquoise,
 		},
-		buf:       NewBuffer(),
-		executor:  executor,
-		completer: completer,
+		buf:            NewBuffer(),
+		executor:       executor,
+		completer:      completer,
 		maxCompletions: 6,
-		selected: -1,
+		selected:       -1,
 	}
 
 	for _, opt := range opts {

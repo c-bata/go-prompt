@@ -10,7 +10,7 @@ type Buffer struct {
 	workingIndex    int
 	CursorPosition  int
 	cacheDocument   *Document
-	preferredColumn int       // Remember the original column for the next up/down movement.
+	preferredColumn int // Remember the original column for the next up/down movement.
 }
 
 // Text returns string of the current line.

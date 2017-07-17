@@ -6,15 +6,15 @@ import (
 )
 
 func TestFormatCompletion(t *testing.T) {
-	scenarioTable := [] struct {
-		scenario string
-		completions []string
-		prefix string
-		suffix string
-		expected []string
-		maxWidth int
+	scenarioTable := []struct {
+		scenario      string
+		completions   []string
+		prefix        string
+		suffix        string
+		expected      []string
+		maxWidth      int
 		expectedWidth int
-	} {
+	}{
 		{
 			scenario: "",
 			completions: []string{
@@ -31,7 +31,7 @@ func TestFormatCompletion(t *testing.T) {
 				" insert ",
 				" where  ",
 			},
-			maxWidth: 20,
+			maxWidth:      20,
 			expectedWidth: 8,
 		},
 	}

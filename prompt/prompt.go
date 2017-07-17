@@ -17,7 +17,7 @@ type Prompt struct {
 	executor       Executor
 	completer      Completer
 	maxCompletions uint16
-	selected       int  // -1 means nothing one is selected.
+	selected       int // -1 means nothing one is selected.
 }
 
 func (p *Prompt) Run() {

@@ -24,7 +24,6 @@ func main() {
 	pt := prompt.NewPrompt(
 		executor,
 		completer,
-		prompt.OptionMaxCompletions(8),
 		prompt.OptionPrefix(">>> "),
 		prompt.OptionTitle("sqlite3-cli"),
 		prompt.OptionOutputTextColor(prompt.DarkGray),
