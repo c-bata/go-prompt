@@ -8,7 +8,6 @@ type Render struct {
 	title          string
 	row            uint16
 	col            uint16
-	maxCompletions uint16
 	// colors
 	prefixTextColor             Color
 	prefixBGColor               Color
@@ -60,15 +59,14 @@ func (r *Render) UpdateWinSize(ws *WinSize) {
 	return
 }
 
-func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
-	max := int(r.maxCompletions)
-	if r.maxCompletions > r.row {
-		max = int(r.row)
+func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selected int) {
+	if max > r.row {
+		max = r.row
 	}
 
 	if l := len(words); l == 0 {
 		return
-	} else if l > max {
+	} else if l > int(max) {
 		words = words[:max]
 	}
 
@@ -89,7 +87,7 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
 	r.out.SetColor(White, Cyan)
 	for i := 0; i < l; i++ {
 		r.out.CursorDown(1)
-		if i == chosen {
+		if i == selected {
 			r.out.SetColor(r.selectedSuggestionTextColor, r.selectedSuggestionBGColor)
 		} else {
 			r.out.SetColor(r.suggestionTextColor, r.suggestionBGColor)
@@ -114,15 +112,15 @@ func (r *Render) Erase(buffer *Buffer) {
 	return
 }
 
-func (r *Render) Render(buffer *Buffer, completions []string, chosen int) {
+func (r *Render) Render(buffer *Buffer, completions []string, maxCompletions uint16, selected int) {
 	line := buffer.Document().CurrentLine()
 	r.out.SetColor(r.inputTextColor, r.inputBGColor)
 	r.out.WriteStr(line)
 	r.out.SetColor(DefaultColor, DefaultColor)
 	r.out.CursorBackward(len(line) - buffer.CursorPosition)
-	r.renderCompletion(buffer, completions, chosen)
-	if chosen != -1 {
-		c := completions[chosen]
+	r.renderCompletion(buffer, completions, maxCompletions, selected)
+	if selected != -1 {
+		c := completions[selected]
 		r.out.CursorBackward(len([]rune(buffer.Document().GetWordBeforeCursor())))
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor)
 		r.out.WriteStr(c)

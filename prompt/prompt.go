@@ -11,12 +11,13 @@ type Executor func(*Buffer) string
 type Completer func(*Buffer) []string
 
 type Prompt struct {
-	in        ConsoleParser
-	buf       *Buffer
-	renderer  *Render
-	executor  Executor
-	completer Completer
-	chosen    int  // -1 means nothing one is chosen.
+	in             ConsoleParser
+	buf            *Buffer
+	renderer       *Render
+	executor       Executor
+	completer      Completer
+	maxCompletions uint16
+	selected       int  // -1 means nothing one is selected.
 }
 
 func (p *Prompt) Run() {
@@ -36,19 +37,19 @@ func (p *Prompt) Run() {
 			p.renderer.Erase(p.buf)
 			ac := p.in.GetASCIICode(b)
 			if ac == nil {
-				if p.chosen != -1 {
-					c := p.completer(p.buf)[p.chosen]
+				if p.selected != -1 {
+					c := p.completer(p.buf)[p.selected]
 					w := p.buf.Document().GetWordBeforeCursor()
 					if w != "" {
 						p.buf.DeleteBeforeCursor(len([]rune(w)))
 					}
 					p.buf.InsertText(c, false, true)
 				}
-				p.chosen = -1
+				p.selected = -1
 				p.buf.InsertText(string(b), false, true)
 			} else if ac.Key == ControlJ || ac.Key == Enter {
-				if p.chosen != -1 {
-					c := p.completer(p.buf)[p.chosen]
+				if p.selected != -1 {
+					c := p.completer(p.buf)[p.selected]
 					w := p.buf.Document().GetWordBeforeCursor()
 					if w != "" {
 						p.buf.DeleteBeforeCursor(len([]rune(w)))
@@ -58,30 +59,26 @@ func (p *Prompt) Run() {
 				res := p.executor(p.buf)
 				p.renderer.BreakLine(p.buf, res)
 				p.buf = NewBuffer()
-				p.chosen = -1
+				p.selected = -1
 			} else if ac.Key == ControlC || ac.Key == ControlD {
 				return
 			} else if ac.Key == BackTab || ac.Key == Up {
-				p.chosen -= 1
+				p.selected -= 1
 			} else if ac.Key == Tab || ac.Key == ControlI || ac.Key == Down {
-				p.chosen += 1
+				p.selected += 1
 			} else {
 				InputHandler(ac, p.buf)
-				p.chosen = -1
+				p.selected = -1
 			}
 
 			completions := p.completer(p.buf)
-			if p.chosen >= len(completions) {
-				p.chosen = -1
-			} else if p.chosen < -1 {
-				p.chosen = len(completions) - 1
-			}
-			p.renderer.Render(p.buf, completions, p.chosen)
+			p.updateSelectedCompletion(completions)
+			p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
 		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
 			p.renderer.Erase(p.buf)
 			completions := p.completer(p.buf)
-			p.renderer.Render(p.buf, completions, p.chosen)
+			p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
 		case e := <-exitCh:
 			if e {
 				return
@@ -89,6 +86,18 @@ func (p *Prompt) Run() {
 		default:
 			time.Sleep(10 * time.Millisecond)
 		}
+	}
+}
+
+func (p *Prompt) updateSelectedCompletion(completions []string) {
+	max := int(p.maxCompletions)
+	if len(completions) < max {
+		max = len(completions)
+	}
+	if p.selected >= max {
+		p.selected = -1
+	} else if p.selected < -1 {
+		p.selected = max - 1
 	}
 }
 
