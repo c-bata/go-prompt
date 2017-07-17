@@ -12,16 +12,16 @@ setup:  ## Setup for required tools.
 
 .PHONY: fmt
 fmt: ## Formatting source codes.
-	@goimports -w $$(glide nv -x)
+	@goimports -w .
 
 .PHONY: lint
 lint: ## Run golint and go vet.
-	@golint $$(glide novendor)
-	@go vet $$(glide novendor)
+	@golint .
+	@go vet .
 
 .PHONY: test
 test:  ## Run the tests.
-	@go test $$(glide novendor)
+	@go test .
 
 .PHONY: help
 help: ## Show help text
