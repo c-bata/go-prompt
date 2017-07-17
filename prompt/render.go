@@ -87,7 +87,9 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selec
 	l := len(formatted)
 
 	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor())) % int(r.col)
-	if d+width > int(r.col) {
+	if d == 0 { // the cursor is on right end.
+		r.out.CursorBackward(width)
+	} else if d + width > int(r.col) {
 		r.out.CursorBackward(d + width - int(r.col))
 	}
 
@@ -102,7 +104,10 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selec
 		r.out.WriteStr(formatted[i])
 		r.out.CursorBackward(width)
 	}
-	if d+width > int(r.col) {
+	if d == 0 { // the cursor is on right end.
+		// DON'T CURSOR DOWN HERE. Because the line doesn't erase properly.
+		r.out.CursorForward(width + 1)
+	} else if d+width > int(r.col) {
 		r.out.CursorForward(d + width - int(r.col))
 	}
 
