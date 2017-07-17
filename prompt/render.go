@@ -55,14 +55,15 @@ func (r *Render) UpdateWinSize(ws *WinSize) {
 }
 
 func (r *Render) renderCompletion(buf *Buffer, words []string, chosen int) {
+	max := int(r.maxCompletions)
+	if r.maxCompletions > r.row {
+		max = int(r.row)
+	}
+
 	if l := len(words); l == 0 {
 		return
-	} else if l > int(r.maxCompletions) - 2 || l >= int(r.row) - 2 {
-		if r.maxCompletions > r.row {
-			words = words[:int(r.row) - 2]
-		} else {
-			words = words[:int(r.maxCompletions) - 2]
-		}
+	} else if l > max {
+		words = words[:max]
 	}
 
 	formatted, width := formatCompletions(words, int(r.col) - len(r.prefix) - 3)
