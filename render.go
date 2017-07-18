@@ -161,7 +161,7 @@ func (r *Render) BreakLine(buffer *Buffer, result string) {
 	// Render Result
 	if result != "" {
 		r.out.SetColor(r.outputTextColor, r.outputBGColor)
-		r.out.WriteStr(result + "\n")
+		r.out.WriteRawStr(result + "\n")
 	}
 	r.out.SetColor(DefaultColor, DefaultColor)
 }

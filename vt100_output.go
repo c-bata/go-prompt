@@ -10,18 +10,23 @@ type VT100Writer struct {
 	buffer []byte
 }
 
+func (w *VT100Writer) WriteRaw(data []byte) {
+	w.buffer = append(w.buffer, data...)
+	return
+}
+
 func (w *VT100Writer) Write(data []byte) {
 	w.WriteRaw(byteFilter(data, writeFilter))
 	return
 }
 
-func (w *VT100Writer) WriteStr(data string) {
-	w.Write([]byte(data))
+func (w *VT100Writer) WriteRawStr(data string) {
+	w.WriteRaw([]byte(data))
 	return
 }
 
-func (w *VT100Writer) WriteRaw(data []byte) {
-	w.buffer = append(w.buffer, data...)
+func (w *VT100Writer) WriteStr(data string) {
+	w.Write([]byte(data))
 	return
 }
 

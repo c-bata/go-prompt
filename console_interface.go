@@ -19,9 +19,10 @@ type ConsoleParser interface {
 type ConsoleWriter interface {
 	/* Write */
 
+	WriteRaw(data []byte)
 	Write(data []byte)
 	WriteStr(data string)
-	WriteRaw(data []byte)
+	WriteRawStr(data string)
 	Flush() error
 
 	/* Erasing */
