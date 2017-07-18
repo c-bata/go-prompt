@@ -11,8 +11,7 @@ func FilterHasPrefix(completions []string, sub string, ignoreCase bool) []string
 	}
 
 	ret := make([]string, 0, len(completions))
-	for i := range completions {
-		n := completions[i]
+	for i, n := range completions {
 		if ignoreCase {
 			n = strings.ToUpper(n)
 		}
@@ -32,8 +31,7 @@ func FilterHasSuffix(completions []string, sub string, ignoreCase bool) []string
 	}
 
 	ret := make([]string, 0, len(completions))
-	for i := range completions {
-		n := completions[i]
+	for i, n := range completions {
 		if ignoreCase {
 			n = strings.ToUpper(n)
 		}
@@ -53,13 +51,12 @@ func FilterContains(completions []string, sub string, ignoreCase bool) []string 
 	}
 
 	ret := make([]string, 0, len(completions))
-	for i := range completions {
-		n := completions[i]
+	for i, n := range completions {
 		if ignoreCase {
 			n = strings.ToUpper(n)
 		}
 		if strings.Contains(n, sub) {
-			ret = append(ret, n)
+			ret = append(ret, completions[i])
 		}
 	}
 	return ret
