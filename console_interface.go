@@ -5,6 +5,31 @@ type WinSize struct {
 	Col uint16
 }
 
+type Color int
+const (
+	DefaultColor Color = iota
+
+	// Low intensity
+	Black
+	DarkRed
+	DarkGreen
+	Brown
+	DarkBlue
+	Purple
+	Cyan
+	LightGray
+
+	// High intensity
+	DarkGray
+	Red
+	Green
+	Yellow
+	Blue
+	Fuchsia
+	Turquoise
+	White
+)
+
 type ConsoleParser interface {
 	// Setup
 	Setup() error
@@ -57,7 +82,7 @@ type ConsoleWriter interface {
 	SetTitle(title string)
 	ClearTitle()
 
-	/* colors */
+	/* Font */
 
-	SetColor(fg, bg Color) (ok bool)
+	SetColor(fg, bg Color, bold bool)
 }

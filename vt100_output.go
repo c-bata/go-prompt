@@ -188,22 +188,28 @@ func (w *VT100Writer) ClearTitle() {
 	return
 }
 
-/* colors */
+/* Font */
 
-func (w *VT100Writer) SetColor(fg, bg Color) (ok bool) {
+func (w *VT100Writer) SetColor(fg, bg Color, bold bool) {
 	f, ok := foregroundANSIColors[fg]
 	if !ok {
-		return
+		f, _ = foregroundANSIColors[DefaultColor]
 	}
 	b, ok := backgroundANSIColors[bg]
 	if !ok {
-		return
+		b, _ = backgroundANSIColors[DefaultColor]
 	}
 	syscall.Write(syscall.Stdout, []byte{0x1b, 0x5b, 0x33, 0x39, 0x3b, 0x34, 0x39, 0x6d})
 	w.WriteRaw([]byte{0x1b, 0x5b})
+	if !bold {
+		w.WriteRaw([]byte{0x30, 0x3b})
+	}
 	w.WriteRaw(f)
 	w.WriteRaw([]byte{0x3b})
 	w.WriteRaw(b)
+	if bold {
+		w.WriteRaw([]byte{0x3b, 0x31})
+	}
 	w.WriteRaw([]byte{0x6d})
 	return
 }

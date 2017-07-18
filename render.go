@@ -45,9 +45,9 @@ func (r *Render) Setup() {
 }
 
 func (r *Render) renderPrefix() {
-	r.out.SetColor(r.prefixTextColor, r.prefixBGColor)
+	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
 	r.out.WriteStr(r.prefix)
-	r.out.SetColor(DefaultColor, DefaultColor)
+	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
 func (r *Render) TearDown() {
@@ -75,7 +75,7 @@ func (r *Render) UpdateWinSize(ws *WinSize) {
 func (r *Render) renderWindowTooSmall() {
 	r.out.CursorGoTo(0, 0)
 	r.out.EraseScreen()
-	r.out.SetColor(DarkRed, White)
+	r.out.SetColor(DarkRed, White, false)
 	r.out.WriteStr("Your console window is too small...")
 	r.out.Flush()
 	return
@@ -106,20 +106,20 @@ func (r *Render) renderCompletion(buf *Buffer, completions []Completion, max uin
 		r.out.CursorBackward(d + width - int(r.col))
 	}
 
-	r.out.SetColor(White, Cyan)
+	r.out.SetColor(White, Cyan, false)
 	for i := 0; i < l; i++ {
 		r.out.CursorDown(1)
 		if i == selected {
-			r.out.SetColor(r.selectedSuggestionTextColor, r.selectedSuggestionBGColor)
+			r.out.SetColor(r.selectedSuggestionTextColor, r.selectedSuggestionBGColor, true)
 		} else {
-			r.out.SetColor(r.suggestionTextColor, r.suggestionBGColor)
+			r.out.SetColor(r.suggestionTextColor, r.suggestionBGColor, false)
 		}
 		r.out.WriteStr(formatted[i].Text)
 
 		if i == selected {
-			r.out.SetColor(r.selectedDescriptionTextColor, r.selectedDescriptionBGColor)
+			r.out.SetColor(r.selectedDescriptionTextColor, r.selectedDescriptionBGColor, false)
 		} else {
-			r.out.SetColor(r.descriptionTextColor, r.descriptionBGColor)
+			r.out.SetColor(r.descriptionTextColor, r.descriptionBGColor, false)
 		}
 		r.out.WriteStr(formatted[i].Description)
 		r.out.CursorBackward(width)
@@ -132,7 +132,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions []Completion, max uin
 	}
 
 	r.out.CursorUp(l)
-	r.out.SetColor(DefaultColor, DefaultColor)
+	r.out.SetColor(DefaultColor, DefaultColor, false)
 	return
 }
 
@@ -152,17 +152,17 @@ func (r *Render) Render(buffer *Buffer, completions []Completion, maxCompletions
 	// Rendering
 	r.renderPrefix()
 
-	r.out.SetColor(r.inputTextColor, r.inputBGColor)
+	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(line)
-	r.out.SetColor(DefaultColor, DefaultColor)
+	r.out.SetColor(DefaultColor, DefaultColor, false)
 	r.out.CursorBackward(len(line) - buffer.CursorPosition)
 	r.renderCompletion(buffer, completions, maxCompletions, selected)
 	if selected != -1 {
 		c := completions[selected]
 		r.out.CursorBackward(len([]rune(buffer.Document().GetWordBeforeCursor())))
-		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor)
+		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
 		r.out.WriteStr(c.Text)
-		r.out.SetColor(DefaultColor, DefaultColor)
+		r.out.SetColor(DefaultColor, DefaultColor, false)
 	}
 	r.out.Flush()
 }
@@ -173,19 +173,19 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	// Erasing and Render
 	r.out.EraseDown()
 	r.renderPrefix()
-	r.out.SetColor(r.inputTextColor, r.inputBGColor)
+	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(buffer.Document().Text + "\n")
-	r.out.SetColor(DefaultColor, DefaultColor)
+	r.out.SetColor(DefaultColor, DefaultColor, false)
 	r.out.Flush()
 }
 
 func (r *Render) RenderResult(result string) {
 	// Render Result
 	if result != "" {
-		r.out.SetColor(r.outputTextColor, r.outputBGColor)
+		r.out.SetColor(r.outputTextColor, r.outputBGColor, false)
 		r.out.WriteRawStr(result)
 	}
-	r.out.SetColor(DefaultColor, DefaultColor)
+	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
 func formatCompletions(completions []Completion, max int) (new []Completion, width int) {
