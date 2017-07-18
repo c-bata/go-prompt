@@ -8,59 +8,98 @@ import (
 func TestFilter(t *testing.T) {
 	var scenarioTable = [] struct {
 		scenario   string
-		filter     Filter
-		list       []string
+		filter     CompletionFilter
+		list       []Completion
 		substr     string
 		ignoreCase bool
-		expected   []string
+		expected   []Completion
 	} {
 		{
 			scenario:   "Contains don't ignore case",
 			filter:     FilterContains,
-			list:       []string{"abcde", "fghij", "ABCDE"},
+			list:       []Completion{
+				{Text: "abcde"},
+				{Text: "fghij"},
+				{Text: "ABCDE"},
+			},
 			substr:     "cd",
 			ignoreCase: false,
-			expected:  []string{"abcde"},
+			expected:  []Completion{
+				{Text: "abcde"},
+			},
 		},
 		{
 			scenario:   "Contains ignore case",
 			filter:     FilterContains,
-			list:       []string{"abcde", "fghij", "ABCDE"},
+			list:       []Completion{
+				{Text: "abcde"},
+				{Text: "fghij"},
+				{Text: "ABCDE"},
+			},
 			substr:     "cd",
 			ignoreCase: true,
-			expected:   []string{"abcde", "ABCDE"},
+			expected:   []Completion{
+				{Text: "abcde"},
+				{Text: "ABCDE"},
+			},
 		},
 		{
 			scenario:   "HasPrefix don't ignore case",
 			filter:     FilterHasPrefix,
-			list:       []string{"abcde", "fghij", "ABCDE"},
+			list:       []Completion{
+				{Text: "abcde"},
+				{Text: "fghij"},
+				{Text: "ABCDE"},
+			},
 			substr:     "abc",
 			ignoreCase: false,
-			expected:  []string{"abcde"},
+			expected:  []Completion{
+				{Text: "abcde"},
+			},
 		},
 		{
 			scenario:   "HasPrefix ignore case",
 			filter:     FilterHasPrefix,
-			list:       []string{"abcde", "fabcj", "ABCDE"},
+			list:       []Completion{
+				{Text: "abcde"},
+				{Text: "fabcj"},
+				{Text: "ABCDE"},
+			},
 			substr:     "abc",
 			ignoreCase: true,
-			expected:   []string{"abcde", "ABCDE"},
+			expected:   []Completion{
+				{Text: "abcde"},
+				{Text: "ABCDE"},
+			},
 		},
 		{
 			scenario:   "HasSuffix don't ignore case",
 			filter:     FilterHasSuffix,
-			list:       []string{"abcde", "fcdej", "ABCDE"},
+			list:       []Completion{
+				{Text: "abcde"},
+				{Text: "fcdej"},
+				{Text: "ABCDE"},
+			},
 			substr:     "cde",
 			ignoreCase: false,
-			expected:  []string{"abcde"},
+			expected:  []Completion{
+				{Text: "abcde"},
+			},
 		},
 		{
 			scenario:   "HasSuffix ignore case",
 			filter:     FilterHasSuffix,
-			list:       []string{"abcde", "fcdej", "ABCDE"},
+			list:       []Completion{
+				{Text: "abcde"},
+				{Text: "fcdej"},
+				{Text: "ABCDE"},
+			},
 			substr:     "cde",
 			ignoreCase: true,
-			expected:   []string{"abcde", "ABCDE"},
+			expected:   []Completion{
+				{Text: "abcde"},
+				{Text: "ABCDE"},
+			},
 		},
 	}
 

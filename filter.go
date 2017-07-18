@@ -2,9 +2,9 @@ package prompt
 
 import "strings"
 
-type Filter func([]string, string, bool) []string
+type CompletionFilter func([]Completion, string, bool) []Completion
 
-func FilterHasPrefix(completions []string, sub string, ignoreCase bool) []string {
+func FilterHasPrefix(completions []Completion, sub string, ignoreCase bool) []Completion {
 	if sub == "" {
 		return completions
 	}
@@ -12,19 +12,20 @@ func FilterHasPrefix(completions []string, sub string, ignoreCase bool) []string
 		sub = strings.ToUpper(sub)
 	}
 
-	ret := make([]string, 0, len(completions))
-	for i, n := range completions {
+	ret := make([]Completion, 0, len(completions))
+	for i := range completions {
+		c := completions[i].Text
 		if ignoreCase {
-			n = strings.ToUpper(n)
+			c = strings.ToUpper(c)
 		}
-		if strings.HasPrefix(n, sub) {
+		if strings.HasPrefix(c, sub) {
 			ret = append(ret, completions[i])
 		}
 	}
 	return ret
 }
 
-func FilterHasSuffix(completions []string, sub string, ignoreCase bool) []string {
+func FilterHasSuffix(completions []Completion, sub string, ignoreCase bool) []Completion {
 	if sub == "" {
 		return completions
 	}
@@ -32,19 +33,20 @@ func FilterHasSuffix(completions []string, sub string, ignoreCase bool) []string
 		sub = strings.ToUpper(sub)
 	}
 
-	ret := make([]string, 0, len(completions))
-	for i, n := range completions {
+	ret := make([]Completion, 0, len(completions))
+	for i := range completions {
+		c := completions[i].Text
 		if ignoreCase {
-			n = strings.ToUpper(n)
+			c = strings.ToUpper(c)
 		}
-		if strings.HasSuffix(n, sub) {
+		if strings.HasSuffix(c, sub) {
 			ret = append(ret, completions[i])
 		}
 	}
 	return ret
 }
 
-func FilterContains(completions []string, sub string, ignoreCase bool) []string {
+func FilterContains(completions []Completion, sub string, ignoreCase bool) []Completion {
 	if sub == "" {
 		return completions
 	}
@@ -52,12 +54,13 @@ func FilterContains(completions []string, sub string, ignoreCase bool) []string 
 		sub = strings.ToUpper(sub)
 	}
 
-	ret := make([]string, 0, len(completions))
-	for i, n := range completions {
+	ret := make([]Completion, 0, len(completions))
+	for i := range completions {
+		c := completions[i].Text
 		if ignoreCase {
-			n = strings.ToUpper(n)
+			c = strings.ToUpper(c)
 		}
-		if strings.Contains(n, sub) {
+		if strings.Contains(c, sub) {
 			ret = append(ret, completions[i])
 		}
 	}
