@@ -2,6 +2,8 @@ package prompt
 
 import "strings"
 
+type Filter func([]string, string, bool) []string
+
 func FilterHasPrefix(completions []string, sub string, ignoreCase bool) []string {
 	if sub == "" {
 		return completions
