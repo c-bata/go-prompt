@@ -8,16 +8,16 @@ import (
 func TestFormatCompletion(t *testing.T) {
 	scenarioTable := []struct {
 		scenario      string
-		completions   []Suggestion
+		completions   []Completion
 		prefix        string
 		suffix        string
-		expected      []Suggestion
+		expected      []Completion
 		maxWidth      int
 		expectedWidth int
 	}{
 		{
 			scenario: "",
-			completions: []Suggestion{
+			completions: []Completion{
 				{Text: "select"},
 				{Text: "from"},
 				{Text: "insert"},
@@ -25,7 +25,7 @@ func TestFormatCompletion(t *testing.T) {
 			},
 			prefix: " ",
 			suffix: " ",
-			expected: []Suggestion{
+			expected: []Completion{
 				{Text: " select "},
 				{Text: " from   "},
 				{Text: " insert "},
@@ -36,7 +36,7 @@ func TestFormatCompletion(t *testing.T) {
 		},
 		{
 			scenario: "",
-			completions: []Suggestion{
+			completions: []Completion{
 				{Text: "select", Description: "select description"},
 				{Text: "from", Description: "from description"},
 				{Text: "insert", Description: "insert description"},
@@ -44,7 +44,7 @@ func TestFormatCompletion(t *testing.T) {
 			},
 			prefix: " ",
 			suffix: " ",
-			expected: []Suggestion{
+			expected: []Completion{
 				{Text: " select ", Description: " select description "},
 				{Text: " from   ", Description: " from description   "},
 				{Text: " insert ", Description: " insert description "},

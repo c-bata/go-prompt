@@ -11,8 +11,8 @@ func executor(t string) string {
 	return r
 }
 
-func completer(t string) []prompt.Suggestion {
-	return []prompt.Suggestion{
+func completer(t string) []prompt.Completion {
+	return []prompt.Completion{
 		{Text: "users", Description: "user table"},
 		{Text: "sites", Description: "sites table"},
 		{Text: "articles", Description: "articles table"},

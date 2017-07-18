@@ -81,19 +81,19 @@ func (r *Render) renderWindowTooSmall() {
 	return
 }
 
-func (r *Render) renderCompletion(buf *Buffer, suggestions []Suggestion, max uint16, selected int) {
+func (r *Render) renderCompletion(buf *Buffer, completions []Completion, max uint16, selected int) {
 	if max > r.row {
 		max = r.row
 	}
 
-	if l := len(suggestions); l == 0 {
+	if l := len(completions); l == 0 {
 		return
 	} else if l > int(max) {
-		suggestions = suggestions[:max]
+		completions = completions[:max]
 	}
 
 	formatted, width := formatCompletions(
-		suggestions,
+		completions,
 		int(r.col)-len(r.prefix),
 	)
 	l := len(formatted)
@@ -136,7 +136,7 @@ func (r *Render) renderCompletion(buf *Buffer, suggestions []Suggestion, max uin
 	return
 }
 
-func (r *Render) Render(buffer *Buffer, completions []Suggestion, maxCompletions uint16, selected int) {
+func (r *Render) Render(buffer *Buffer, completions []Completion, maxCompletions uint16, selected int) {
 	// Erasing
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
 	r.out.EraseDown()
@@ -188,18 +188,18 @@ func (r *Render) RenderResult(result string) {
 	r.out.SetColor(DefaultColor, DefaultColor)
 }
 
-func formatCompletions(suggestions []Suggestion, max int) (new []Suggestion, width int) {
-	num := len(suggestions)
-	new = make([]Suggestion, num)
+func formatCompletions(completions []Completion, max int) (new []Completion, width int) {
+	num := len(completions)
+	new = make([]Completion, num)
 	leftWidth := 0
 	rightWidth := 0
 
 	for i := 0; i < num; i++ {
-		if leftWidth < len([]rune(suggestions[i].Text)) {
-			leftWidth = len([]rune(suggestions[i].Text))
+		if leftWidth < len([]rune(completions[i].Text)) {
+			leftWidth = len([]rune(completions[i].Text))
 		}
-		if rightWidth < len([]rune(suggestions[i].Description)) {
-			rightWidth = len([]rune(suggestions[i].Description))
+		if rightWidth < len([]rune(completions[i].Description)) {
+			rightWidth = len([]rune(completions[i].Description))
 		}
 	}
 
@@ -220,26 +220,26 @@ func formatCompletions(suggestions []Suggestion, max int) (new []Suggestion, wid
 	for i := 0; i < num; i++ {
 		var newText string
 		var newDescription string
-		if l := len(suggestions[i].Text); l > leftWidth {
-			newText = leftPrefix + suggestions[i].Text[:leftWidth-len("...")] + "..." + leftSuffix
+		if l := len(completions[i].Text); l > leftWidth {
+			newText = leftPrefix + completions[i].Text[:leftWidth-len("...")] + "..." + leftSuffix
 		} else if l < width {
-			spaces := strings.Repeat(" ", leftWidth-len([]rune(suggestions[i].Text)))
-			newText = leftPrefix + suggestions[i].Text + spaces + leftSuffix
+			spaces := strings.Repeat(" ", leftWidth-len([]rune(completions[i].Text)))
+			newText = leftPrefix + completions[i].Text + spaces + leftSuffix
 		} else {
-			newText = leftPrefix + suggestions[i].Text + leftSuffix
+			newText = leftPrefix + completions[i].Text + leftSuffix
 		}
 
 		if rightWidth == 0 {
 			newDescription = ""
-		} else if l := len(suggestions[i].Description); l > rightWidth {
-			newDescription = rightPrefix + suggestions[i].Description[:rightWidth-len("...")] + "..." + rightSuffix
+		} else if l := len(completions[i].Description); l > rightWidth {
+			newDescription = rightPrefix + completions[i].Description[:rightWidth-len("...")] + "..." + rightSuffix
 		} else if l < width {
-			spaces := strings.Repeat(" ", rightWidth-len([]rune(suggestions[i].Description)))
-			newDescription = rightPrefix + suggestions[i].Description + spaces + rightSuffix
+			spaces := strings.Repeat(" ", rightWidth-len([]rune(completions[i].Description)))
+			newDescription = rightPrefix + completions[i].Description + spaces + rightSuffix
 		} else {
-			newDescription = rightPrefix + suggestions[i].Description + rightSuffix
+			newDescription = rightPrefix + completions[i].Description + rightSuffix
 		}
-		new[i] = Suggestion{Text: newText, Description: newDescription}
+		new[i] = Completion{Text: newText, Description: newDescription}
 	}
 	return
 }
