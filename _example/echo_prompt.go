@@ -7,8 +7,7 @@ import (
 )
 
 func executor(t string) string {
-	r := "Your input: " + t
-	return r
+	return fmt.Sprintln("Your input: " + t)
 }
 
 func completer(t string) []prompt.Completion {

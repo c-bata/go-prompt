@@ -183,7 +183,7 @@ func (r *Render) RenderResult(result string) {
 	// Render Result
 	if result != "" {
 		r.out.SetColor(r.outputTextColor, r.outputBGColor)
-		r.out.WriteRawStr(result + "\n")
+		r.out.WriteRawStr(result)
 	}
 	r.out.SetColor(DefaultColor, DefaultColor)
 }
