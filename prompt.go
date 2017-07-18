@@ -8,7 +8,11 @@ import (
 )
 
 type Executor func(string) string
-type Completer func(string) []string
+type Completer func(string) []Completion
+type Completion struct {
+	Text        string
+	Description string
+}
 
 type Prompt struct {
 	in             ConsoleParser
@@ -43,7 +47,7 @@ func (p *Prompt) Run() {
 					if w != "" {
 						p.buf.DeleteBeforeCursor(len([]rune(w)))
 					}
-					p.buf.InsertText(c, false, true)
+					p.buf.InsertText(c.Text, false, true)
 				}
 				p.selected = -1
 				p.buf.InsertText(string(b), false, true)
@@ -54,7 +58,7 @@ func (p *Prompt) Run() {
 					if w != "" {
 						p.buf.DeleteBeforeCursor(len([]rune(w)))
 					}
-					p.buf.InsertText(c, false, true)
+					p.buf.InsertText(c.Text, false, true)
 				}
 				p.renderer.BreakLine(p.buf)
 				res := p.executor(p.buf.Text())
@@ -93,7 +97,7 @@ func (p *Prompt) Run() {
 	}
 }
 
-func (p *Prompt) updateSelectedCompletion(completions []string) {
+func (p *Prompt) updateSelectedCompletion(completions []Completion) {
 	max := int(p.maxCompletions)
 	if len(completions) < max {
 		max = len(completions)

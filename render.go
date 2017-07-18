@@ -2,6 +2,16 @@ package prompt
 
 import "strings"
 
+const (
+	leftPrefix = " "
+	leftSuffix = " "
+	rightPrefix = " "
+	rightSuffix = " "
+	leftMargin = len(leftPrefix + leftSuffix)
+	rightMargin = len(rightPrefix + rightSuffix)
+	completionMargin = leftMargin + rightMargin
+)
+
 type Render struct {
 	out    ConsoleWriter
 	prefix string
@@ -9,18 +19,22 @@ type Render struct {
 	row    uint16
 	col    uint16
 	// colors
-	prefixTextColor             Color
-	prefixBGColor               Color
-	inputTextColor              Color
-	inputBGColor                Color
-	outputTextColor             Color
-	outputBGColor               Color
-	previewSuggestionTextColor  Color
-	previewSuggestionBGColor    Color
-	suggestionTextColor         Color
-	suggestionBGColor           Color
-	selectedSuggestionTextColor Color
-	selectedSuggestionBGColor   Color
+	prefixTextColor              Color
+	prefixBGColor                Color
+	inputTextColor               Color
+	inputBGColor                 Color
+	outputTextColor              Color
+	outputBGColor                Color
+	previewSuggestionTextColor   Color
+	previewSuggestionBGColor     Color
+	suggestionTextColor          Color
+	suggestionBGColor            Color
+	selectedSuggestionTextColor  Color
+	selectedSuggestionBGColor    Color
+	descriptionTextColor         Color
+	descriptionBGColor           Color
+	selectedDescriptionTextColor Color
+	selectedDescriptionBGColor   Color
 }
 
 func (r *Render) Setup() {
@@ -67,22 +81,20 @@ func (r *Render) renderWindowTooSmall() {
 	return
 }
 
-func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selected int) {
+func (r *Render) renderCompletion(buf *Buffer, completions []Completion, max uint16, selected int) {
 	if max > r.row {
 		max = r.row
 	}
 
-	if l := len(words); l == 0 {
+	if l := len(completions); l == 0 {
 		return
 	} else if l > int(max) {
-		words = words[:max]
+		completions = completions[:max]
 	}
 
 	formatted, width := formatCompletions(
-		words,
+		completions,
 		int(r.col)-len(r.prefix),
-		" ",
-		" ",
 	)
 	l := len(formatted)
 	r.prepareArea(l)
@@ -102,7 +114,14 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selec
 		} else {
 			r.out.SetColor(r.suggestionTextColor, r.suggestionBGColor)
 		}
-		r.out.WriteStr(formatted[i])
+		r.out.WriteStr(formatted[i].Text)
+
+		if i == selected {
+			r.out.SetColor(r.selectedDescriptionTextColor, r.selectedDescriptionBGColor)
+		} else {
+			r.out.SetColor(r.descriptionTextColor, r.descriptionBGColor)
+		}
+		r.out.WriteStr(formatted[i].Description)
 		r.out.CursorBackward(width)
 	}
 	if d == 0 { // the cursor is on right end.
@@ -117,7 +136,7 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selec
 	return
 }
 
-func (r *Render) Render(buffer *Buffer, completions []string, maxCompletions uint16, selected int) {
+func (r *Render) Render(buffer *Buffer, completions []Completion, maxCompletions uint16, selected int) {
 	// Erasing
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
 	r.out.EraseDown()
@@ -125,7 +144,7 @@ func (r *Render) Render(buffer *Buffer, completions []string, maxCompletions uin
 	// prepare area
 	line := buffer.Text()
 	h := ((len(r.prefix) + len(line)) / int(r.col)) + 1 + int(maxCompletions)
-	if h > int(r.row) {
+	if h > int(r.row) || completionMargin > int(r.col) {
 		r.renderWindowTooSmall()
 		return
 	}
@@ -142,7 +161,7 @@ func (r *Render) Render(buffer *Buffer, completions []string, maxCompletions uin
 		c := completions[selected]
 		r.out.CursorBackward(len([]rune(buffer.Document().GetWordBeforeCursor())))
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor)
-		r.out.WriteStr(c)
+		r.out.WriteStr(c.Text)
 		r.out.SetColor(DefaultColor, DefaultColor)
 	}
 	r.out.Flush()
@@ -169,31 +188,58 @@ func (r *Render) RenderResult(result string) {
 	r.out.SetColor(DefaultColor, DefaultColor)
 }
 
-func formatCompletions(words []string, max int, prefix string, suffix string) (new []string, width int) {
-	num := len(words)
-	new = make([]string, num)
-	width = 0
+func formatCompletions(completions []Completion, max int) (new []Completion, width int) {
+	num := len(completions)
+	new = make([]Completion, num)
+	leftWidth := 0
+	rightWidth := 0
 
 	for i := 0; i < num; i++ {
-		if width < len([]rune(words[i])) {
-			width = len([]rune(words[i]))
+		if leftWidth < len([]rune(completions[i].Text)) {
+			leftWidth = len([]rune(completions[i].Text))
+		}
+		if rightWidth < len([]rune(completions[i].Description)) {
+			rightWidth = len([]rune(completions[i].Description))
 		}
 	}
 
-	if len(prefix)+width+len(suffix) > max {
-		width = max - len(prefix) - len(suffix)
+	if diff := max - completionMargin - leftWidth - rightWidth; diff < 0 {
+		if rightWidth > diff {
+			rightWidth -= diff
+		} else if rightWidth+rightMargin > diff {
+			leftWidth += rightWidth + rightMargin - diff
+			rightWidth = 0
+		}
+	}
+	if rightWidth == 0 {
+		width = leftWidth + leftMargin
+	} else {
+		width = leftWidth + leftMargin + rightWidth + rightMargin
 	}
 
 	for i := 0; i < num; i++ {
-		if l := len(words[i]); l > width {
-			new[i] = prefix + words[i][:width-len("...")] + "..." + suffix
+		var newText string
+		var newDescription string
+		if l := len(completions[i].Text); l > leftWidth {
+			newText = leftPrefix + completions[i].Text[:leftWidth-len("...")] + "..." + leftSuffix
 		} else if l < width {
-			spaces := strings.Repeat(" ", width-len([]rune(words[i])))
-			new[i] = prefix + words[i] + spaces + suffix
+			spaces := strings.Repeat(" ", leftWidth-len([]rune(completions[i].Text)))
+			newText = leftPrefix + completions[i].Text + spaces + leftSuffix
 		} else {
-			new[i] = prefix + words[i] + suffix
+			newText = leftPrefix + completions[i].Text + leftSuffix
 		}
+
+		if rightWidth == 0 {
+			newDescription = ""
+		} else if l := len(completions[i].Description); l > rightWidth {
+			newDescription = rightPrefix + completions[i].Description[:rightWidth-len("...")] + "..." + rightSuffix
+		} else if l < width {
+			spaces := strings.Repeat(" ", rightWidth-len([]rune(completions[i].Description)))
+			newDescription = rightPrefix + completions[i].Description + spaces + rightSuffix
+		} else {
+			newDescription = rightPrefix + completions[i].Description + rightSuffix
+		}
+		new[i] = Completion{Text: newText, Description: newDescription}
 	}
-	width += len(prefix) + len(suffix)
 	return
 }

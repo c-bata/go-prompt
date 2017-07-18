@@ -116,6 +116,34 @@ func OptionSelectedSuggestionBGColor(x Color) option {
 	}
 }
 
+func OptionDescriptionTextColor(x Color) option {
+	return func(p *Prompt) error {
+		p.renderer.descriptionTextColor = x
+		return nil
+	}
+}
+
+func OptionDescriptionBGColor(x Color) option {
+	return func(p *Prompt) error {
+		p.renderer.descriptionBGColor = x
+		return nil
+	}
+}
+
+func OptionSelectedDescriptionTextColor(x Color) option {
+	return func(p *Prompt) error {
+		p.renderer.selectedDescriptionTextColor = x
+		return nil
+	}
+}
+
+func OptionSelectedDescriptionBGColor(x Color) option {
+	return func(p *Prompt) error {
+		p.renderer.selectedDescriptionBGColor = x
+		return nil
+	}
+}
+
 func OptionMaxCompletions(x uint16) option {
 	return func(p *Prompt) error {
 		p.maxCompletions = x
@@ -127,20 +155,24 @@ func NewPrompt(executor Executor, completer Completer, opts ...option) *Prompt {
 	pt := &Prompt{
 		in: &VT100Parser{fd: syscall.Stdin},
 		renderer: &Render{
-			prefix:                      "> ",
-			out:                         &VT100Writer{fd: syscall.Stdout},
-			prefixTextColor:             Blue,
-			prefixBGColor:               DefaultColor,
-			inputTextColor:              DefaultColor,
-			inputBGColor:                DefaultColor,
-			outputTextColor:             DefaultColor,
-			outputBGColor:               DefaultColor,
-			previewSuggestionTextColor:  Green,
-			previewSuggestionBGColor:    DefaultColor,
-			suggestionTextColor:         White,
-			suggestionBGColor:           Cyan,
-			selectedSuggestionTextColor: Black,
-			selectedSuggestionBGColor:   Turquoise,
+			prefix:                       "> ",
+			out:                          &VT100Writer{fd: syscall.Stdout},
+			prefixTextColor:              Blue,
+			prefixBGColor:                DefaultColor,
+			inputTextColor:               DefaultColor,
+			inputBGColor:                 DefaultColor,
+			outputTextColor:              DefaultColor,
+			outputBGColor:                DefaultColor,
+			previewSuggestionTextColor:   Green,
+			previewSuggestionBGColor:     DefaultColor,
+			suggestionTextColor:          White,
+			suggestionBGColor:            Cyan,
+			selectedSuggestionTextColor:  Black,
+			selectedSuggestionBGColor:    Turquoise,
+			descriptionTextColor:         Black,
+			descriptionBGColor:           Turquoise,
+			selectedDescriptionTextColor: White,
+			selectedDescriptionBGColor:   Cyan,
 		},
 		buf:            NewBuffer(),
 		executor:       executor,
