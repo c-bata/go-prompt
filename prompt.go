@@ -57,11 +57,9 @@ func (p *Prompt) Run() {
 					p.buf.InsertText(c, false, true)
 				}
 				p.renderer.BreakLine(p.buf)
+				res := p.executor(p.buf.Text())
+				p.renderer.RenderResult(res)
 				p.buf = NewBuffer()
-				go func() {
-					res := p.executor(p.buf.Text())
-					p.renderer.RenderResult(res)
-				} ()
 				p.selected = -1
 			} else if ac.Key == ControlC {
 				p.renderer.BreakLine(p.buf)

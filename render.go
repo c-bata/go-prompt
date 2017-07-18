@@ -85,6 +85,7 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selec
 		" ",
 	)
 	l := len(formatted)
+	r.prepareArea(l)
 
 	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor())) % int(r.col)
 	if d == 0 { // the cursor is on right end.
@@ -128,7 +129,6 @@ func (r *Render) Render(buffer *Buffer, completions []string, maxCompletions uin
 		r.renderWindowTooSmall()
 		return
 	}
-	r.prepareArea(h)
 
 	// Rendering
 	r.renderPrefix()
@@ -157,6 +157,7 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	r.out.SetColor(r.inputTextColor, r.inputBGColor)
 	r.out.WriteStr(buffer.Document().Text + "\n")
 	r.out.SetColor(DefaultColor, DefaultColor)
+	r.out.Flush()
 }
 
 func (r *Render) RenderResult(result string) {
