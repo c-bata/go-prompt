@@ -67,19 +67,19 @@ func (r *Render) renderWindowTooSmall() {
 	return
 }
 
-func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selected int) {
+func (r *Render) renderCompletion(buf *Buffer, suggestions []*Suggestion, max uint16, selected int) {
 	if max > r.row {
 		max = r.row
 	}
 
-	if l := len(words); l == 0 {
+	if l := len(suggestions); l == 0 {
 		return
 	} else if l > int(max) {
-		words = words[:max]
+		suggestions = suggestions[:max]
 	}
 
 	formatted, width := formatCompletions(
-		words,
+		suggestions,
 		int(r.col)-len(r.prefix),
 		" ",
 		" ",
@@ -117,7 +117,7 @@ func (r *Render) renderCompletion(buf *Buffer, words []string, max uint16, selec
 	return
 }
 
-func (r *Render) Render(buffer *Buffer, completions []string, maxCompletions uint16, selected int) {
+func (r *Render) Render(buffer *Buffer, completions []*Suggestion, maxCompletions uint16, selected int) {
 	// Erasing
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
 	r.out.EraseDown()
@@ -142,7 +142,7 @@ func (r *Render) Render(buffer *Buffer, completions []string, maxCompletions uin
 		c := completions[selected]
 		r.out.CursorBackward(len([]rune(buffer.Document().GetWordBeforeCursor())))
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor)
-		r.out.WriteStr(c)
+		r.out.WriteStr(c.Text)
 		r.out.SetColor(DefaultColor, DefaultColor)
 	}
 	r.out.Flush()
@@ -169,14 +169,14 @@ func (r *Render) RenderResult(result string) {
 	r.out.SetColor(DefaultColor, DefaultColor)
 }
 
-func formatCompletions(words []string, max int, prefix string, suffix string) (new []string, width int) {
-	num := len(words)
+func formatCompletions(suggestions []*Suggestion, max int, prefix string, suffix string) (new []string, width int) {
+	num := len(suggestions)
 	new = make([]string, num)
 	width = 0
 
 	for i := 0; i < num; i++ {
-		if width < len([]rune(words[i])) {
-			width = len([]rune(words[i]))
+		if width < len([]rune(suggestions[i].Text)) {
+			width = len([]rune(suggestions[i].Text))
 		}
 	}
 
@@ -185,13 +185,13 @@ func formatCompletions(words []string, max int, prefix string, suffix string) (n
 	}
 
 	for i := 0; i < num; i++ {
-		if l := len(words[i]); l > width {
-			new[i] = prefix + words[i][:width-len("...")] + "..." + suffix
+		if l := len(suggestions[i].Text); l > width {
+			new[i] = prefix + suggestions[i].Text[:width-len("...")] + "..." + suffix
 		} else if l < width {
-			spaces := strings.Repeat(" ", width-len([]rune(words[i])))
-			new[i] = prefix + words[i] + spaces + suffix
+			spaces := strings.Repeat(" ", width-len([]rune(suggestions[i].Text)))
+			new[i] = prefix + suggestions[i].Text + spaces + suffix
 		} else {
-			new[i] = prefix + words[i] + suffix
+			new[i] = prefix + suggestions[i].Text + suffix
 		}
 	}
 	width += len(prefix) + len(suffix)

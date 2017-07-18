@@ -8,7 +8,7 @@ import (
 func TestFormatCompletion(t *testing.T) {
 	scenarioTable := []struct {
 		scenario      string
-		completions   []string
+		completions   []*Suggestion
 		prefix        string
 		suffix        string
 		expected      []string
@@ -17,11 +17,11 @@ func TestFormatCompletion(t *testing.T) {
 	}{
 		{
 			scenario: "",
-			completions: []string{
-				"select",
-				"from",
-				"insert",
-				"where",
+			completions: []*Suggestion{
+				{Text: "select"},
+				{Text: "from"},
+				{Text: "insert"},
+				{Text: "where"},
 			},
 			prefix: " ",
 			suffix: " ",

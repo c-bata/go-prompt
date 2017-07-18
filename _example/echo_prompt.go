@@ -11,12 +11,12 @@ func executor(t string) string {
 	return r
 }
 
-func completer(t string) []string {
-	return []string{
-		"users",
-		"sites",
-		"articles",
-		"comments",
+func completer(t string) []*prompt.Suggestion {
+	return []*prompt.Suggestion{
+		{Text: "users"},
+		{Text: "sites"},
+		{Text: "articles"},
+		{Text: "comments"},
 	}
 }
 
