@@ -148,16 +148,18 @@ func (r *Render) Render(buffer *Buffer, completions []string, maxCompletions uin
 	r.out.Flush()
 }
 
-func (r *Render) BreakLine(buffer *Buffer, result string) {
-	// Erasing
+func (r *Render) BreakLine(buffer *Buffer) {
+	// CR
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
+	// Erasing and Render
 	r.out.EraseDown()
 	r.renderPrefix()
-
-	// Render Line Break
 	r.out.SetColor(r.inputTextColor, r.inputBGColor)
 	r.out.WriteStr(buffer.Document().Text + "\n")
+	r.out.SetColor(DefaultColor, DefaultColor)
+}
 
+func (r *Render) RenderResult(result string) {
 	// Render Result
 	if result != "" {
 		r.out.SetColor(r.outputTextColor, r.outputBGColor)
