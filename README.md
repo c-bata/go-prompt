@@ -71,6 +71,10 @@ func main() {
 #### `OptionSelectedSuggestionTextColor(x Color)`
 #### `OptionSelectedSuggestionBGColor(x Color)`
 #### `OptionMaxCompletions(x uint16)`
+#### `OptionDescriptionTextColor(x Color)`
+#### `OptionDescriptionBGColor(x Color)`
+#### `OptionSelectedDescriptionTextColor(x Color)`
+#### `OptionSelectedDescriptionBGColor(x Color)`
 
 
 ## LICENSE

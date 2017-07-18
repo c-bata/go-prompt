@@ -8,7 +8,7 @@ import (
 )
 
 type Executor func(string) string
-type Completer func(string) []*Suggestion
+type Completer func(string) []Suggestion
 type Suggestion struct {
 	Text        string
 	Description string
@@ -97,7 +97,7 @@ func (p *Prompt) Run() {
 	}
 }
 
-func (p *Prompt) updateSelectedCompletion(completions []*Suggestion) {
+func (p *Prompt) updateSelectedCompletion(completions []Suggestion) {
 	max := int(p.maxCompletions)
 	if len(completions) < max {
 		max = len(completions)
