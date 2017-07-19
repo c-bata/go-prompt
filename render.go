@@ -205,9 +205,9 @@ func formatCompletions(completions []Completion, max int) (new []Completion, wid
 
 	if diff := max - completionMargin - leftWidth - rightWidth; diff < 0 {
 		if rightWidth > diff {
-			rightWidth -= diff
-		} else if rightWidth+rightMargin > diff {
-			leftWidth += rightWidth + rightMargin - diff
+			rightWidth += diff
+		} else if rightWidth+rightMargin > -diff {
+			leftWidth += rightWidth + rightMargin + diff
 			rightWidth = 0
 		}
 	}
