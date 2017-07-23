@@ -80,7 +80,13 @@ func (p *Prompt) feed(b []byte) (shouldExecute, shouldExit bool, input string) {
 		}
 		p.selected = -1
 		p.buf.InsertText(string(b), false, true)
-	} else if ac.Key == ControlJ || ac.Key == Enter {
+		return
+	}
+
+	switch ac.Key {
+	case ControlJ:
+		fallthrough
+	case Enter:
 		if p.selected != -1 {
 			c := p.completer(p.buf.Text())[p.selected]
 			w := p.buf.Document().GetWordBeforeCursor()
@@ -95,18 +101,23 @@ func (p *Prompt) feed(b []byte) (shouldExecute, shouldExit bool, input string) {
 		input = p.buf.Text()
 		p.buf = NewBuffer()
 		p.selected = -1
-	} else if ac.Key == ControlC {
+	case ControlC:
 		p.renderer.BreakLine(p.buf)
 		p.buf = NewBuffer()
 		p.selected = -1
-	} else if ac.Key == ControlD {
+	case ControlD:
 		shouldExit = true
-		return
-	} else if ac.Key == BackTab || ac.Key == Up {
+	case Up:
+		fallthrough
+	case BackTab:
 		p.selected -= 1
-	} else if ac.Key == Tab || ac.Key == ControlI || ac.Key == Down {
+	case ControlI:
+		fallthrough
+	case Down:
+		fallthrough
+	case Tab:
 		p.selected += 1
-	} else {
+	default:
 		InputHandler(ac, p.buf)
 		p.selected = -1
 	}

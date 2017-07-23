@@ -180,7 +180,6 @@ func (r *Render) BreakLine(buffer *Buffer) {
 }
 
 func (r *Render) RenderResult(result string) {
-	// Render Result
 	if result != "" {
 		r.out.SetColor(r.outputTextColor, r.outputBGColor, false)
 		r.out.WriteRawStr(result)
