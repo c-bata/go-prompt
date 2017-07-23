@@ -19,14 +19,16 @@ Library for building powerful interactive command lines in Golang.
 package main
 
 import (
+    "context"
     "fmt"
+
     "github.com/c-bata/go-prompt-toolkit/prompt"
 )
 
 // executor executes command and return the output string.
 // 1. Execute sql
 // 2. Get response and return output
-func executor(sql string) string {
+func executor(ctx context.Context, sql string) string {
     res := "something response from db."
     return res // this is printed in console.
 }
@@ -42,7 +44,7 @@ func main() {
         completer,
         prompt.OptionTitle("sqlite3-prompt"),
         prompt.OptionPrefix(">>> "),
-        prompt.OptionPrefixColor("blue"),
+        prompt.OptionPrefixColor(prompt.Blue),
     )
     defer fmt.Println("\nGoodbye!")
     pt.Run()

@@ -1,13 +1,14 @@
 package prompt
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 )
 
-type Executor func(string) string
+type Executor func(context.Context, string) string
 type Completer func(string) []Completion
 type Completion struct {
 	Text        string
@@ -32,69 +33,84 @@ func (p *Prompt) Run() {
 	bufCh := make(chan []byte, 128)
 	go readBuffer(bufCh)
 
-	exitCh := make(chan bool, 16)
-	winSizeCh := make(chan *WinSize, 128)
+	exitCh := make(chan struct{})
+	winSizeCh := make(chan *WinSize)
 	go handleSignals(p.in, exitCh, winSizeCh)
 
 	for {
 		select {
 		case b := <-bufCh:
-			ac := p.in.GetASCIICode(b)
-			if ac == nil {
-				if p.selected != -1 {
-					c := p.completer(p.buf.Text())[p.selected]
-					w := p.buf.Document().GetWordBeforeCursor()
-					if w != "" {
-						p.buf.DeleteBeforeCursor(len([]rune(w)))
-					}
-					p.buf.InsertText(c.Text, false, true)
-				}
-				p.selected = -1
-				p.buf.InsertText(string(b), false, true)
-			} else if ac.Key == ControlJ || ac.Key == Enter {
-				if p.selected != -1 {
-					c := p.completer(p.buf.Text())[p.selected]
-					w := p.buf.Document().GetWordBeforeCursor()
-					if w != "" {
-						p.buf.DeleteBeforeCursor(len([]rune(w)))
-					}
-					p.buf.InsertText(c.Text, false, true)
-				}
-				p.renderer.BreakLine(p.buf)
-				res := p.executor(p.buf.Text())
-				p.renderer.RenderResult(res)
-				p.buf = NewBuffer()
-				p.selected = -1
-			} else if ac.Key == ControlC {
-				p.renderer.BreakLine(p.buf)
-				p.buf = NewBuffer()
-				p.selected = -1
-			} else if ac.Key == ControlD {
+			if shouldExecute, shouldExit, input := p.feed(b); shouldExit {
 				return
-			} else if ac.Key == BackTab || ac.Key == Up {
-				p.selected -= 1
-			} else if ac.Key == Tab || ac.Key == ControlI || ac.Key == Down {
-				p.selected += 1
-			} else {
-				InputHandler(ac, p.buf)
-				p.selected = -1
-			}
+			} else if shouldExecute {
+				ctx, _ := context.WithCancel(context.Background())
+				p.renderer.RenderResult(p.executor(ctx, input))
 
-			completions := p.completer(p.buf.Text())
-			p.updateSelectedCompletion(completions)
-			p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
+				completions := p.completer(p.buf.Text())
+				p.updateSelectedCompletion(completions)
+				p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
+			} else {
+				completions := p.completer(p.buf.Text())
+				p.updateSelectedCompletion(completions)
+				p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
+			}
 		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
 			completions := p.completer(p.buf.Text())
 			p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
-		case e := <-exitCh:
-			if e {
-				return
-			}
+		case <-exitCh:
+			return
 		default:
 			time.Sleep(10 * time.Millisecond)
 		}
 	}
+}
+
+func (p *Prompt) feed(b []byte) (shouldExecute, shouldExit bool, input string) {
+	shouldExecute = false
+	ac := p.in.GetASCIICode(b)
+	if ac == nil {
+		if p.selected != -1 {
+			c := p.completer(p.buf.Text())[p.selected]
+			w := p.buf.Document().GetWordBeforeCursor()
+			if w != "" {
+				p.buf.DeleteBeforeCursor(len([]rune(w)))
+			}
+			p.buf.InsertText(c.Text, false, true)
+		}
+		p.selected = -1
+		p.buf.InsertText(string(b), false, true)
+	} else if ac.Key == ControlJ || ac.Key == Enter {
+		if p.selected != -1 {
+			c := p.completer(p.buf.Text())[p.selected]
+			w := p.buf.Document().GetWordBeforeCursor()
+			if w != "" {
+				p.buf.DeleteBeforeCursor(len([]rune(w)))
+			}
+			p.buf.InsertText(c.Text, false, true)
+		}
+		p.renderer.BreakLine(p.buf)
+
+		shouldExecute = true
+		input = p.buf.Text()
+		p.buf = NewBuffer()
+		p.selected = -1
+	} else if ac.Key == ControlC {
+		p.renderer.BreakLine(p.buf)
+		p.buf = NewBuffer()
+		p.selected = -1
+	} else if ac.Key == ControlD {
+		shouldExit = true
+		return
+	} else if ac.Key == BackTab || ac.Key == Up {
+		p.selected -= 1
+	} else if ac.Key == Tab || ac.Key == ControlI || ac.Key == Down {
+		p.selected += 1
+	} else {
+		InputHandler(ac, p.buf)
+		p.selected = -1
+	}
+	return
 }
 
 func (p *Prompt) updateSelectedCompletion(completions []Completion) {
@@ -131,7 +147,7 @@ func readBuffer(bufCh chan []byte) {
 	}
 }
 
-func handleSignals(in ConsoleParser, exitCh chan bool, winSizeCh chan *WinSize) {
+func handleSignals(in ConsoleParser, exitCh chan struct{}, winSizeCh chan *WinSize) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(
 		sigCh,
@@ -147,19 +163,19 @@ func handleSignals(in ConsoleParser, exitCh chan bool, winSizeCh chan *WinSize) 
 		switch s {
 		// kill -SIGHUP XXXX
 		case syscall.SIGHUP:
-			exitCh <- true
+			exitCh <- struct{}{}
 
 			// kill -SIGINT XXXX or Ctrl+c
 		case syscall.SIGINT:
-			exitCh <- true
+			exitCh <- struct{}{}
 
 			// kill -SIGTERM XXXX
 		case syscall.SIGTERM:
-			exitCh <- true
+			exitCh <- struct{}{}
 
 			// kill -SIGQUIT XXXX
 		case syscall.SIGQUIT:
-			exitCh <- true
+			exitCh <- struct{}{}
 
 		case syscall.SIGWINCH:
 			winSizeCh <- in.GetWinSize()
