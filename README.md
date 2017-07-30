@@ -11,7 +11,7 @@ Library for building powerful interactive command lines in Golang.
 
 #### Projects using go-prompt-toolkit
 
-* kube-prompt : This is available soon...
+* [kube-prompt : An interactive kubernetes client featuring autocomplete using prompt-toolkit.](https://github.com/c-bata/kube-prompt)
 
 ## Getting Started
 
