@@ -115,4 +115,7 @@ const (
 
 	// Key which is ignored. (The key binding for this key should not do anything.)
 	Ignore
+
+	// Key is not defined
+	NotDefined
 )

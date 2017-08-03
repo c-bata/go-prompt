@@ -35,13 +35,13 @@ func (t *VT100Parser) TearDown() error {
 	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.origTermios)
 }
 
-func (t *VT100Parser) GetASCIICode(b []byte) *ASCIICode {
+func (t *VT100Parser) GetKey(b []byte) Key {
 	for _, k := range asciiSequences {
 		if bytes.Compare(k.ASCIICode, b) == 0 {
-			return k
+			return k.Key
 		}
 	}
-	return nil
+	return NotDefined
 }
 
 // winsize is winsize struct got from the ioctl(2) system call.

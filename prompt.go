@@ -68,22 +68,9 @@ func (p *Prompt) Run() {
 
 func (p *Prompt) feed(b []byte) (shouldExecute, shouldExit bool, input string) {
 	shouldExecute = false
-	ac := p.in.GetASCIICode(b)
-	if ac == nil {
-		if p.selected != -1 {
-			c := p.completer(p.buf.Text())[p.selected]
-			w := p.buf.Document().GetWordBeforeCursor()
-			if w != "" {
-				p.buf.DeleteBeforeCursor(len([]rune(w)))
-			}
-			p.buf.InsertText(c.Text, false, true)
-		}
-		p.selected = -1
-		p.buf.InsertText(string(b), false, true)
-		return
-	}
+	key := p.in.GetKey(b)
 
-	switch ac.Key {
+	switch key {
 	case ControlJ:
 		fallthrough
 	case Enter:
@@ -117,8 +104,24 @@ func (p *Prompt) feed(b []byte) (shouldExecute, shouldExit bool, input string) {
 		fallthrough
 	case Tab:
 		p.selected += 1
+	case Left:
+		p.buf.CursorLeft(1)
+	case Right:
+		p.buf.CursorRight(1)
+	case Backspace:
+		p.buf.DeleteBeforeCursor(1)
+	case NotDefined:
+		if p.selected != -1 {
+			c := p.completer(p.buf.Text())[p.selected]
+			w := p.buf.Document().GetWordBeforeCursor()
+			if w != "" {
+				p.buf.DeleteBeforeCursor(len([]rune(w)))
+			}
+			p.buf.InsertText(c.Text, false, true)
+		}
+		p.selected = -1
+		p.buf.InsertText(string(b), false, true)
 	default:
-		InputHandler(ac, p.buf)
 		p.selected = -1
 	}
 	return

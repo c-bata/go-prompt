@@ -3,12 +3,12 @@ package prompt
 import "strings"
 
 const (
-	leftPrefix = " "
-	leftSuffix = " "
-	rightPrefix = " "
-	rightSuffix = " "
-	leftMargin = len(leftPrefix + leftSuffix)
-	rightMargin = len(rightPrefix + rightSuffix)
+	leftPrefix       = " "
+	leftSuffix       = " "
+	rightPrefix      = " "
+	rightSuffix      = " "
+	leftMargin       = len(leftPrefix + leftSuffix)
+	rightMargin      = len(rightPrefix + rightSuffix)
 	completionMargin = leftMargin + rightMargin
 )
 

@@ -179,6 +179,7 @@ func NewPrompt(executor Executor, completer Completer, opts ...option) *Prompt {
 		completer:      completer,
 		maxCompletions: 6,
 		selected:       -1,
+		history:        make([]string, 0, 10),
 	}
 
 	for _, opt := range opts {

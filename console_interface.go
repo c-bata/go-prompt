@@ -6,6 +6,7 @@ type WinSize struct {
 }
 
 type Color int
+
 const (
 	DefaultColor Color = iota
 
@@ -36,7 +37,7 @@ type ConsoleParser interface {
 	// TearDown
 	TearDown() error
 	// GetSCIICode returns ASCIICode correspond to input byte codes.
-	GetASCIICode(b []byte) *ASCIICode
+	GetKey(b []byte) Key
 	// GetWinSize returns winsize struct which is the response of ioctl(2).
 	GetWinSize() *WinSize
 }
