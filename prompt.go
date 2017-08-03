@@ -2,10 +2,17 @@ package prompt
 
 import (
 	"context"
+	"io/ioutil"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+)
+
+const (
+	logfile      = "/tmp/go-prompt-debug.log"
+	envEnableLog = "GO_PROMPT_ENABLE_LOG"
 )
 
 type Executor func(context.Context, string) string
@@ -23,11 +30,23 @@ type Prompt struct {
 	completer      Completer
 	maxCompletions uint16
 	selected       int // -1 means nothing one is selected.
+	history        []string
 }
 
 func (p *Prompt) Run() {
 	p.setUp()
 	defer p.tearDown()
+
+	if os.Getenv(envEnableLog) != "true" {
+		log.SetOutput(ioutil.Discard)
+	} else if f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
+		log.SetOutput(ioutil.Discard)
+	} else {
+		defer f.Close()
+		log.SetOutput(f)
+		log.Println("Logging is enabled.")
+	}
+
 	p.renderer.Render(p.buf, p.completer(p.buf.Text()), p.maxCompletions, p.selected)
 
 	bufCh := make(chan []byte, 128)
@@ -71,9 +90,7 @@ func (p *Prompt) feed(b []byte) (shouldExecute, shouldExit bool, input string) {
 	key := p.in.GetKey(b)
 
 	switch key {
-	case ControlJ:
-		fallthrough
-	case Enter:
+	case ControlJ, Enter:
 		if p.selected != -1 {
 			c := p.completer(p.buf.Text())[p.selected]
 			w := p.buf.Document().GetWordBeforeCursor()
@@ -86,6 +103,8 @@ func (p *Prompt) feed(b []byte) (shouldExecute, shouldExit bool, input string) {
 
 		shouldExecute = true
 		input = p.buf.Text()
+		p.history = append(p.history, input)
+		log.Printf("History: %s", input)
 		p.buf = NewBuffer()
 		p.selected = -1
 	case ControlC:
