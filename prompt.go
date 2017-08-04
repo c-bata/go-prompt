@@ -16,7 +16,7 @@ const (
 )
 
 type Executor func(context.Context, string) string
-type Completer func(string) []Completion
+type Completer func(string) []Suggest
 
 type Prompt struct {
 	in             ConsoleParser

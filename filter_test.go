@@ -9,36 +9,36 @@ func TestFilter(t *testing.T) {
 	var scenarioTable = []struct {
 		scenario   string
 		filter     CompletionFilter
-		list       []Completion
+		list       []Suggest
 		substr     string
 		ignoreCase bool
-		expected   []Completion
+		expected   []Suggest
 	}{
 		{
 			scenario: "Contains don't ignore case",
 			filter:   FilterContains,
-			list: []Completion{
+			list: []Suggest{
 				{Text: "abcde"},
 				{Text: "fghij"},
 				{Text: "ABCDE"},
 			},
 			substr:     "cd",
 			ignoreCase: false,
-			expected: []Completion{
+			expected: []Suggest{
 				{Text: "abcde"},
 			},
 		},
 		{
 			scenario: "Contains ignore case",
 			filter:   FilterContains,
-			list: []Completion{
+			list: []Suggest{
 				{Text: "abcde"},
 				{Text: "fghij"},
 				{Text: "ABCDE"},
 			},
 			substr:     "cd",
 			ignoreCase: true,
-			expected: []Completion{
+			expected: []Suggest{
 				{Text: "abcde"},
 				{Text: "ABCDE"},
 			},
@@ -46,28 +46,28 @@ func TestFilter(t *testing.T) {
 		{
 			scenario: "HasPrefix don't ignore case",
 			filter:   FilterHasPrefix,
-			list: []Completion{
+			list: []Suggest{
 				{Text: "abcde"},
 				{Text: "fghij"},
 				{Text: "ABCDE"},
 			},
 			substr:     "abc",
 			ignoreCase: false,
-			expected: []Completion{
+			expected: []Suggest{
 				{Text: "abcde"},
 			},
 		},
 		{
 			scenario: "HasPrefix ignore case",
 			filter:   FilterHasPrefix,
-			list: []Completion{
+			list: []Suggest{
 				{Text: "abcde"},
 				{Text: "fabcj"},
 				{Text: "ABCDE"},
 			},
 			substr:     "abc",
 			ignoreCase: true,
-			expected: []Completion{
+			expected: []Suggest{
 				{Text: "abcde"},
 				{Text: "ABCDE"},
 			},
@@ -75,28 +75,28 @@ func TestFilter(t *testing.T) {
 		{
 			scenario: "HasSuffix don't ignore case",
 			filter:   FilterHasSuffix,
-			list: []Completion{
+			list: []Suggest{
 				{Text: "abcde"},
 				{Text: "fcdej"},
 				{Text: "ABCDE"},
 			},
 			substr:     "cde",
 			ignoreCase: false,
-			expected: []Completion{
+			expected: []Suggest{
 				{Text: "abcde"},
 			},
 		},
 		{
 			scenario: "HasSuffix ignore case",
 			filter:   FilterHasSuffix,
-			list: []Completion{
+			list: []Suggest{
 				{Text: "abcde"},
 				{Text: "fcdej"},
 				{Text: "ABCDE"},
 			},
 			substr:     "cde",
 			ignoreCase: true,
-			expected: []Completion{
+			expected: []Suggest{
 				{Text: "abcde"},
 				{Text: "ABCDE"},
 			},

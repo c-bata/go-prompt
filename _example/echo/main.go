@@ -11,8 +11,8 @@ func executor(ctx context.Context, t string) string {
 	return fmt.Sprintln("Your input: " + t)
 }
 
-func completer(t string) []prompt.Completion {
-	return []prompt.Completion{
+func completer(t string) []prompt.Suggest {
+	return []prompt.Suggest{
 		{Text: "users", Description: "user table"},
 		{Text: "sites", Description: "sites table"},
 		{Text: "articles", Description: "articles table"},

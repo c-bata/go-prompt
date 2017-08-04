@@ -81,7 +81,7 @@ func (r *Render) renderWindowTooSmall() {
 	return
 }
 
-func (r *Render) renderCompletion(buf *Buffer, completions []Completion, max uint16, selected int) {
+func (r *Render) renderCompletion(buf *Buffer, completions []Suggest, max uint16, selected int) {
 	if max > r.row {
 		max = r.row
 	}
@@ -136,7 +136,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions []Completion, max uin
 	return
 }
 
-func (r *Render) Render(buffer *Buffer, completions []Completion, maxCompletions uint16, selected int) {
+func (r *Render) Render(buffer *Buffer, completions []Suggest, maxCompletions uint16, selected int) {
 	// Erasing
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
 	r.out.EraseDown()
@@ -187,9 +187,9 @@ func (r *Render) RenderResult(result string) {
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
-func formatCompletions(completions []Completion, max int) (new []Completion, width int) {
+func formatCompletions(completions []Suggest, max int) (new []Suggest, width int) {
 	num := len(completions)
-	new = make([]Completion, num)
+	new = make([]Suggest, num)
 	leftWidth := 0
 	rightWidth := 0
 
@@ -238,7 +238,7 @@ func formatCompletions(completions []Completion, max int) (new []Completion, wid
 		} else {
 			newDescription = rightPrefix + completions[i].Description + rightSuffix
 		}
-		new[i] = Completion{Text: newText, Description: newDescription}
+		new[i] = Suggest{Text: newText, Description: newDescription}
 	}
 	return
 }

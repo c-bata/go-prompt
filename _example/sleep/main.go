@@ -25,8 +25,8 @@ func executor(ctx context.Context, t string) string {
 	return ""
 }
 
-func completer(t string) []prompt.Completion {
-	return []prompt.Completion{
+func completer(t string) []prompt.Suggest {
+	return []prompt.Suggest{
 		{Text: "sleep 5s"},
 		{Text: "sleep 20s"},
 	}

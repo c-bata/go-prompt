@@ -2,9 +2,9 @@ package prompt
 
 import "strings"
 
-type CompletionFilter func([]Completion, string, bool) []Completion
+type CompletionFilter func([]Suggest, string, bool) []Suggest
 
-func FilterHasPrefix(completions []Completion, sub string, ignoreCase bool) []Completion {
+func FilterHasPrefix(completions []Suggest, sub string, ignoreCase bool) []Suggest {
 	if sub == "" {
 		return completions
 	}
@@ -12,7 +12,7 @@ func FilterHasPrefix(completions []Completion, sub string, ignoreCase bool) []Co
 		sub = strings.ToUpper(sub)
 	}
 
-	ret := make([]Completion, 0, len(completions))
+	ret := make([]Suggest, 0, len(completions))
 	for i := range completions {
 		c := completions[i].Text
 		if ignoreCase {
@@ -25,7 +25,7 @@ func FilterHasPrefix(completions []Completion, sub string, ignoreCase bool) []Co
 	return ret
 }
 
-func FilterHasSuffix(completions []Completion, sub string, ignoreCase bool) []Completion {
+func FilterHasSuffix(completions []Suggest, sub string, ignoreCase bool) []Suggest {
 	if sub == "" {
 		return completions
 	}
@@ -33,7 +33,7 @@ func FilterHasSuffix(completions []Completion, sub string, ignoreCase bool) []Co
 		sub = strings.ToUpper(sub)
 	}
 
-	ret := make([]Completion, 0, len(completions))
+	ret := make([]Suggest, 0, len(completions))
 	for i := range completions {
 		c := completions[i].Text
 		if ignoreCase {
@@ -46,7 +46,7 @@ func FilterHasSuffix(completions []Completion, sub string, ignoreCase bool) []Co
 	return ret
 }
 
-func FilterContains(completions []Completion, sub string, ignoreCase bool) []Completion {
+func FilterContains(completions []Suggest, sub string, ignoreCase bool) []Suggest {
 	if sub == "" {
 		return completions
 	}
@@ -54,7 +54,7 @@ func FilterContains(completions []Completion, sub string, ignoreCase bool) []Com
 		sub = strings.ToUpper(sub)
 	}
 
-	ret := make([]Completion, 0, len(completions))
+	ret := make([]Suggest, 0, len(completions))
 	for i := range completions {
 		c := completions[i].Text
 		if ignoreCase {
