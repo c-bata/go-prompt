@@ -10,12 +10,12 @@ type History struct {
 
 func (h *History) Add(input string) {
 	h.histories = append(h.histories, input)
-	copy(h.tmp, h.histories)
-	h.tmp = append(h.tmp, "")
-	h.selected = len(h.tmp) - 1
+	h.Clear()
 }
 
 func (h *History) Clear() {
+	copy(h.tmp, h.histories)
+	h.tmp = append(h.tmp, "")
 	h.selected = len(h.tmp) - 1
 }
 
