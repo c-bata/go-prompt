@@ -42,14 +42,14 @@ func main() {
 
 	for {
 		b := <-bufCh
-		if ac := parser.GetASCIICode(b); ac == nil {
+		if key := parser.GetKey(b); key == prompt.NotDefined {
 			fmt.Printf("Key '%s' data:'%#v'\n", string(b), b)
 		} else {
-			if ac.Key == prompt.ControlC {
+			if key == prompt.ControlC {
 				fmt.Println("exit.")
 				return
 			}
-			fmt.Printf("Key '%s' data:'%#v'\n", ac.Key, b)
+			fmt.Printf("Key '%s' data:'%#v'\n", key, b)
 		}
 		fmt.Print("> ")
 	}
