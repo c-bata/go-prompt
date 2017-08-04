@@ -52,7 +52,7 @@ func (p *Prompt) Run() {
 	bufCh := make(chan []byte, 128)
 	go readBuffer(bufCh)
 
-	exitCh := make(chan struct{})
+	exitCh := make(chan int)
 	winSizeCh := make(chan *WinSize)
 	go handleSignals(p.in, exitCh, winSizeCh)
 
@@ -77,8 +77,9 @@ func (p *Prompt) Run() {
 			p.renderer.UpdateWinSize(w)
 			completions := p.completer(p.buf.Text())
 			p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
-		case <-exitCh:
-			return
+		case code := <-exitCh:
+			p.tearDown()
+			os.Exit(code)
 		default:
 			time.Sleep(10 * time.Millisecond)
 		}
@@ -117,11 +118,9 @@ func (p *Prompt) feed(b []byte) (shouldExecute, shouldExit bool, input string) {
 		fallthrough
 	case BackTab:
 		p.selected -= 1
-	case ControlI:
-		fallthrough
 	case Down:
 		fallthrough
-	case Tab:
+	case Tab, ControlI:
 		p.selected += 1
 	case Left:
 		p.buf.CursorLeft(1)
@@ -180,11 +179,10 @@ func readBuffer(bufCh chan []byte) {
 	}
 }
 
-func handleSignals(in ConsoleParser, exitCh chan struct{}, winSizeCh chan *WinSize) {
+func handleSignals(in ConsoleParser, exitCh chan int, winSizeCh chan *WinSize) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(
 		sigCh,
-		syscall.SIGHUP,
 		syscall.SIGINT,
 		syscall.SIGTERM,
 		syscall.SIGQUIT,
@@ -194,24 +192,23 @@ func handleSignals(in ConsoleParser, exitCh chan struct{}, winSizeCh chan *WinSi
 	for {
 		s := <-sigCh
 		switch s {
-		// kill -SIGHUP XXXX
-		case syscall.SIGHUP:
-			exitCh <- struct{}{}
+		case syscall.SIGINT:  // kill -SIGINT XXXX or Ctrl+c
+			log.Println("SIGNAL: Catch SIGINT")
+			exitCh <- 0
 
-			// kill -SIGINT XXXX or Ctrl+c
-		case syscall.SIGINT:
-			exitCh <- struct{}{}
+		case syscall.SIGTERM:  // kill -SIGTERM XXXX
+			log.Println("SIGNAL: Catch SIGTERM")
+			exitCh <- 1
 
-			// kill -SIGTERM XXXX
-		case syscall.SIGTERM:
-			exitCh <- struct{}{}
-
-			// kill -SIGQUIT XXXX
-		case syscall.SIGQUIT:
-			exitCh <- struct{}{}
+		case syscall.SIGQUIT:  // kill -SIGQUIT XXXX
+			log.Println("SIGNAL: Catch SIGQUIT")
+			exitCh <- 0
 
 		case syscall.SIGWINCH:
+			log.Println("SIGNAL: Catch SIGWINCH")
 			winSizeCh <- in.GetWinSize()
+
+		// TODO: SIGUSR1 -> Reopen log file.
 		default:
 		}
 	}
