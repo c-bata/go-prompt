@@ -30,7 +30,7 @@ type Prompt struct {
 	completer      Completer
 	maxCompletions uint16
 	selected       int // -1 means nothing one is selected.
-	history        []string
+	history        *History
 }
 
 type Exec struct {
@@ -74,7 +74,6 @@ func (p *Prompt) Run() {
 			if shouldExit, exec := p.feed(b); shouldExit {
 				return
 			} else if exec != nil {
-				p.history = append(p.history, exec.input)
 				p.runExecutor(exec, bufCh)
 
 				completions := p.completer(p.buf.Text())
@@ -139,6 +138,9 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		log.Printf("[History] %s", p.buf.Text())
 		p.buf = NewBuffer()
 		p.selected = -1
+		if exec.input != "" {
+			p.history.Add(exec.input)
+		}
 	case ControlC:
 		p.renderer.BreakLine(p.buf)
 		p.buf = NewBuffer()
@@ -146,10 +148,22 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	case ControlD:
 		shouldExit = true
 	case Up:
+		if p.selected == -1 {
+			if newBuf, changed := p.history.Older(p.buf); changed {
+				p.buf = newBuf
+			}
+			return
+		}
 		fallthrough
 	case BackTab:
 		p.selected -= 1
 	case Down:
+		if p.selected == -1 {
+			if newBuf, changed := p.history.Newer(p.buf); changed {
+				p.buf = newBuf
+			}
+			return
+		}
 		fallthrough
 	case Tab, ControlI:
 		p.selected += 1
