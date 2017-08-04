@@ -1,16 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
-	"context"
 	"time"
 
 	"github.com/c-bata/go-prompt-toolkit"
 )
 
 func executor(ctx context.Context, t string) string {
-	ctx, cancel := context.WithTimeout(ctx, 10 * time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	if t == "sleep 5s" {

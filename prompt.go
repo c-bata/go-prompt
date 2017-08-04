@@ -33,6 +33,18 @@ type Prompt struct {
 	history        []string
 }
 
+type Exec struct {
+	input string
+	ctx   context.Context
+}
+
+func (e *Exec) Context() context.Context {
+	if e.ctx == nil {
+		e.ctx = context.Background()
+	}
+	return e.ctx
+}
+
 func (p *Prompt) Run() {
 	p.setUp()
 	defer p.tearDown()
@@ -44,7 +56,7 @@ func (p *Prompt) Run() {
 	} else {
 		defer f.Close()
 		log.SetOutput(f)
-		log.Println("Logging is enabled.")
+		log.Println("[INFO] Logging is enabled.")
 	}
 
 	p.renderer.Render(p.buf, p.completer(p.buf.Text()), p.maxCompletions, p.selected)
@@ -59,11 +71,11 @@ func (p *Prompt) Run() {
 	for {
 		select {
 		case b := <-bufCh:
-			if shouldExecute, shouldExit, input := p.feed(b); shouldExit {
+			if shouldExit, exec := p.feed(b); shouldExit {
 				return
-			} else if shouldExecute {
-				ctx, _ := context.WithCancel(context.Background())
-				p.renderer.RenderResult(p.executor(ctx, input))
+			} else if exec != nil {
+				p.history = append(p.history, exec.input)
+				p.runExecutor(exec, bufCh)
 
 				completions := p.completer(p.buf.Text())
 				p.updateSelectedCompletion(completions)
@@ -86,8 +98,29 @@ func (p *Prompt) Run() {
 	}
 }
 
-func (p *Prompt) feed(b []byte) (shouldExecute, shouldExit bool, input string) {
-	shouldExecute = false
+func (p *Prompt) runExecutor(exec *Exec, bufCh chan []byte) {
+	resCh := make(chan string, 1)
+	ctx, cancel := context.WithCancel(exec.Context())
+	go func() {
+		resCh <- p.executor(ctx, exec.input)
+	}()
+
+	for {
+		select {
+		case r := <-resCh:
+			p.renderer.RenderResult(r)
+			return
+		case b := <-bufCh:
+			if p.in.GetKey(b) == ControlC {
+				log.Println("[INFO] Executor is canceled.")
+				cancel()
+			}
+		}
+	}
+	return
+}
+
+func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	key := p.in.GetKey(b)
 
 	switch key {
@@ -102,10 +135,8 @@ func (p *Prompt) feed(b []byte) (shouldExecute, shouldExit bool, input string) {
 		}
 		p.renderer.BreakLine(p.buf)
 
-		shouldExecute = true
-		input = p.buf.Text()
-		p.history = append(p.history, input)
-		log.Printf("History: %s", input)
+		exec = &Exec{input: p.buf.Text()}
+		log.Printf("[History] %s", p.buf.Text())
 		p.buf = NewBuffer()
 		p.selected = -1
 	case ControlC:
@@ -127,6 +158,15 @@ func (p *Prompt) feed(b []byte) (shouldExecute, shouldExit bool, input string) {
 	case Right:
 		p.buf.CursorRight(1)
 	case Backspace:
+		if p.selected != -1 {
+			c := p.completer(p.buf.Text())[p.selected]
+			w := p.buf.Document().GetWordBeforeCursor()
+			if w != "" {
+				p.buf.DeleteBeforeCursor(len([]rune(w)))
+			}
+			p.buf.InsertText(c.Text, false, true)
+			p.selected = -1
+		}
 		p.buf.DeleteBeforeCursor(1)
 	case NotDefined:
 		if p.selected != -1 {
@@ -193,19 +233,19 @@ func handleSignals(in ConsoleParser, exitCh chan int, winSizeCh chan *WinSize) {
 		s := <-sigCh
 		switch s {
 		case syscall.SIGINT:  // kill -SIGINT XXXX or Ctrl+c
-			log.Println("SIGNAL: Catch SIGINT")
+			log.Println("[SIGNAL] Catch SIGINT")
 			exitCh <- 0
 
 		case syscall.SIGTERM:  // kill -SIGTERM XXXX
-			log.Println("SIGNAL: Catch SIGTERM")
+			log.Println("[SIGNAL] Catch SIGTERM")
 			exitCh <- 1
 
 		case syscall.SIGQUIT:  // kill -SIGQUIT XXXX
-			log.Println("SIGNAL: Catch SIGQUIT")
+			log.Println("[SIGNAL] Catch SIGQUIT")
 			exitCh <- 0
 
 		case syscall.SIGWINCH:
-			log.Println("SIGNAL: Catch SIGWINCH")
+			log.Println("[SIGNAL] Catch SIGWINCH")
 			winSizeCh <- in.GetWinSize()
 
 		// TODO: SIGUSR1 -> Reopen log file.
