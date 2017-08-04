@@ -10,7 +10,12 @@ type History struct {
 
 func (h *History) Add(input string) {
 	h.histories = append(h.histories, input)
-	h.tmp = append(h.histories, "")
+	copy(h.tmp, h.histories)
+	h.tmp = append(h.tmp, "")
+	h.selected = len(h.tmp) - 1
+}
+
+func (h *History) Clear() {
 	h.selected = len(h.tmp) - 1
 }
 
@@ -30,7 +35,7 @@ func (h *History) Older(buf *Buffer) (new *Buffer, changed bool) {
 
 func (h *History) Newer(buf *Buffer) (new *Buffer, changed bool) {
 	log.Printf("[DEBUG] Before %#v\n", h)
-	if h.selected >= len(h.tmp) - 1 {
+	if h.selected >= len(h.tmp)-1 {
 		return buf, false
 	}
 	h.tmp[h.selected] = buf.Text()

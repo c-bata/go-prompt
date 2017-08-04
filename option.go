@@ -146,7 +146,7 @@ func OptionSelectedDescriptionBGColor(x Color) option {
 
 func OptionMaxCompletions(x uint16) option {
 	return func(p *Prompt) error {
-		p.maxCompletions = x
+		p.completion.Max = x
 		return nil
 	}
 }
@@ -177,9 +177,8 @@ func NewPrompt(executor Executor, completer Completer, opts ...option) *Prompt {
 		buf:            NewBuffer(),
 		executor:       executor,
 		completer:      completer,
-		maxCompletions: 6,
-		selected:       -1,
 		history:        NewHistory(),
+		completion:     NewCompletionManager(6),
 	}
 
 	for _, opt := range opts {

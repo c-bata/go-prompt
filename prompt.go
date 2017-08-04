@@ -17,10 +17,6 @@ const (
 
 type Executor func(context.Context, string) string
 type Completer func(string) []Completion
-type Completion struct {
-	Text        string
-	Description string
-}
 
 type Prompt struct {
 	in             ConsoleParser
@@ -28,9 +24,8 @@ type Prompt struct {
 	renderer       *Render
 	executor       Executor
 	completer      Completer
-	maxCompletions uint16
-	selected       int // -1 means nothing one is selected.
 	history        *History
+	completion     *CompletionManager
 }
 
 type Exec struct {
@@ -59,7 +54,7 @@ func (p *Prompt) Run() {
 		log.Println("[INFO] Logging is enabled.")
 	}
 
-	p.renderer.Render(p.buf, p.completer(p.buf.Text()), p.maxCompletions, p.selected)
+	p.renderer.Render(p.buf, p.completer(p.buf.Text()), p.completion.Max, p.completion.selected)
 
 	bufCh := make(chan []byte, 128)
 	go readBuffer(bufCh)
@@ -77,17 +72,17 @@ func (p *Prompt) Run() {
 				p.runExecutor(exec, bufCh)
 
 				completions := p.completer(p.buf.Text())
-				p.updateSelectedCompletion(completions)
-				p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
+				p.completion.update(completions)
+				p.renderer.Render(p.buf, completions, p.completion.Max, p.completion.selected)
 			} else {
 				completions := p.completer(p.buf.Text())
-				p.updateSelectedCompletion(completions)
-				p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
+				p.completion.update(completions)
+				p.renderer.Render(p.buf, completions, p.completion.Max, p.completion.selected)
 			}
 		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
 			completions := p.completer(p.buf.Text())
-			p.renderer.Render(p.buf, completions, p.maxCompletions, p.selected)
+			p.renderer.Render(p.buf, completions, p.completion.Max, p.completion.selected)
 		case code := <-exitCh:
 			p.tearDown()
 			os.Exit(code)
@@ -124,8 +119,8 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 
 	switch key {
 	case ControlJ, Enter:
-		if p.selected != -1 {
-			c := p.completer(p.buf.Text())[p.selected]
+		if p.completion.Completing() {
+			c := p.completer(p.buf.Text())[p.completion.selected]
 			w := p.buf.Document().GetWordBeforeCursor()
 			if w != "" {
 				p.buf.DeleteBeforeCursor(len([]rune(w)))
@@ -137,18 +132,19 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		exec = &Exec{input: p.buf.Text()}
 		log.Printf("[History] %s", p.buf.Text())
 		p.buf = NewBuffer()
-		p.selected = -1
+		p.completion.Reset()
 		if exec.input != "" {
 			p.history.Add(exec.input)
 		}
 	case ControlC:
 		p.renderer.BreakLine(p.buf)
 		p.buf = NewBuffer()
-		p.selected = -1
+		p.completion.Reset()
+		p.history.Clear()
 	case ControlD:
 		shouldExit = true
 	case Up:
-		if p.selected == -1 {
+		if !p.completion.Completing() {
 			if newBuf, changed := p.history.Older(p.buf); changed {
 				p.buf = newBuf
 			}
@@ -156,9 +152,9 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		}
 		fallthrough
 	case BackTab:
-		p.selected -= 1
+		p.completion.Previous()
 	case Down:
-		if p.selected == -1 {
+		if !p.completion.Completing() {
 			if newBuf, changed := p.history.Newer(p.buf); changed {
 				p.buf = newBuf
 			}
@@ -166,56 +162,43 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		}
 		fallthrough
 	case Tab, ControlI:
-		p.selected += 1
+		p.completion.Next()
 	case Left:
 		p.buf.CursorLeft(1)
 	case Right:
 		p.buf.CursorRight(1)
 	case Backspace:
-		if p.selected != -1 {
-			c := p.completer(p.buf.Text())[p.selected]
+		if p.completion.Completing() {
+			c := p.completer(p.buf.Text())[p.completion.selected]
 			w := p.buf.Document().GetWordBeforeCursor()
 			if w != "" {
 				p.buf.DeleteBeforeCursor(len([]rune(w)))
 			}
 			p.buf.InsertText(c.Text, false, true)
-			p.selected = -1
+			p.completion.Reset()
 		}
 		p.buf.DeleteBeforeCursor(1)
 	case NotDefined:
-		if p.selected != -1 {
-			c := p.completer(p.buf.Text())[p.selected]
+		if p.completion.Completing() {
+			c := p.completer(p.buf.Text())[p.completion.selected]
 			w := p.buf.Document().GetWordBeforeCursor()
 			if w != "" {
 				p.buf.DeleteBeforeCursor(len([]rune(w)))
 			}
 			p.buf.InsertText(c.Text, false, true)
 		}
-		p.selected = -1
+		p.completion.Reset()
 		p.buf.InsertText(string(b), false, true)
 	default:
-		p.selected = -1
+		p.completion.Reset()
 	}
 	return
-}
-
-func (p *Prompt) updateSelectedCompletion(completions []Completion) {
-	max := int(p.maxCompletions)
-	if len(completions) < max {
-		max = len(completions)
-	}
-	if p.selected >= max {
-		p.selected = -1
-	} else if p.selected < -1 {
-		p.selected = max - 1
-	}
 }
 
 func (p *Prompt) setUp() {
 	p.in.Setup()
 	p.renderer.Setup()
 	p.renderer.UpdateWinSize(p.in.GetWinSize())
-	p.selected = -1 // -1 means nothing one is selected.
 }
 
 func (p *Prompt) tearDown() {
