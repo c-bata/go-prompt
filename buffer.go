@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"log"
 	"strings"
 )
 
@@ -57,7 +58,7 @@ func (b *Buffer) InsertText(v string, overwrite bool, moveCursor bool) {
 // text/cursor_position should be consistent at any time, otherwise set a Document instead.)
 func (b *Buffer) setText(v string) {
 	if b.CursorPosition > len([]rune(v)) {
-		panic("The length of input value should be shorter than the position of cursor.")
+		log.Print("[ERROR] The length of input value should be shorter than the position of cursor.")
 	}
 	o := b.workingLines[b.workingIndex]
 	b.workingLines[b.workingIndex] = v
@@ -132,7 +133,7 @@ func (b *Buffer) CursorDown(count int) {
 // DeleteBeforeCursor delete specified number of characters before cursor and return the deleted text.
 func (b *Buffer) DeleteBeforeCursor(count int) (deleted string) {
 	if count <= 0 {
-		panic("The count argument on DeleteBeforeCursor should grater than 0.")
+		log.Print("[ERROR] The count argument on DeleteBeforeCursor should grater than 0.")
 	}
 	r := []rune(b.Text())
 

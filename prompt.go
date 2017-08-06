@@ -19,13 +19,13 @@ type Executor func(context.Context, string) string
 type Completer func(string) []Suggest
 
 type Prompt struct {
-	in             ConsoleParser
-	buf            *Buffer
-	renderer       *Render
-	executor       Executor
-	completer      Completer
-	history        *History
-	completion     *CompletionManager
+	in         ConsoleParser
+	buf        *Buffer
+	renderer   *Render
+	executor   Executor
+	completer  Completer
+	history    *History
+	completion *CompletionManager
 }
 
 type Exec struct {
@@ -229,24 +229,23 @@ func handleSignals(in ConsoleParser, exitCh chan int, winSizeCh chan *WinSize) {
 	for {
 		s := <-sigCh
 		switch s {
-		case syscall.SIGINT:  // kill -SIGINT XXXX or Ctrl+c
+		case syscall.SIGINT: // kill -SIGINT XXXX or Ctrl+c
 			log.Println("[SIGNAL] Catch SIGINT")
 			exitCh <- 0
 
-		case syscall.SIGTERM:  // kill -SIGTERM XXXX
+		case syscall.SIGTERM: // kill -SIGTERM XXXX
 			log.Println("[SIGNAL] Catch SIGTERM")
 			exitCh <- 1
 
-		case syscall.SIGQUIT:  // kill -SIGQUIT XXXX
+		case syscall.SIGQUIT: // kill -SIGQUIT XXXX
 			log.Println("[SIGNAL] Catch SIGQUIT")
 			exitCh <- 0
 
 		case syscall.SIGWINCH:
 			log.Println("[SIGNAL] Catch SIGWINCH")
 			winSizeCh <- in.GetWinSize()
-
-		// TODO: SIGUSR1 -> Reopen log file.
 		default:
+			time.Sleep(10 * time.Millisecond)
 		}
 	}
 }
