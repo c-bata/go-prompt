@@ -9,7 +9,7 @@ import (
 	"github.com/c-bata/go-prompt-toolkit"
 )
 
-func executor(ctx context.Context, t string) string {
+func executor(ctx context.Context, t string) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -22,7 +22,7 @@ func executor(ctx context.Context, t string) string {
 		cmd.Run()
 		fmt.Println("Foo")
 	}
-	return ""
+	return
 }
 
 func completer(t string) []prompt.Suggest {
@@ -36,7 +36,6 @@ func main() {
 	pt := prompt.NewPrompt(
 		executor,
 		completer,
-		prompt.OptionOutputTextColor(prompt.DarkGray),
 	)
 	defer fmt.Println("\nGoodbye!")
 	pt.Run()

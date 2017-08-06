@@ -15,7 +15,7 @@ const (
 	envEnableLog = "GO_PROMPT_ENABLE_LOG"
 )
 
-type Executor func(context.Context, string) string
+type Executor func(context.Context, string)
 type Completer func(string) []Suggest
 
 type Prompt struct {
@@ -93,16 +93,16 @@ func (p *Prompt) Run() {
 }
 
 func (p *Prompt) runExecutor(exec *Exec, bufCh chan []byte) {
-	resCh := make(chan string, 1)
+	resCh := make(chan struct{}, 1)
 	ctx, cancel := context.WithCancel(exec.Context())
 	go func() {
-		resCh <- p.executor(ctx, exec.input)
+		p.executor(ctx, exec.input)
+		resCh <- struct{}{}
 	}()
 
 	for {
 		select {
-		case r := <-resCh:
-			p.renderer.RenderResult(r)
+		case <-resCh:
 			return
 		case b := <-bufCh:
 			if p.in.GetKey(b) == ControlC {

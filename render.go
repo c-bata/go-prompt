@@ -23,8 +23,6 @@ type Render struct {
 	prefixBGColor                Color
 	inputTextColor               Color
 	inputBGColor                 Color
-	outputTextColor              Color
-	outputBGColor                Color
 	previewSuggestionTextColor   Color
 	previewSuggestionBGColor     Color
 	suggestionTextColor          Color
@@ -177,14 +175,6 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	r.out.WriteStr(buffer.Document().Text + "\n")
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 	r.out.Flush()
-}
-
-func (r *Render) RenderResult(result string) {
-	if result != "" {
-		r.out.SetColor(r.outputTextColor, r.outputBGColor, false)
-		r.out.WriteRawStr(result)
-	}
-	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
 func formatCompletions(completions []Suggest, max int) (new []Suggest, width int) {

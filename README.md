@@ -21,21 +21,29 @@ package main
 import (
     "context"
     "fmt"
+    "time"
 
     "github.com/c-bata/go-prompt-toolkit/prompt"
 )
 
-// executor executes command and return the output string.
+// executor executes command and print the output.
 // 1. Execute sql
-// 2. Get response and return output
-func executor(ctx context.Context, sql string) string {
+// 2. Get response and print it
+func executor(ctx context.Context, sql string)  {
     res := "something response from db."
-    return res // this is printed in console.
+    fmt.Println(res)
+    return
 }
 
 // completer returns the completion items from user input.
-func completer(sql string) []string {
-    return []string{"users", "articles", "comments", "groups", "tags"}
+func completer(sql string) []prompt.Suggest {
+    return []primpt.Suggest{
+        {Text: "users", Description: "user collections."},
+        {Text: "articles", Description: "article is posted by users."},
+        {Text: "comments", Description: "comment is inserted with each articles."},
+        {Text: "groups", Description: "group is the collection of users."},
+        {Text: "tags", Description: "tag contains hash tag like #prompt"},
+    }
 }
 
 func main() {
@@ -66,8 +74,6 @@ func main() {
 #### `OptionInputBGColor(x Color)`
 #### `OptionPreviewSuggestionTextColor(x Color)`
 #### `OptionPreviewSuggestionBGColor(x Color)`
-#### `OptionOutputTextColor(x Color)`
-#### `OptionOutputBGColor(x Color)`
 #### `OptionSuggestionTextColor(x Color)`
 #### `OptionSuggestionBGColor(x Color)`
 #### `OptionSelectedSuggestionTextColor(x Color)`

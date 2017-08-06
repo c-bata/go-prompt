@@ -7,8 +7,8 @@ import (
 	"github.com/c-bata/go-prompt-toolkit"
 )
 
-func executor(ctx context.Context, t string) string {
-	return fmt.Sprintln("Your input: " + t)
+func executor(ctx context.Context, t string) {
+	fmt.Println("Your input: " + t)
 }
 
 func completer(t string) []prompt.Suggest {
@@ -26,7 +26,6 @@ func main() {
 		completer,
 		prompt.OptionPrefix(">>> "),
 		prompt.OptionTitle("sqlite3-cli"),
-		prompt.OptionOutputTextColor(prompt.DarkGray),
 	)
 	defer fmt.Println("\nGoodbye!")
 	pt.Run()

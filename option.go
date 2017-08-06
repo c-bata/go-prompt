@@ -74,20 +74,6 @@ func OptionPreviewSuggestionBGColor(x Color) option {
 	}
 }
 
-func OptionOutputTextColor(x Color) option {
-	return func(p *Prompt) error {
-		p.renderer.outputTextColor = x
-		return nil
-	}
-}
-
-func OptionOutputBGColor(x Color) option {
-	return func(p *Prompt) error {
-		p.renderer.outputBGColor = x
-		return nil
-	}
-}
-
 func OptionSuggestionTextColor(x Color) option {
 	return func(p *Prompt) error {
 		p.renderer.suggestionTextColor = x
@@ -161,8 +147,6 @@ func NewPrompt(executor Executor, completer Completer, opts ...option) *Prompt {
 			prefixBGColor:                DefaultColor,
 			inputTextColor:               DefaultColor,
 			inputBGColor:                 DefaultColor,
-			outputTextColor:              DefaultColor,
-			outputBGColor:                DefaultColor,
 			previewSuggestionTextColor:   Green,
 			previewSuggestionBGColor:     DefaultColor,
 			suggestionTextColor:          White,
