@@ -6,7 +6,7 @@ import (
 	"context"
 	"os/exec"
 
-	"github.com/c-bata/go-prompt-toolkit"
+	"github.com/c-bata/go-prompt"
 )
 
 func executor(t string) {
@@ -16,11 +16,9 @@ func executor(t string) {
 	if t == "sleep 5s" {
 		cmd := exec.CommandContext(ctx, "sleep", "5")
 		cmd.Run()
-		fmt.Println("Foo")
 	} else if t == "sleep 20s" {
 		cmd := exec.CommandContext(ctx, "sleep", "20")
 		cmd.Run()
-		fmt.Println("Foo")
 	}
 	return
 }
@@ -33,10 +31,10 @@ func completer(t string) []prompt.Suggest {
 }
 
 func main() {
-	pt := prompt.NewPrompt(
+	p := prompt.New(
 		executor,
 		completer,
 	)
 	defer fmt.Println("\nGoodbye!")
-	pt.Run()
+	p.Run()
 }

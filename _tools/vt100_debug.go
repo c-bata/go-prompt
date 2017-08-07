@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"syscall"
 
-	"github.com/c-bata/go-prompt-toolkit"
+	"github.com/c-bata/go-prompt"
 	"github.com/pkg/term/termios"
 )
 
@@ -13,17 +13,17 @@ const fd = 0
 var orig syscall.Termios
 
 func SetRawMode() {
-	var new syscall.Termios
+	var n syscall.Termios
 	if err := termios.Tcgetattr(uintptr(fd), &orig); err != nil {
 		fmt.Println("Failed to get attribute")
 		return
 	}
-	new = orig
+	n = orig
 	// "&^=" used like: https://play.golang.org/p/8eJw3JxS4O
-	new.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG
-	new.Cc[syscall.VMIN] = 1
-	new.Cc[syscall.VTIME] = 0
-	termios.Tcsetattr(uintptr(fd), termios.TCSANOW, (*syscall.Termios)(&new))
+	n.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG
+	n.Cc[syscall.VMIN] = 1
+	n.Cc[syscall.VTIME] = 0
+	termios.Tcsetattr(uintptr(fd), termios.TCSANOW, (*syscall.Termios)(&n))
 }
 
 func Restore() {

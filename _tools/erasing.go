@@ -1,6 +1,6 @@
 package main
 
-import "github.com/c-bata/go-prompt-toolkit"
+import "github.com/c-bata/go-prompt"
 
 func main() {
 	l := 20

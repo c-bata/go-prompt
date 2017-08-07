@@ -1,5 +1,3 @@
-NAME := prompt
-
 .DEFAULT_GOAL := help
 
 .PHONY: setup

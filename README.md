@@ -1,17 +1,17 @@
-# go-prompt-toolkit
+# go-prompt
 
 ![demo](./_resources/demo.gif)
 
-Library for building powerful interactive command lines in Golang.
+Library for building powerful interactive prompt in Go, inspired by python-prompt-toolkit.
 
 #### Similar Projects
 
-* [jonathanslenders/python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit): **go-prompt-toolkit** is inspired by this library.
+* [jonathanslenders/python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit): **go-prompt** is inspired by this library.
 * [peterh/liner](https://github.com/peterh/liner): The most similar project in golang is **liner** that I've ever seen.
 
-#### Projects using go-prompt-toolkit
+#### Projects using go-prompt
 
-* [kube-prompt : An interactive kubernetes client featuring autocomplete using prompt-toolkit.](https://github.com/c-bata/kube-prompt)
+* [kube-prompt : An interactive kubernetes client featuring auto-complete written in Go.](https://github.com/c-bata/kube-prompt)
 
 ## Getting Started
 
@@ -19,42 +19,35 @@ Library for building powerful interactive command lines in Golang.
 package main
 
 import (
-    "fmt"
-    "time"
+	"fmt"
 
-    "github.com/c-bata/go-prompt-toolkit/prompt"
+	"github.com/c-bata/go-prompt"
 )
 
 // executor executes command and print the output.
-// 1. Execute sql
-// 2. Get response and print it
-func executor(in string)  {
-    out := "something response from db."
-    fmt.Println(out)
-    return
+func executor(in string) {
+	fmt.Println("Your input: " + in)
 }
 
 // completer returns the completion items from user input.
 func completer(in string) []prompt.Suggest {
-    return []primpt.Suggest{
-        {Text: "users", Description: "user collections."},
-        {Text: "articles", Description: "article is posted by users."},
-        {Text: "comments", Description: "comment is inserted with each articles."},
-        {Text: "groups", Description: "group is the collection of users."},
-        {Text: "tags", Description: "tag contains hash tag like #prompt"},
-    }
+	s := []prompt.Suggest{
+		{Text: "users", Description: "user table"},
+		{Text: "sites", Description: "sites table"},
+		{Text: "articles", Description: "articles table"},
+		{Text: "comments", Description: "comments table"},
+	}
+	return prompt.FilterHasPrefix(s, in, true)
 }
 
 func main() {
-    pt := prompt.NewPrompt(
-        executor,
-        completer,
-        prompt.OptionTitle("sqlite3-prompt"),
-        prompt.OptionPrefix(">>> "),
-        prompt.OptionPrefixColor(prompt.Blue),
-    )
-    defer fmt.Println("\nGoodbye!")
-    pt.Run()
+	p := prompt.New(
+		executor,
+		completer,
+		prompt.OptionPrefix(">>> "),
+		prompt.OptionTitle("sql-prompt"),
+	)
+	p.Run()
 }
 ```
 

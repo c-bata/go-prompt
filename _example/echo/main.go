@@ -3,29 +3,29 @@ package main
 import (
 	"fmt"
 
-	"github.com/c-bata/go-prompt-toolkit"
+	"github.com/c-bata/go-prompt"
 )
 
-func executor(t string) {
-	fmt.Println("Your input: " + t)
+func executor(in string) {
+	fmt.Println("Your input: " + in)
 }
 
-func completer(t string) []prompt.Suggest {
-	return []prompt.Suggest{
+func completer(in string) []prompt.Suggest {
+	s := []prompt.Suggest{
 		{Text: "users", Description: "user table"},
 		{Text: "sites", Description: "sites table"},
 		{Text: "articles", Description: "articles table"},
 		{Text: "comments", Description: "comments table"},
 	}
+	return prompt.FilterHasPrefix(s, in, true)
 }
 
 func main() {
-	pt := prompt.NewPrompt(
+	p := prompt.New(
 		executor,
 		completer,
 		prompt.OptionPrefix(">>> "),
-		prompt.OptionTitle("sqlite3-cli"),
+		prompt.OptionTitle("sql-prompt"),
 	)
-	defer fmt.Println("\nGoodbye!")
-	pt.Run()
+	p.Run()
 }

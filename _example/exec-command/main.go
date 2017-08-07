@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"os"
 
-	"github.com/c-bata/go-prompt-toolkit"
+	"github.com/c-bata/go-prompt"
 )
 
 func executor(t string) {
@@ -26,10 +26,9 @@ func completer(t string) []prompt.Suggest {
 }
 
 func main() {
-	pt := prompt.NewPrompt(
+	p := prompt.New(
 		executor,
 		completer,
 	)
-	defer fmt.Println("\nGoodbye!")
-	pt.Run()
+	p.Run()
 }

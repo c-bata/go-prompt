@@ -137,7 +137,7 @@ func OptionMaxCompletions(x uint16) option {
 	}
 }
 
-func NewPrompt(executor Executor, completer Completer, opts ...option) *Prompt {
+func New(executor Executor, completer Completer, opts ...option) *Prompt {
 	pt := &Prompt{
 		in: &VT100Parser{fd: syscall.Stdin},
 		renderer: &Render{
