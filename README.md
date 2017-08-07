@@ -19,7 +19,6 @@ Library for building powerful interactive command lines in Golang.
 package main
 
 import (
-    "context"
     "fmt"
     "time"
 
@@ -29,14 +28,14 @@ import (
 // executor executes command and print the output.
 // 1. Execute sql
 // 2. Get response and print it
-func executor(ctx context.Context, sql string)  {
-    res := "something response from db."
-    fmt.Println(res)
+func executor(in string)  {
+    out := "something response from db."
+    fmt.Println(out)
     return
 }
 
 // completer returns the completion items from user input.
-func completer(sql string) []prompt.Suggest {
+func completer(in string) []prompt.Suggest {
     return []primpt.Suggest{
         {Text: "users", Description: "user collections."},
         {Text: "articles", Description: "article is posted by users."},

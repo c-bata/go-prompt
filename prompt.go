@@ -15,7 +15,7 @@ const (
 	envEnableLog = "GO_PROMPT_ENABLE_LOG"
 )
 
-type Executor func(context.Context, string)
+type Executor func(string)
 type Completer func(string) []Suggest
 
 type Prompt struct {
@@ -57,7 +57,8 @@ func (p *Prompt) Run() {
 	p.renderer.Render(p.buf, p.completer(p.buf.Text()), p.completion.Max, p.completion.selected)
 
 	bufCh := make(chan []byte, 128)
-	go readBuffer(bufCh)
+	stopReadBufCh := make(chan struct{})
+	go readBuffer(bufCh, stopReadBufCh)
 
 	exitCh := make(chan int)
 	winSizeCh := make(chan *WinSize)
@@ -66,14 +67,23 @@ func (p *Prompt) Run() {
 	for {
 		select {
 		case b := <-bufCh:
-			if shouldExit, exec := p.feed(b); shouldExit {
+			if shouldExit, e := p.feed(b); shouldExit {
 				return
-			} else if exec != nil {
-				p.runExecutor(exec, bufCh)
+			} else if e != nil {
+				// Stop goroutine to run readBuffer function
+				stopReadBufCh <- struct{}{}
+
+				// Unset raw mode
+				p.in.TearDown()
+				p.executor(e.input)
 
 				completions := p.completer(p.buf.Text())
 				p.completion.update(completions)
 				p.renderer.Render(p.buf, completions, p.completion.Max, p.completion.selected)
+
+				// Set raw mode
+				p.in.Setup()
+				go readBuffer(bufCh, stopReadBufCh)
 			} else {
 				completions := p.completer(p.buf.Text())
 				p.completion.update(completions)
@@ -90,28 +100,6 @@ func (p *Prompt) Run() {
 			time.Sleep(10 * time.Millisecond)
 		}
 	}
-}
-
-func (p *Prompt) runExecutor(exec *Exec, bufCh chan []byte) {
-	resCh := make(chan struct{}, 1)
-	ctx, cancel := context.WithCancel(exec.Context())
-	go func() {
-		p.executor(ctx, exec.input)
-		resCh <- struct{}{}
-	}()
-
-	for {
-		select {
-		case <-resCh:
-			return
-		case b := <-bufCh:
-			if p.in.GetKey(b) == ControlC {
-				log.Println("[INFO] Executor is canceled.")
-				cancel()
-			}
-		}
-	}
-	return
 }
 
 func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
@@ -206,12 +194,26 @@ func (p *Prompt) tearDown() {
 	p.renderer.TearDown()
 }
 
-func readBuffer(bufCh chan []byte) {
+func readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	buf := make([]byte, 1024)
 
+	// Set NonBlocking mode because if syscall.Read block this goroutine, it cannot received value from stopCh.
+	_, _, e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(syscall.Stdin),
+		uintptr(syscall.F_SETFL), uintptr(syscall.O_ASYNC|syscall.O_NONBLOCK))
+	if e != 0 {
+		log.Println("[ERROR] Cannot set non blocking mode.")
+		panic(e)
+	}
+
 	for {
-		if n, err := syscall.Read(syscall.Stdin, buf); err == nil {
-			bufCh <- buf[:n]
+		time.Sleep(10 * time.Millisecond)
+		select {
+		case <-stopCh:
+			return
+		default:
+			if n, err := syscall.Read(syscall.Stdin, buf); err == nil {
+				bufCh <- buf[:n]
+			}
 		}
 	}
 }

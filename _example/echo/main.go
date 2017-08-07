@@ -1,13 +1,12 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/c-bata/go-prompt-toolkit"
 )
 
-func executor(ctx context.Context, t string) {
+func executor(t string) {
 	fmt.Println("Your input: " + t)
 }
 
