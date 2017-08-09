@@ -58,6 +58,7 @@ func (p *Prompt) Run() {
 		select {
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
+				p.renderer.BreakLine(p.buf)
 				return
 			} else if e != nil {
 				// Stop goroutine to run readBuffer function
@@ -82,6 +83,7 @@ func (p *Prompt) Run() {
 			p.renderer.UpdateWinSize(w)
 			p.renderer.Render(p.buf, p.completion)
 		case code := <-exitCh:
+			p.renderer.BreakLine(p.buf)
 			p.tearDown()
 			os.Exit(code)
 		default:
