@@ -33,13 +33,6 @@ type Exec struct {
 	ctx   context.Context
 }
 
-func (e *Exec) Context() context.Context {
-	if e.ctx == nil {
-		e.ctx = context.Background()
-	}
-	return e.ctx
-}
-
 func (p *Prompt) Run() {
 	p.setUp()
 	defer p.tearDown()
@@ -58,7 +51,7 @@ func (p *Prompt) Run() {
 
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
-	go readBuffer(bufCh, stopReadBufCh)
+	go p.readBuffer(bufCh, stopReadBufCh)
 
 	exitCh := make(chan int)
 	winSizeCh := make(chan *WinSize)
@@ -74,13 +67,8 @@ func (p *Prompt) Run() {
 				stopReadBufCh <- struct{}{}
 
 				// Unset raw mode
-				p.in.TearDown()
-
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
-				if err := syscall.SetNonblock(syscall.Stdin, false); err != nil {
-					log.Println("[ERROR] Cannot set blocking mode.")
-					panic(err)
-				}
+				p.in.TearDown()
 				p.executor(e.input)
 
 				completions := p.completer(p.buf.Text())
@@ -88,8 +76,7 @@ func (p *Prompt) Run() {
 				p.renderer.Render(p.buf, completions, p.completion.Max, p.completion.selected)
 
 				// Set raw mode
-				p.in.Setup()
-				go readBuffer(bufCh, stopReadBufCh)
+				go p.readBuffer(bufCh, stopReadBufCh)
 			} else {
 				completions := p.completer(p.buf.Text())
 				p.completion.update(completions)
@@ -200,16 +187,9 @@ func (p *Prompt) tearDown() {
 	p.renderer.TearDown()
 }
 
-func readBuffer(bufCh chan []byte, stopCh chan struct{}) {
+func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
+	p.in.Setup()
 	buf := make([]byte, 1024)
-
-	// Set NonBlocking mode because if syscall.Read block this goroutine, it cannot receive data from stopCh.
-	_, _, e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(syscall.Stdin),
-		uintptr(syscall.F_SETFL), uintptr(syscall.O_ASYNC|syscall.O_NONBLOCK))
-	if e != 0 {
-		log.Println("[ERROR] Cannot set non blocking mode.")
-		panic(e)
-	}
 
 	for {
 		time.Sleep(10 * time.Millisecond)

@@ -2,6 +2,7 @@ package prompt
 
 import (
 	"bytes"
+	"log"
 	"syscall"
 	"unsafe"
 
@@ -14,7 +15,28 @@ type VT100Parser struct {
 }
 
 func (t *VT100Parser) Setup() error {
-	return t.setRawMode()
+	// Set NonBlocking mode because if syscall.Read block this goroutine, it cannot receive data from stopCh.
+	if err := syscall.SetNonblock(t.fd, true); err != nil {
+		log.Println("[ERROR] Cannot set non blocking mode.")
+		return err
+	}
+	if err := t.setRawMode(); err != nil {
+		log.Println("[ERROR] Cannot set raw mode.")
+		return err
+	}
+	return nil
+}
+
+func (t *VT100Parser) TearDown() error {
+	if err := syscall.SetNonblock(t.fd, false); err != nil {
+		log.Println("[ERROR] Cannot set blocking mode.")
+		return err
+	}
+	if err := termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.origTermios); err != nil {
+		log.Println("[ERROR] Cannot reset from raw mode.")
+		return err
+	}
+	return nil
 }
 
 func (t *VT100Parser) setRawMode() error {
@@ -29,10 +51,6 @@ func (t *VT100Parser) setRawMode() error {
 	n.Cc[syscall.VTIME] = 0
 	termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*syscall.Termios)(&n))
 	return nil
-}
-
-func (t *VT100Parser) TearDown() error {
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.origTermios)
 }
 
 func (t *VT100Parser) GetKey(b []byte) Key {
