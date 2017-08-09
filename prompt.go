@@ -103,13 +103,29 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		if exec.input != "" {
 			p.history.Add(exec.input)
 		}
+	case ControlA:
+		x := []rune(p.buf.Document().TextBeforeCursor())
+		p.buf.CursorLeft(len(x))
+	case ControlE:
+		x := []rune(p.buf.Document().TextAfterCursor())
+		p.buf.CursorRight(len(x))
+	case ControlK:
+		x := []rune(p.buf.Document().TextAfterCursor())
+		p.buf.Delete(len(x))
+	case ControlU:
+		x := []rune(p.buf.Document().TextBeforeCursor())
+		p.buf.DeleteBeforeCursor(len(x))
 	case ControlC:
 		p.renderer.BreakLine(p.buf)
 		p.buf = NewBuffer()
 		p.completion.Reset()
 		p.history.Clear()
 	case ControlD:
-		shouldExit = true
+		if p.buf.Text() == "" {
+			shouldExit = true
+		} else {
+			p.buf.Delete(1)
+		}
 	case Up:
 		if !p.completion.Completing() {
 			if newBuf, changed := p.history.Older(p.buf); changed {
