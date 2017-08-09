@@ -62,16 +62,16 @@ It is difficult to describe by text. So please see below:
 * **OptionPrefixBackgroundColor(prompt.Color)** : default `prompt.DefaultColor`
 * **OptionInputTextColor(prompt.Color)** : default `prompt.DefaultColor`
 * **OptionInputBGColor(prompt.Color)** : default `prompt.DefaultColor`
-* **OptionPreviewSuggestionTextColor(prompt.Color)** : default `prompt.DefaultColor`
+* **OptionPreviewSuggestionTextColor(prompt.Color)** : default `prompt.Green`
 * **OptionPreviewSuggestionBGColor(prompt.Color)** : default `prompt.DefaultColor`
-* **OptionSuggestionTextColor(prompt.Color)** : default `prompt.DefaultColor`
-* **OptionSuggestionBGColor(prompt.Color)** : default `prompt.DefaultColor`
-* **OptionSelectedSuggestionTextColor(prompt.Color)** : `default prompt.DefaultColor`
+* **OptionSuggestionTextColor(prompt.Color)** : default `prompt.White`
+* **OptionSuggestionBGColor(prompt.Color)** : default `prompt.Cyan`
+* **OptionSelectedSuggestionTextColor(prompt.Color)** : `default prompt.Black`
 * **OptionSelectedSuggestionBGColor(prompt.Color)** : `default prompt.DefaultColor`
-* **OptionDescriptionTextColor(prompt.Color)** : default `prompt.DefaultColor`
-* **OptionDescriptionBGColor(prompt.Color)** : default `prompt.DefaultColor`
-* **OptionSelectedDescriptionTextColor(prompt.Color)** : default `prompt.DefaultColor`
-* **OptionSelectedDescriptionBGColor(prompt.Color)** : default `prompt.DefaultColor`
+* **OptionDescriptionTextColor(prompt.Color)** : default `prompt.Black`
+* **OptionDescriptionBGColor(prompt.Color)** : default `prompt.Turquoise`
+* **OptionSelectedDescriptionTextColor(prompt.Color)** : default `prompt.White`
+* **OptionSelectedDescriptionBGColor(prompt.Color)** : default `prompt.Cyan`
 
 ## Other Options
 
