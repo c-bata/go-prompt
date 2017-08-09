@@ -34,21 +34,11 @@ func (p *Prompt) Run() {
 	p.setUp()
 	defer p.tearDown()
 
-	if os.Getenv(envEnableLog) != "true" {
-		log.SetOutput(ioutil.Discard)
-	} else if f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
-		log.SetOutput(ioutil.Discard)
-	} else {
-		defer f.Close()
-		log.SetOutput(f)
-		log.Println("[INFO] Logging is enabled.")
-	}
-
 	p.renderer.Render(p.buf, p.completion)
 
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
-	go p.readBuffer(bufCh, stopReadBufCh)
+	go readBuffer(bufCh, stopReadBufCh)
 
 	exitCh := make(chan int)
 	winSizeCh := make(chan *WinSize)
@@ -74,7 +64,7 @@ func (p *Prompt) Run() {
 
 				// Set raw mode
 				p.in.Setup()
-				go p.readBuffer(bufCh, stopReadBufCh)
+				go readBuffer(bufCh, stopReadBufCh)
 			} else {
 				p.completion.Update(p.buf.Text())
 				p.renderer.Render(p.buf, p.completion)
@@ -170,7 +160,47 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	return
 }
 
+func (p *Prompt) Input() string {
+	p.setUp()
+	defer p.tearDown()
+
+	p.renderer.Render(p.buf, p.completion)
+	bufCh := make(chan []byte, 128)
+	stopReadBufCh := make(chan struct{})
+	go readBuffer(bufCh, stopReadBufCh)
+
+	for {
+		select {
+		case b := <-bufCh:
+			if shouldExit, e := p.feed(b); shouldExit {
+				p.renderer.BreakLine(p.buf)
+				return ""
+			} else if e != nil {
+				// Stop goroutine to run readBuffer function
+				stopReadBufCh <- struct{}{}
+				return e.input
+			} else {
+				p.completion.Update(p.buf.Text())
+				p.renderer.Render(p.buf, p.completion)
+			}
+		default:
+			time.Sleep(10 * time.Millisecond)
+		}
+	}
+}
+
 func (p *Prompt) setUp() {
+	// Logging
+	if os.Getenv(envEnableLog) != "true" {
+		log.SetOutput(ioutil.Discard)
+	} else if f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
+		log.SetOutput(ioutil.Discard)
+	} else {
+		defer f.Close()
+		log.SetOutput(f)
+		log.Println("[INFO] Logging is enabled.")
+	}
+
 	p.in.Setup()
 	p.renderer.Setup()
 	p.renderer.UpdateWinSize(p.in.GetWinSize())
@@ -181,7 +211,7 @@ func (p *Prompt) tearDown() {
 	p.renderer.TearDown()
 }
 
-func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
+func readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	buf := make([]byte, 1024)
 
 	log.Printf("[INFO] readBuffer start")
@@ -189,7 +219,7 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 		time.Sleep(10 * time.Millisecond)
 		select {
 		case <-stopCh:
-			log.Print("[INFO] stop p.readBuffer")
+			log.Print("[INFO] stop readBuffer")
 			return
 		default:
 			if n, err := syscall.Read(syscall.Stdin, buf); err == nil {

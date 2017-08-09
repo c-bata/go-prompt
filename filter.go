@@ -2,7 +2,7 @@ package prompt
 
 import "strings"
 
-type CompletionFilter func([]Suggest, string, bool) []Suggest
+type Filter func([]Suggest, string, bool) []Suggest
 
 func FilterHasPrefix(completions []Suggest, sub string, ignoreCase bool) []Suggest {
 	if sub == "" {

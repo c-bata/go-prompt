@@ -8,7 +8,7 @@ import (
 func TestFilter(t *testing.T) {
 	var scenarioTable = []struct {
 		scenario   string
-		filter     CompletionFilter
+		filter     Filter
 		list       []Suggest
 		substr     string
 		ignoreCase bool
