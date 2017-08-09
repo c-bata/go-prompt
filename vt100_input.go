@@ -41,12 +41,10 @@ func (t *VT100Parser) TearDown() error {
 
 func (t *VT100Parser) setRawMode() error {
 	x := t.origTermios.Lflag
-	if x &^= syscall.ICANON;  x != 0 && x == t.origTermios.Lflag {
+	if x &^= syscall.ICANON; x != 0 && x == t.origTermios.Lflag {
 		// fd is already raw mode
-		log.Print("[INFO] already raw mode.")
 		return nil
 	}
-	log.Print("[INFO] set raw mode.")
 	var n syscall.Termios
 	if err := termios.Tcgetattr(uintptr(t.fd), &t.origTermios); err != nil {
 		return err
@@ -64,7 +62,6 @@ func (t *VT100Parser) resetRawMode() error {
 	if t.origTermios.Lflag == 0 {
 		return nil
 	}
-	log.Print("[INFO] Reset raw mode.")
 	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.origTermios)
 }
 

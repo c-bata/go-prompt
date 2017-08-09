@@ -166,11 +166,10 @@ func New(executor Executor, completer Completer, opts ...option) *Prompt {
 			selectedDescriptionTextColor: White,
 			selectedDescriptionBGColor:   Cyan,
 		},
-		buf:            NewBuffer(),
-		executor:       executor,
-		completer:      completer,
-		history:        NewHistory(),
-		completion:     NewCompletionManager(6),
+		buf:        NewBuffer(),
+		executor:   executor,
+		history:    NewHistory(),
+		completion: NewCompletionManager(completer, 6),
 	}
 
 	for _, opt := range opts {

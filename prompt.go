@@ -22,7 +22,6 @@ type Prompt struct {
 	buf        *Buffer
 	renderer   *Render
 	executor   Executor
-	completer  Completer
 	history    *History
 	completion *CompletionManager
 }
@@ -45,7 +44,7 @@ func (p *Prompt) Run() {
 		log.Println("[INFO] Logging is enabled.")
 	}
 
-	p.renderer.Render(p.buf, p.completer(p.buf.Text()), p.completion.Max, p.completion.selected)
+	p.renderer.Render(p.buf, p.completion)
 
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
@@ -69,22 +68,19 @@ func (p *Prompt) Run() {
 				p.in.TearDown()
 				p.executor(e.input)
 
-				completions := p.completer(p.buf.Text())
-				p.completion.update(completions)
-				p.renderer.Render(p.buf, completions, p.completion.Max, p.completion.selected)
+				p.completion.Update(p.buf.Text())
+				p.renderer.Render(p.buf, p.completion)
 
 				// Set raw mode
 				p.in.Setup()
 				go p.readBuffer(bufCh, stopReadBufCh)
 			} else {
-				completions := p.completer(p.buf.Text())
-				p.completion.update(completions)
-				p.renderer.Render(p.buf, completions, p.completion.Max, p.completion.selected)
+				p.completion.Update(p.buf.Text())
+				p.renderer.Render(p.buf, p.completion)
 			}
 		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
-			completions := p.completer(p.buf.Text())
-			p.renderer.Render(p.buf, completions, p.completion.Max, p.completion.selected)
+			p.renderer.Render(p.buf, p.completion)
 		case code := <-exitCh:
 			p.tearDown()
 			os.Exit(code)
@@ -99,13 +95,12 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 
 	switch key {
 	case ControlJ, Enter:
-		if p.completion.Completing() {
-			c := p.completer(p.buf.Text())[p.completion.selected]
+		if s, ok := p.completion.GetSelectedSuggestion(); ok {
 			w := p.buf.Document().GetWordBeforeCursor()
 			if w != "" {
 				p.buf.DeleteBeforeCursor(len([]rune(w)))
 			}
-			p.buf.InsertText(c.Text, false, true)
+			p.buf.InsertText(s.Text, false, true)
 		}
 		p.renderer.BreakLine(p.buf)
 
@@ -148,24 +143,22 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	case Right:
 		p.buf.CursorRight(1)
 	case Backspace:
-		if p.completion.Completing() {
-			c := p.completer(p.buf.Text())[p.completion.selected]
+		if s, ok := p.completion.GetSelectedSuggestion(); ok {
 			w := p.buf.Document().GetWordBeforeCursor()
 			if w != "" {
 				p.buf.DeleteBeforeCursor(len([]rune(w)))
 			}
-			p.buf.InsertText(c.Text, false, true)
+			p.buf.InsertText(s.Text, false, true)
 			p.completion.Reset()
 		}
 		p.buf.DeleteBeforeCursor(1)
 	case NotDefined:
-		if p.completion.Completing() {
-			c := p.completer(p.buf.Text())[p.completion.selected]
+		if s, ok := p.completion.GetSelectedSuggestion(); ok {
 			w := p.buf.Document().GetWordBeforeCursor()
 			if w != "" {
 				p.buf.DeleteBeforeCursor(len([]rune(w)))
 			}
-			p.buf.InsertText(c.Text, false, true)
+			p.buf.InsertText(s.Text, false, true)
 		}
 		p.completion.Reset()
 		p.buf.InsertText(string(b), false, true)
