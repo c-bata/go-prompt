@@ -130,9 +130,17 @@ func OptionSelectedDescriptionBGColor(x Color) option {
 	}
 }
 
-func OptionMaxCompletions(x uint16) option {
+func OptionMaxSuggestion(x uint16) option {
 	return func(p *Prompt) error {
 		p.completion.Max = x
+		return nil
+	}
+}
+
+func OptionHistory(x []string) option {
+	return func(p *Prompt) error {
+		p.history.histories = x
+		p.history.Clear()
 		return nil
 	}
 }

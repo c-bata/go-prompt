@@ -197,7 +197,7 @@ func (p *Prompt) tearDown() {
 func readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	buf := make([]byte, 1024)
 
-	// Set NonBlocking mode because if syscall.Read block this goroutine, it cannot received value from stopCh.
+	// Set NonBlocking mode because if syscall.Read block this goroutine, it cannot receive data from stopCh.
 	_, _, e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(syscall.Stdin),
 		uintptr(syscall.F_SETFL), uintptr(syscall.O_ASYNC|syscall.O_NONBLOCK))
 	if e != 0 {

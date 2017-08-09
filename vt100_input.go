@@ -82,8 +82,8 @@ var asciiSequences []*ASCIICode = []*ASCIICode{
 	{Key: ControlF, ASCIICode: []byte{0x6}},
 	{Key: ControlG, ASCIICode: []byte{0x7}},
 	{Key: ControlH, ASCIICode: []byte{0x8}},
-	{Key: ControlI, ASCIICode: []byte{0x9}},
-	{Key: ControlJ, ASCIICode: []byte{0xa}},
+	//{Key: ControlI, ASCIICode: []byte{0x9}},
+	//{Key: ControlJ, ASCIICode: []byte{0xa}},
 	{Key: ControlK, ASCIICode: []byte{0xb}},
 	{Key: ControlL, ASCIICode: []byte{0xc}},
 	{Key: ControlM, ASCIICode: []byte{0xd}},
@@ -116,6 +116,7 @@ var asciiSequences []*ASCIICode = []*ASCIICode{
 	{Key: End, ASCIICode: []byte{0x1b, 0x5b, 0x70}},
 	{Key: End, ASCIICode: []byte{0x1b, 0x4f, 0x70}},
 
+	{Key: Enter, ASCIICode: []byte{0xa}},
 	{Key: Delete, ASCIICode: []byte{0x1b, 0x5b, 0x33, 0x7e}},
 	{Key: ShiftDelete, ASCIICode: []byte{0x1b, 0x5b, 0x33, 0x3b, 0x02, 0x7e}},
 	{Key: ControlDelete, ASCIICode: []byte{0x1b, 0x5b, 0x33, 0x3b, 0x05, 0x7e}},
@@ -125,6 +126,7 @@ var asciiSequences []*ASCIICode = []*ASCIICode{
 	{Key: PageDown, ASCIICode: []byte{0x1b, 0x5b, 0x06, 0x7e}},
 	{Key: Home, ASCIICode: []byte{0x1b, 0x5b, 0x07, 0x7e}},
 	{Key: End, ASCIICode: []byte{0x1b, 0x5b, 0x09, 0x7e}},
+	{Key: Tab, ASCIICode: []byte{0x9}},
 	{Key: BackTab, ASCIICode: []byte{0x1b, 0x5b, 0x5a}},
 	{Key: Insert, ASCIICode: []byte{0x1b, 0x5b, 0x02, 0x7e}},
 
