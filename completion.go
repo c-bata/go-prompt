@@ -13,6 +13,7 @@ type CompletionManager struct {
 
 func (c *CompletionManager) Reset() {
 	c.selected = -1
+	c.Update([]*Suggest{})
 	return
 }
 

@@ -1,7 +1,6 @@
 package prompt
 
 import (
-	"context"
 	"io/ioutil"
 	"log"
 	"os"
@@ -30,7 +29,6 @@ type Prompt struct {
 
 type Exec struct {
 	input string
-	ctx   context.Context
 }
 
 func (p *Prompt) Run() {
@@ -76,6 +74,7 @@ func (p *Prompt) Run() {
 				p.renderer.Render(p.buf, completions, p.completion.Max, p.completion.selected)
 
 				// Set raw mode
+				p.in.Setup()
 				go p.readBuffer(bufCh, stopReadBufCh)
 			} else {
 				completions := p.completer(p.buf.Text())
@@ -188,13 +187,14 @@ func (p *Prompt) tearDown() {
 }
 
 func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
-	p.in.Setup()
 	buf := make([]byte, 1024)
 
+	log.Printf("[INFO] readBuffer start")
 	for {
 		time.Sleep(10 * time.Millisecond)
 		select {
 		case <-stopCh:
+			log.Print("[INFO] stop p.readBuffer")
 			return
 		default:
 			if n, err := syscall.Read(syscall.Stdin, buf); err == nil {

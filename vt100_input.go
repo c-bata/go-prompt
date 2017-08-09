@@ -32,7 +32,7 @@ func (t *VT100Parser) TearDown() error {
 		log.Println("[ERROR] Cannot set blocking mode.")
 		return err
 	}
-	if err := termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.origTermios); err != nil {
+	if err := t.resetRawMode(); err != nil {
 		log.Println("[ERROR] Cannot reset from raw mode.")
 		return err
 	}
@@ -40,10 +40,13 @@ func (t *VT100Parser) TearDown() error {
 }
 
 func (t *VT100Parser) setRawMode() error {
-	if t.origTermios.Lflag != 0 {
+	x := t.origTermios.Lflag
+	if x &^= syscall.ICANON;  x != 0 && x == t.origTermios.Lflag {
 		// fd is already raw mode
+		log.Print("[INFO] already raw mode.")
 		return nil
 	}
+	log.Print("[INFO] set raw mode.")
 	var n syscall.Termios
 	if err := termios.Tcgetattr(uintptr(t.fd), &t.origTermios); err != nil {
 		return err
@@ -55,6 +58,14 @@ func (t *VT100Parser) setRawMode() error {
 	n.Cc[syscall.VTIME] = 0
 	termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*syscall.Termios)(&n))
 	return nil
+}
+
+func (t *VT100Parser) resetRawMode() error {
+	if t.origTermios.Lflag == 0 {
+		return nil
+	}
+	log.Print("[INFO] Reset raw mode.")
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.origTermios)
 }
 
 func (t *VT100Parser) GetKey(b []byte) Key {
