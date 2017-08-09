@@ -40,6 +40,10 @@ func (t *VT100Parser) TearDown() error {
 }
 
 func (t *VT100Parser) setRawMode() error {
+	if t.origTermios.Lflag != 0 {
+		// fd is already raw mode
+		return nil
+	}
 	var n syscall.Termios
 	if err := termios.Tcgetattr(uintptr(t.fd), &t.origTermios); err != nil {
 		return err
