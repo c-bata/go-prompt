@@ -75,6 +75,12 @@ func (p *Prompt) Run() {
 
 				// Unset raw mode
 				p.in.TearDown()
+
+				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
+				if err := syscall.SetNonblock(syscall.Stdin, false); err != nil {
+					log.Println("[ERROR] Cannot set blocking mode.")
+					panic(err)
+				}
 				p.executor(e.input)
 
 				completions := p.completer(p.buf.Text())
