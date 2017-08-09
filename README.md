@@ -51,54 +51,100 @@ func main() {
 }
 ```
 
+## Color Options
 
-## Options
+go-prompt has many color options.
+It is difficult to describe by text. So please see below:
 
 ![options](./_resources/prompt-options.png)
 
-#### `OptionParser(x ConsoleParser)`
-#### `OptionWriter(x ConsoleWriter)`
-#### `OptionTitle(x string)`
-#### `OptionPrefix(x string)`
-#### `OptionPrefixTextColor(x Color)`
-#### `OptionPrefixBackgroundColor(x Color)`
-#### `OptionInputTextColor(x Color)`
-#### `OptionInputBGColor(x Color)`
-#### `OptionPreviewSuggestionTextColor(x Color)`
-#### `OptionPreviewSuggestionBGColor(x Color)`
-#### `OptionSuggestionTextColor(x Color)`
-#### `OptionSuggestionBGColor(x Color)`
-#### `OptionSelectedSuggestionTextColor(x Color)`
-#### `OptionSelectedSuggestionBGColor(x Color)`
-#### `OptionMaxCompletions(x uint16)`
-#### `OptionDescriptionTextColor(x Color)`
-#### `OptionDescriptionBGColor(x Color)`
-#### `OptionSelectedDescriptionTextColor(x Color)`
-#### `OptionSelectedDescriptionBGColor(x Color)`
+* **OptionPrefixTextColor(prompt.Color)** : default `prompt.Blue`
+* **OptionPrefixBackgroundColor(prompt.Color)** : default `prompt.DefaultColor`
+* **OptionInputTextColor(prompt.Color)** : default `prompt.DefaultColor`
+* **OptionInputBGColor(prompt.Color)** : default `prompt.DefaultColor`
+* **OptionPreviewSuggestionTextColor(prompt.Color)** : default `prompt.DefaultColor`
+* **OptionPreviewSuggestionBGColor(prompt.Color)** : default `prompt.DefaultColor`
+* **OptionSuggestionTextColor(prompt.Color)** : default `prompt.DefaultColor`
+* **OptionSuggestionBGColor(prompt.Color)** : default `prompt.DefaultColor`
+* **OptionSelectedSuggestionTextColor(prompt.Color)** : `default prompt.DefaultColor`
+* **OptionSelectedSuggestionBGColor(prompt.Color)** : `default prompt.DefaultColor`
+* **OptionDescriptionTextColor(prompt.Color)** : default `prompt.DefaultColor`
+* **OptionDescriptionBGColor(prompt.Color)** : default `prompt.DefaultColor`
+* **OptionSelectedDescriptionTextColor(prompt.Color)** : default `prompt.DefaultColor`
+* **OptionSelectedDescriptionBGColor(prompt.Color)** : default `prompt.DefaultColor`
 
+## Other Options
+
+#### `OptionTitle(string)` : default `""`
+Option to set title displayed at the header bar of terminal.
+
+#### `OptionHistory([]string)` : default `[]string{}`
+Option to set history.
+
+#### `OptionPrefix(string)` : default `"> "`
+Option to set prefix string.
+
+#### `OptionMaxSuggestions(x uint16)` : default `6`
+The max number of displayed suggestions.
+
+#### `OptionParser(prompt.ConsoleParser)` : default `VT100Parser`
+To set a custom ConsoleParser object.
+An argument should implement ConsoleParser interface.
+
+#### `OptionWriter(prompt.ConsoleWriter)` : default `VT100Writer`
+To set a custom ConsoleWriter object.
+An argument should implement ConsoleWriter interace.
+
+
+## `go-prompt` internals
+
+This is a short description of go-prompt implementation.
+go-prompt consists of three parts.
+
+1. Input parser
+2. Emulate user input with Buffer object.
+3. Render buffer object.
+
+### Input Parser
+
+![input-parser animation](./_resources/input-parser.gif)
+
+Input Parser only supports only vt100 compatible console now.
+
+* Set raw mode.
+* Read standard input.
+* Parse byte array
+
+### Emulate user input
+
+go-prompt contains Buffer class.
+It represents input state by handling user input key.
+
+`Buffer` object has text and cursor position.
+
+```go
+package main
+
+import "github.com/c-bata/go-prompt"
+
+func main() {
+  b := prompt.NewBuffer()
+  ... wip
+}
+```
+
+### Render Buffer object.
+
+`Renderer` object renders a buffer object.
+
+```go
+package main
+```
+
+the output is below:
+
+**TODO this is screen shot**
 
 ## LICENSE
 
-```
-MIT License
-
-Copyright (c) 2017 Masashi SHIBATA
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+This software is licensed under the MIT License (See [LICENSE](./LICENSE) ).
