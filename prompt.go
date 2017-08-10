@@ -31,6 +31,17 @@ type Exec struct {
 }
 
 func (p *Prompt) Run() {
+	// Logging
+	if os.Getenv(envEnableLog) != "true" {
+		log.SetOutput(ioutil.Discard)
+	} else if f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
+		log.SetOutput(ioutil.Discard)
+	} else {
+		defer f.Close()
+		log.SetOutput(f)
+		log.Println("[INFO] Logging is enabled.")
+	}
+
 	p.setUp()
 	defer p.tearDown()
 
@@ -177,6 +188,17 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 }
 
 func (p *Prompt) Input() string {
+	// Logging
+	if os.Getenv(envEnableLog) != "true" {
+		log.SetOutput(ioutil.Discard)
+	} else if f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
+		log.SetOutput(ioutil.Discard)
+	} else {
+		defer f.Close()
+		log.SetOutput(f)
+		log.Println("[INFO] Logging is enabled.")
+	}
+
 	p.setUp()
 	defer p.tearDown()
 
@@ -206,17 +228,6 @@ func (p *Prompt) Input() string {
 }
 
 func (p *Prompt) setUp() {
-	// Logging
-	if os.Getenv(envEnableLog) != "true" {
-		log.SetOutput(ioutil.Discard)
-	} else if f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
-		log.SetOutput(ioutil.Discard)
-	} else {
-		defer f.Close()
-		log.SetOutput(f)
-		log.Println("[INFO] Logging is enabled.")
-	}
-
 	p.in.Setup()
 	p.renderer.Setup()
 	p.renderer.UpdateWinSize(p.in.GetWinSize())
