@@ -22,6 +22,7 @@ func (c *CompletionManager) GetSelectedSuggestion() (s Suggest, ok bool) {
 		return Suggest{}, false
 	} else if c.selected < -1 {
 		log.Printf("[ERROR] shoud be reached here, selected=%d", c.selected)
+		c.selected = -1
 		return Suggest{}, false
 	}
 	return c.tmp[c.selected], true

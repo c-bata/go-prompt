@@ -1,9 +1,5 @@
 package prompt
 
-import (
-	"log"
-)
-
 const (
 	leftPrefix       = " "
 	leftSuffix       = " "
@@ -98,7 +94,6 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 		suggestions,
 		int(r.col)-len(r.prefix),
 	)
-	log.Printf("[INFO] formatted: %#v\n", formatted)
 	l := len(formatted)
 	r.prepareArea(l)
 
