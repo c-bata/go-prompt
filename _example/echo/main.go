@@ -18,10 +18,6 @@ func completer(in string) []prompt.Suggest {
 		last = args[len(args) - 1]
 	}
 	s := []prompt.Suggest{
-		{Text: "users", Description: "user table"},
-		{Text: "sites", Description: "sites table"},
-		{Text: "articles", Description: "articles table"},
-		{Text: "comments", Description: "comments table"},
 	}
 	return prompt.FilterHasPrefix(s, last, true)
 }
