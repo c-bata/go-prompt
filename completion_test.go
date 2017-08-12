@@ -107,7 +107,7 @@ func TestFormatShortSuggestion(t *testing.T) {
 	}
 
 	for i, s := range scenarioTable {
-		actual, width := formatCompletions(s.in, s.max)
+		actual, width := formatSuggestions(s.in, s.max)
 		if width != s.exWidth {
 			t.Errorf("[scenario %d] Want %d but got %d\n", i, s.exWidth, width)
 		}

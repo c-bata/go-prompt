@@ -68,7 +68,7 @@ func (r *Render) renderWindowTooSmall() {
 }
 
 func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
-	max := completions.Max
+	max := completions.max
 	if max > r.row {
 		max = r.row
 	}
@@ -80,7 +80,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 		suggestions = suggestions[:max]
 	}
 
-	formatted, width := formatCompletions(
+	formatted, width := formatSuggestions(
 		suggestions,
 		int(r.col)-len(r.prefix),
 	)
@@ -131,7 +131,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 
 	// prepare area
 	line := buffer.Text()
-	h := ((len(r.prefix) + len(line)) / int(r.col)) + 1 + int(completion.Max)
+	h := ((len(r.prefix) + len(line)) / int(r.col)) + 1 + int(completion.max)
 	if h > int(r.row) || completionMargin > int(r.col) {
 		r.renderWindowTooSmall()
 		return

@@ -56,7 +56,7 @@ func TestFormatCompletion(t *testing.T) {
 	}
 
 	for _, s := range scenarioTable {
-		ac, width := formatCompletions(s.completions, s.maxWidth)
+		ac, width := formatSuggestions(s.completions, s.maxWidth)
 		if !reflect.DeepEqual(ac, s.expected) {
 			t.Errorf("Should be %#v, but got %#v", s.expected, ac)
 		}

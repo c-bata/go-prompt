@@ -132,7 +132,7 @@ func OptionSelectedDescriptionBGColor(x Color) option {
 
 func OptionMaxSuggestion(x uint16) option {
 	return func(p *Prompt) error {
-		p.completion.Max = x
+		p.completion.max = x
 		return nil
 	}
 }

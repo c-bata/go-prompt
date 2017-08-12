@@ -24,7 +24,7 @@ type Suggest struct {
 type CompletionManager struct {
 	selected  int // -1 means nothing one is selected.
 	tmp       []Suggest
-	Max       uint16
+	max       uint16
 	completer Completer
 }
 
@@ -71,7 +71,7 @@ func (c *CompletionManager) Completing() bool {
 }
 
 func (c *CompletionManager) update() {
-	max := int(c.Max)
+	max := int(c.max)
 	if len(c.tmp) < max {
 		max = len(c.tmp)
 	}
@@ -120,17 +120,17 @@ func formatTexts(o []string, max int, prefix, suffix string) (new []string, widt
 	return n, lenPrefix + width + lenSuffix
 }
 
-func formatCompletions(completions []Suggest, max int) (new []Suggest, width int) {
-	num := len(completions)
+func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width int) {
+	num := len(suggests)
 	new = make([]Suggest, num)
 
 	left := make([]string, num)
 	for i := 0; i < num; i++ {
-		left[i] = completions[i].Text
+		left[i] = suggests[i].Text
 	}
 	right := make([]string, num)
 	for i := 0; i < num; i++ {
-		right[i] = completions[i].Description
+		right[i] = suggests[i].Description
 	}
 
 	left, leftWidth := formatTexts(left, max, leftPrefix, leftSuffix)
@@ -148,7 +148,7 @@ func formatCompletions(completions []Suggest, max int) (new []Suggest, width int
 func NewCompletionManager(completer Completer, max uint16) *CompletionManager {
 	return &CompletionManager{
 		selected:  -1,
-		Max:       max,
+		max:       max,
 		completer: completer,
 	}
 }
