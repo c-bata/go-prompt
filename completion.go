@@ -5,6 +5,17 @@ import (
 	"strings"
 )
 
+const (
+	shortenSuffix    = "..."
+	leftPrefix       = " "
+	leftSuffix       = " "
+	rightPrefix      = " "
+	rightSuffix      = " "
+	leftMargin       = len(leftPrefix + leftSuffix)
+	rightMargin      = len(rightPrefix + rightSuffix)
+	completionMargin = leftMargin + rightMargin
+)
+
 type Suggest struct {
 	Text        string
 	Description string
@@ -71,60 +82,67 @@ func (c *CompletionManager) update() {
 	}
 }
 
+func formatTexts(o []string, max int, prefix, suffix string) (new []string, width int) {
+	l := len(o)
+	n := make([]string, l)
+
+	lenPrefix := len([]rune(prefix))
+	lenSuffix := len([]rune(suffix))
+	lenShorten := len(shortenSuffix)
+	min := lenPrefix + lenSuffix + lenShorten
+	for i := 0; i < l; i++ {
+		if width < len([]rune(o[i])) {
+			width = len([]rune(o[i]))
+		}
+	}
+
+	if width == 0 {
+		return n, 0
+	}
+	if min >= max {
+		log.Println("[WARN] formatTexts: max is lower than length of prefix and suffix.")
+		return n, 0
+	}
+	if lenPrefix + width + lenSuffix > max {
+		width = max - lenPrefix - lenSuffix
+	}
+
+	for i := 0; i < l; i++ {
+		r := []rune(o[i])
+		x := len(r)
+		if x <= width {
+			spaces := strings.Repeat(" ", width-x)
+			n[i] = prefix + o[i] + spaces + suffix
+		} else if x > width {
+			n[i] = prefix + string(r[:width - lenShorten]) + shortenSuffix + suffix
+		}
+	}
+	return n, lenPrefix + width + lenSuffix
+}
+
 func formatCompletions(completions []Suggest, max int) (new []Suggest, width int) {
 	num := len(completions)
 	new = make([]Suggest, num)
-	leftWidth := 0
-	rightWidth := 0
+
+	left := make([]string, num)
+	for i := 0; i < num; i++ {
+		left[i] = completions[i].Text
+	}
+	right := make([]string, num)
+	for i := 0; i < num; i++ {
+		right[i] = completions[i].Description
+	}
+
+	left, leftWidth := formatTexts(left, max, leftPrefix, leftSuffix)
+	if leftWidth == 0 {
+		return []Suggest{}, 0
+	}
+	right, rightWidth := formatTexts(right, max - leftWidth, rightPrefix, rightSuffix)
 
 	for i := 0; i < num; i++ {
-		if leftWidth < len([]rune(completions[i].Text)) {
-			leftWidth = len([]rune(completions[i].Text))
-		}
-		if rightWidth < len([]rune(completions[i].Description)) {
-			rightWidth = len([]rune(completions[i].Description))
-		}
+		new[i] = Suggest{Text: left[i], Description: right[i]}
 	}
-
-	if diff := max - completionMargin - leftWidth - rightWidth; diff < 0 {
-		if rightWidth > diff {
-			rightWidth += diff
-		} else if rightWidth+rightMargin > -diff {
-			leftWidth += rightWidth + rightMargin + diff
-			rightWidth = 0
-		}
-	}
-	if rightWidth == 0 {
-		width = leftWidth + leftMargin
-	} else {
-		width = leftWidth + leftMargin + rightWidth + rightMargin
-	}
-
-	for i := 0; i < num; i++ {
-		var newText string
-		var newDescription string
-		if l := len(completions[i].Text); l > leftWidth {
-			newText = leftPrefix + completions[i].Text[:leftWidth-len("...")] + "..." + leftSuffix
-		} else if l < width {
-			spaces := strings.Repeat(" ", leftWidth-len([]rune(completions[i].Text)))
-			newText = leftPrefix + completions[i].Text + spaces + leftSuffix
-		} else {
-			newText = leftPrefix + completions[i].Text + leftSuffix
-		}
-
-		if rightWidth == 0 {
-			newDescription = ""
-		} else if l := len(completions[i].Description); l > rightWidth {
-			newDescription = rightPrefix + completions[i].Description[:rightWidth-len("...")] + "..." + rightSuffix
-		} else if l < width {
-			spaces := strings.Repeat(" ", rightWidth-len([]rune(completions[i].Description)))
-			newDescription = rightPrefix + completions[i].Description + spaces + rightSuffix
-		} else {
-			newDescription = rightPrefix + completions[i].Description + rightSuffix
-		}
-		new[i] = Suggest{Text: newText, Description: newDescription}
-	}
-	return
+	return new, leftWidth + rightWidth
 }
 
 func NewCompletionManager(completer Completer, max uint16) *CompletionManager {

@@ -1,15 +1,5 @@
 package prompt
 
-const (
-	leftPrefix       = " "
-	leftSuffix       = " "
-	rightPrefix      = " "
-	rightSuffix      = " "
-	leftMargin       = len(leftPrefix + leftSuffix)
-	rightMargin      = len(rightPrefix + rightSuffix)
-	completionMargin = leftMargin + rightMargin
-)
-
 type Render struct {
 	out    ConsoleWriter
 	prefix string

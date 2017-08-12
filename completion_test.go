@@ -42,6 +42,30 @@ func TestFormatShortSuggestion(t *testing.T) {
 		},
 		{
 			in: []Suggest{
+				{Text:"This is apple."},
+				{Text:"This is banana."},
+				{Text:"This is coconut."},
+			},
+			expected: []Suggest{
+				{Text:" Thi... "},
+				{Text:" Thi... "},
+				{Text:" Thi... "},
+			},
+			max:     8,
+			exWidth: 8,
+		},
+		{
+			in: []Suggest{
+				{Text:"This is apple."},
+				{Text:"This is banana."},
+				{Text:"This is coconut."},
+			},
+			expected: []Suggest{},
+			max:     3,
+			exWidth: 0,
+		},
+		{
+			in: []Suggest{
 				{Text:"--all-namespaces", Description:"If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace."},
 				{Text:"--allow-missing-template-keys", Description:"If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats."},
 				{Text:"--export", Description:"If true, use 'export' for the resources.  Exported resources are stripped of cluster-specific information."},
@@ -84,6 +108,94 @@ func TestFormatShortSuggestion(t *testing.T) {
 
 	for i, s := range scenarioTable {
 		actual, width := formatCompletions(s.in, s.max)
+		if width != s.exWidth {
+			t.Errorf("[scenario %d] Want %d but got %d\n", i, s.exWidth, width)
+		}
+		if !reflect.DeepEqual(actual, s.expected) {
+			t.Errorf("[scenario %d] Want %#v, but got %#v\n", i, s.expected, actual)
+		}
+	}
+}
+
+func TestFormatText(t *testing.T) {
+	var scenarioTable = []struct{
+		in       []string
+		expected []string
+		max      int
+		exWidth  int
+	}{
+		{
+			in: []string{
+				"",
+				"",
+			},
+			expected: []string{
+				"",
+				"",
+			},
+			max:     10,
+			exWidth: 0,
+		},
+		{
+			in: []string{
+				"apple",
+				"banana",
+				"coconut",
+			},
+			expected: []string{
+				"",
+				"",
+				"",
+			},
+			max:     2,
+			exWidth: 0,
+		},
+		{
+			in: []string{
+				"apple",
+				"banana",
+				"coconut",
+			},
+			expected: []string{
+				"",
+				"",
+				"",
+			},
+			max:     len(" " + " " + shortenSuffix),
+			exWidth: 0,
+		},
+		{
+			in: []string{
+				"apple",
+				"banana",
+				"coconut",
+			},
+			expected: []string{
+				" apple   ",
+				" banana  ",
+				" coconut ",
+			},
+			max:     100,
+			exWidth: len(" coconut "),
+		},
+		{
+			in: []string{
+				"apple",
+				"banana",
+				"coconut",
+			},
+			expected: []string{
+				" a... ",
+				" b... ",
+				" c... ",
+			},
+			max:     6,
+			exWidth: 6,
+		},
+	}
+
+	for i, s := range scenarioTable {
+		actual, width := formatTexts(s.in, s.max, " ", " ")
 		if width != s.exWidth {
 			t.Errorf("[scenario %d] Want %d but got %d\n", i, s.exWidth, width)
 		}
