@@ -24,12 +24,7 @@ Easy building a multi-platform binary of the command line tools because built wi
 
 ![Keyboard shortcuts](./_resources/keyboard-shortcuts.gif)
 
-go-prompt implements the bash compatible keyboard shortcuts.
-
-* `Ctrl+A`: Go to the beginning of the line.
-* `Ctrl+E`: Go to the end of the line.
-* `Ctrl+K`: Cut the part of the line after the cursor.
-* etc...
+You can customize keyboard shortcuts. More details are available from 'KeyBoard Shortcuts' section in Developer Guide.
 
 #### Easy to use
 
@@ -61,7 +56,7 @@ func main() {
 
 More practical example is avairable from `_example` directory or [kube-prompt](https://github.com/c-bata/kube-prompt).
 
-#### Flexible customize
+#### Flexible customization
 
 ![options](./_resources/prompt-options.png)
 go-prompt has many color options. All options are listed in [Developer Guide](./example/README.md).
@@ -75,6 +70,7 @@ go-prompt has many color options. All options are listed in [Developer Guide](./
 
 * If you want to create projects using go-prompt, you might want to look at the [Getting Started](./example/README.md).
 * If you want to contribute go-prompt, you might want to look at the [Developer Guide](./_tools/README.md).
+* If you want to know internal API, you might want to look at the [GoDoc](http://godoc.org/github.com/c-bata/go-prompt).
 
 
 ## Author

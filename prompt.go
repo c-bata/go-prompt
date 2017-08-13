@@ -18,12 +18,13 @@ type Executor func(string)
 type Completer func(string) []Suggest
 
 type Prompt struct {
-	in         ConsoleParser
-	buf        *Buffer
-	renderer   *Render
-	executor   Executor
-	history    *History
-	completion *CompletionManager
+	in          ConsoleParser
+	buf         *Buffer
+	renderer    *Render
+	executor    Executor
+	history     *History
+	completion  *CompletionManager
+	keyBindings []KeyBind
 }
 
 type Exec struct {
@@ -97,7 +98,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	key := p.in.GetKey(b)
 
 	switch key {
-	case ControlJ, Enter:
+	case Enter, ControlJ:
 		if s, ok := p.completion.GetSelectedSuggestion(); ok {
 			w := p.buf.Document().GetWordBeforeCursor()
 			if w != "" {
@@ -114,30 +115,12 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		if exec.input != "" {
 			p.history.Add(exec.input)
 		}
-	case ControlA:
-		x := []rune(p.buf.Document().TextBeforeCursor())
-		p.buf.CursorLeft(len(x))
-	case ControlE:
-		x := []rune(p.buf.Document().TextAfterCursor())
-		p.buf.CursorRight(len(x))
-	case ControlK:
-		x := []rune(p.buf.Document().TextAfterCursor())
-		p.buf.Delete(len(x))
-	case ControlU:
-		x := []rune(p.buf.Document().TextBeforeCursor())
-		p.buf.DeleteBeforeCursor(len(x))
 	case ControlC:
 		p.renderer.BreakLine(p.buf)
 		p.buf = NewBuffer()
 		p.completion.Reset()
 		p.history.Clear()
-	case ControlD:
-		if p.buf.Text() == "" {
-			shouldExit = true
-		} else {
-			p.buf.Delete(1)
-		}
-	case Up:
+	case Up, ControlP:
 		if !p.completion.Completing() {
 			if newBuf, changed := p.history.Older(p.buf); changed {
 				p.buf = newBuf
@@ -147,7 +130,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		fallthrough
 	case BackTab:
 		p.completion.Previous()
-	case Down:
+	case Down, ControlN:
 		if !p.completion.Completing() {
 			if newBuf, changed := p.history.Newer(p.buf); changed {
 				p.buf = newBuf
@@ -157,20 +140,12 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		fallthrough
 	case Tab, ControlI:
 		p.completion.Next()
-	case Left:
-		p.buf.CursorLeft(1)
-	case Right:
-		p.buf.CursorRight(1)
-	case Backspace:
-		if s, ok := p.completion.GetSelectedSuggestion(); ok {
-			w := p.buf.Document().GetWordBeforeCursor()
-			if w != "" {
-				p.buf.DeleteBeforeCursor(len([]rune(w)))
-			}
-			p.buf.InsertText(s.Text, false, true)
-			p.completion.Reset()
+	case ControlD:
+		if p.buf.Text() == "" {
+			shouldExit = true
+			return
 		}
-		p.buf.DeleteBeforeCursor(1)
+		p.completion.Reset()
 	case NotDefined:
 		if s, ok := p.completion.GetSelectedSuggestion(); ok {
 			w := p.buf.Document().GetWordBeforeCursor()
@@ -182,7 +157,37 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		p.completion.Reset()
 		p.buf.InsertText(string(b), false, true)
 	default:
+		if s, ok := p.completion.GetSelectedSuggestion(); ok {
+			w := p.buf.Document().GetWordBeforeCursor()
+			if w != "" {
+				p.buf.DeleteBeforeCursor(len([]rune(w)))
+			}
+			p.buf.InsertText(s.Text, false, true)
+		}
 		p.completion.Reset()
+	}
+
+	for i := range commonKeyBindings {
+		kb := commonKeyBindings[i]
+		if kb.Key == key {
+			p.buf = kb.Fn(p.buf)
+		}
+	}
+
+	// All the above assume that bash is running in the default Emacs setting
+	for i := range emacsKeyBindings {
+		kb := emacsKeyBindings[i]
+		if kb.Key == key {
+			p.buf = kb.Fn(p.buf)
+		}
+	}
+
+	// Custom keybindings
+	for i := range p.keyBindings {
+		kb := p.keyBindings[i]
+		if kb.Key == key {
+			p.buf = kb.Fn(p.buf)
+		}
 	}
 	return
 }

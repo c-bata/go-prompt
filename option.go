@@ -145,6 +145,13 @@ func OptionHistory(x []string) option {
 	}
 }
 
+func OptionAddKeyBind(b ...KeyBind) option {
+	return func(p *Prompt) error {
+		p.keyBindings = append(p.keyBindings, b...)
+		return nil
+	}
+}
+
 func New(executor Executor, completer Completer, opts ...option) *Prompt {
 	pt := &Prompt{
 		in: &VT100Parser{fd: syscall.Stdin},
