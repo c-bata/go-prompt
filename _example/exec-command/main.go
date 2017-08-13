@@ -18,7 +18,7 @@ func executor(t string) {
 	return
 }
 
-func completer(t string) []prompt.Suggest {
+func completer(t prompt.Document) []prompt.Suggest {
 	return []prompt.Suggest{
 		{Text: "bash"},
 	}

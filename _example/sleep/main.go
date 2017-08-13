@@ -23,7 +23,7 @@ func executor(t string) {
 	return
 }
 
-func completer(t string) []prompt.Suggest {
+func completer(t prompt.Document) []prompt.Suggest {
 	return []prompt.Suggest{
 		{Text: "sleep 5s"},
 		{Text: "sleep 20s"},
@@ -35,6 +35,6 @@ func main() {
 		executor,
 		completer,
 	)
-	defer fmt.Println("\nGoodbye!")
+	defer fmt.Println("Goodbye!")
 	p.Run()
 }

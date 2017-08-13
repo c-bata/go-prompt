@@ -15,7 +15,7 @@ const (
 )
 
 type Executor func(string)
-type Completer func(string) []Suggest
+type Completer func(Document) []Suggest
 
 type Prompt struct {
 	in          ConsoleParser
@@ -72,14 +72,14 @@ func (p *Prompt) Run() {
 				p.in.TearDown()
 				p.executor(e.input)
 
-				p.completion.Update(p.buf.Text())
+				p.completion.Update(*p.buf.Document())
 				p.renderer.Render(p.buf, p.completion)
 
 				// Set raw mode
 				p.in.Setup()
 				go readBuffer(bufCh, stopReadBufCh)
 			} else {
-				p.completion.Update(p.buf.Text())
+				p.completion.Update(*p.buf.Document())
 				p.renderer.Render(p.buf, p.completion)
 			}
 		case w := <-winSizeCh:
@@ -218,7 +218,7 @@ func (p *Prompt) Input() string {
 				stopReadBufCh <- struct{}{}
 				return e.input
 			} else {
-				p.completion.Update(p.buf.Text())
+				p.completion.Update(*p.buf.Document())
 				p.renderer.Render(p.buf, p.completion)
 			}
 		default:

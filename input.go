@@ -34,7 +34,7 @@ func newChoiceCompleter(choices []string, filter Filter) Completer {
 	for i := range choices {
 		s[i] = Suggest{Text: choices[i]}
 	}
-	return func(x string) []Suggest {
-		return filter(s, x, true)
+	return func(x Document) []Suggest {
+		return filter(s, x.GetWordBeforeCursor(), true)
 	}
 }

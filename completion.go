@@ -45,11 +45,11 @@ func (c *CompletionManager) GetSuggestions() []Suggest {
 
 func (c *CompletionManager) Reset() {
 	c.selected = -1
-	c.Update("")
+	c.Update(*NewDocument())
 	return
 }
 
-func (c *CompletionManager) Update(in string) {
+func (c *CompletionManager) Update(in Document) {
 	c.tmp = c.completer(in)
 	return
 }

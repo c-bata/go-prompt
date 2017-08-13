@@ -5,10 +5,18 @@ import (
 	"unicode/utf8"
 )
 
-// Document has text displayed in terminal and cursorposition.
+// Document has text displayed in terminal and cursor position.
 type Document struct {
 	Text           string
 	CursorPosition int
+}
+
+// NewDocument return the new empty document.
+func NewDocument() *Document {
+	return &Document{
+		Text: "",
+		CursorPosition: 0,
+	}
 }
 
 // GetCharRelativeToCursor return character relative to cursor position, or empty string
