@@ -1,12 +1,8 @@
-# Getting started
+# Developer Guide
 
-#### Download
+## Getting Started
 
-```
-$ go get -u github.com/c-bata/go-prompt
-```
-
-#### Usage
+Most simple example is below.
 
 ```go
 package main
@@ -23,14 +19,14 @@ func executor(in string) {
 }
 
 // completer returns the completion items from user input.
-func completer(in string) []prompt.Suggest {
+func completer(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{
 		{Text: "users", Description: "user table"},
 		{Text: "sites", Description: "sites table"},
 		{Text: "articles", Description: "articles table"},
 		{Text: "comments", Description: "comments table"},
 	}
-	return prompt.FilterHasPrefix(s, in, true)
+	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
 
 func main() {
@@ -44,13 +40,16 @@ func main() {
 }
 ```
 
+If you want to create CLI using go-prompt, I recommend you to look at the [source code of kube-prompt](https://github.com/c-bata/kube-prompt).
+It is the most practical example.
 
-## Color Options
+
+## Options
 
 go-prompt has many color options.
-It is difficult to describe by text. So please see below:
+It is difficult to describe by text. So please see below figure:
 
-![options](../_resources/prompt-options.png)
+![options](https://github.com/c-bata/assets/raw/master/go-prompt/prompt-options.png)
 
 * **OptionPrefixTextColor(prompt.Color)** : default `prompt.Blue`
 * **OptionPrefixBackgroundColor(prompt.Color)** : default `prompt.DefaultColor`
@@ -67,7 +66,7 @@ It is difficult to describe by text. So please see below:
 * **OptionSelectedDescriptionTextColor(prompt.Color)** : default `prompt.White`
 * **OptionSelectedDescriptionBGColor(prompt.Color)** : default `prompt.Cyan`
 
-## Other Options
+**Other Options**
 
 #### `OptionTitle(string)` : default `""`
 Option to set title displayed at the header bar of terminal.
@@ -89,3 +88,63 @@ An argument should implement ConsoleParser interface.
 To set a custom ConsoleWriter object.
 An argument should implement ConsoleWriter interace.
 
+#### `SwitchKeyBindMode(prompt.KeyBindMode)` : default `prompt.EmacsKeyBindMode`
+To set a key bind mode.
+
+#### `OptionAddKeyBind(...KeyBind)` : default `[]KeyBind{}`
+To set a custom key bind.
+
+## Architecture of go-prompt
+
+*Caution: This section is WIP.*
+
+This is a short description of go-prompt implementation.
+go-prompt consists of three parts.
+
+1. Input parser
+2. Emulate user input with Buffer object.
+3. Render buffer object.
+
+### Input Parser
+
+![input-parser animation](https://github.com/c-bata/assets/raw/master/go-prompt/input-parser.gif)
+
+Input Parser only supports only vt100 compatible console now.
+
+* Set raw mode.
+* Read standard input.
+* Parse byte array
+
+### Emulate user input
+
+go-prompt contains Buffer class.
+It represents input state by handling user input key.
+
+`Buffer` object has text and cursor position.
+
+**TODO prepare the sample of buffer**
+
+```go
+package main
+
+import "github.com/c-bata/go-prompt"
+
+func main() {
+  b := prompt.NewBuffer()
+  ... wip
+}
+```
+
+### Renderer
+
+`Renderer` object renders a buffer object.
+
+**TODO prepare the sample of brender**
+
+```go
+package main
+```
+
+the output is below:
+
+**TODO prepare a screen shot**
