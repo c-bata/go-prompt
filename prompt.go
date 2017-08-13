@@ -97,65 +97,21 @@ func (p *Prompt) Run() {
 func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	key := p.in.GetKey(b)
 
+	// completion
+	completing := p.completion.Completing()
 	switch key {
-	case Enter, ControlJ:
-		if s, ok := p.completion.GetSelectedSuggestion(); ok {
-			w := p.buf.Document().GetWordBeforeCursor()
-			if w != "" {
-				p.buf.DeleteBeforeCursor(len([]rune(w)))
-			}
-			p.buf.InsertText(s.Text, false, true)
+	case Down:
+		if completing {
+			p.completion.Next()
 		}
-		p.renderer.BreakLine(p.buf)
-
-		exec = &Exec{input: p.buf.Text()}
-		log.Printf("[History] %s", p.buf.Text())
-		p.buf = NewBuffer()
-		p.completion.Reset()
-		if exec.input != "" {
-			p.history.Add(exec.input)
-		}
-	case ControlC:
-		p.renderer.BreakLine(p.buf)
-		p.buf = NewBuffer()
-		p.completion.Reset()
-		p.history.Clear()
-	case Up, ControlP:
-		if !p.completion.Completing() {
-			if newBuf, changed := p.history.Older(p.buf); changed {
-				p.buf = newBuf
-			}
-			return
-		}
-		fallthrough
-	case BackTab:
-		p.completion.Previous()
-	case Down, ControlN:
-		if !p.completion.Completing() {
-			if newBuf, changed := p.history.Newer(p.buf); changed {
-				p.buf = newBuf
-			}
-			return
-		}
-		fallthrough
 	case Tab, ControlI:
 		p.completion.Next()
-	case ControlD:
-		if p.buf.Text() == "" {
-			shouldExit = true
-			return
+	case Up:
+		if completing {
+			p.completion.Previous()
 		}
-		p.completion.Reset()
-	case NotDefined:
-		if s, ok := p.completion.GetSelectedSuggestion(); ok {
-			w := p.buf.Document().GetWordBeforeCursor()
-			if w != "" {
-				p.buf.DeleteBeforeCursor(len([]rune(w)))
-			}
-			p.buf.InsertText(s.Text, false, true)
-		}
-		p.completion.Reset()
-		p.buf.InsertText(string(b), false, true)
+	case BackTab:
+		p.completion.Previous()
 	default:
 		if s, ok := p.completion.GetSelectedSuggestion(); ok {
 			w := p.buf.Document().GetWordBeforeCursor()
@@ -165,6 +121,42 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 			p.buf.InsertText(s.Text, false, true)
 		}
 		p.completion.Reset()
+	}
+
+	switch key {
+	case Enter, ControlJ:
+		p.renderer.BreakLine(p.buf)
+
+		exec = &Exec{input: p.buf.Text()}
+		log.Printf("[History] %s", p.buf.Text())
+		p.buf = NewBuffer()
+		if exec.input != "" {
+			p.history.Add(exec.input)
+		}
+	case ControlC:
+		p.renderer.BreakLine(p.buf)
+		p.buf = NewBuffer()
+		p.history.Clear()
+	case Up, ControlP:
+		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
+			if newBuf, changed := p.history.Older(p.buf); changed {
+				p.buf = newBuf
+			}
+		}
+	case Down, ControlN:
+		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
+			if newBuf, changed := p.history.Newer(p.buf); changed {
+				p.buf = newBuf
+			}
+			return
+		}
+	case ControlD:
+		if p.buf.Text() == "" {
+			shouldExit = true
+			return
+		}
+	case NotDefined:
+		p.buf.InsertText(string(b), false, true)
 	}
 
 	for i := range commonKeyBindings {
