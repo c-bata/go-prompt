@@ -1,5 +1,50 @@
 package prompt
 
+/*
+
+========
+PROGRESS
+========
+
+Moving the cursor
+-----------------
+
+* [x] Ctrl + a   Go to the beginning of the line (Home)
+* [x] Ctrl + e   Go to the End of the line (End)
+* [x] Ctrl + p   Previous command (Up arrow)
+* [x] Ctrl + n   Next command (Down arrow)
+* [ ] Alt + b   Back (left) one word
+* [ ] Alt + f   Forward (right) one word
+* [x] Ctrl + f   Forward one character
+* [x] Ctrl + b   Backward one character
+* [x] Ctrl + xx  Toggle between the start of line and current cursor position
+
+Editing
+-------
+
+* [ ] Ctrl + L   Clear the Screen, similar to the clear command
+* [ ] Alt + Del Delete the Word before the cursor.
+* [ ] Alt + d   Delete the Word after the cursor.
+* [x] Ctrl + d   Delete character under the cursor
+* [x] Ctrl + h   Delete character before the cursor (Backspace)
+
+* [x] Ctrl + w   Cut the Word before the cursor to the clipboard.
+* [x] Ctrl + k   Cut the Line after the cursor to the clipboard.
+* [x] Ctrl + u   Cut/delete the Line before the cursor to the clipboard.
+
+* [ ] Alt + t   Swap current word with previous
+* [ ] Ctrl + t   Swap the last two characters before the cursor (typo).
+* [ ] Esc  + t   Swap the last two words before the cursor.
+
+* [ ] ctrl + y   Paste the last thing to be cut (yank)
+* [ ] Alt + u   UPPER capitalize every character from the cursor to the end of the current word.
+* [ ] Alt + l   Lower the case of every character from the cursor to the end of the current word.
+* [ ] Alt + c   Capitalize the character under the cursor and move to the end of the word.
+* [ ] Alt + r   Cancel the changes and put back the line as it was in the history (revert).
+* [ ] ctrl + _   Undo
+
+*/
+
 var emacsKeyBindings = []KeyBind {
 	// Go to the End of the line
 	{

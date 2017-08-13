@@ -145,6 +145,13 @@ func OptionHistory(x []string) option {
 	}
 }
 
+func SwitchKeyBindMode(m KeyBindMode) option {
+	return func(p *Prompt) error {
+		p.keyBindMode = m
+		return nil
+	}
+}
+
 func OptionAddKeyBind(b ...KeyBind) option {
 	return func(p *Prompt) error {
 		p.keyBindings = append(p.keyBindings, b...)
@@ -173,10 +180,11 @@ func New(executor Executor, completer Completer, opts ...option) *Prompt {
 			selectedDescriptionTextColor: White,
 			selectedDescriptionBGColor:   Cyan,
 		},
-		buf:        NewBuffer(),
-		executor:   executor,
-		history:    NewHistory(),
-		completion: NewCompletionManager(completer, 6),
+		buf:         NewBuffer(),
+		executor:    executor,
+		history:     NewHistory(),
+		completion:  NewCompletionManager(completer, 6),
+		keyBindMode: EmacsKeyBind, // All the above assume that bash is running in the default Emacs setting
 	}
 
 	for _, opt := range opts {

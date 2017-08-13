@@ -7,6 +7,13 @@ type KeyBind struct {
 	Fn  KeyBindFunc
 }
 
+type KeyBindMode string
+
+const (
+	CommonKeyBind KeyBindMode = "common"
+	EmacsKeyBind KeyBindMode = "emacs"
+)
+
 var commonKeyBindings = []KeyBind {
 	// Go to the End of the line
 	{

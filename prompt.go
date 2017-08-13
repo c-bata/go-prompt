@@ -25,6 +25,7 @@ type Prompt struct {
 	history     *History
 	completion  *CompletionManager
 	keyBindings []KeyBind
+	keyBindMode KeyBindMode
 }
 
 type Exec struct {
@@ -159,6 +160,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		p.buf.InsertText(string(b), false, true)
 	}
 
+	// Key bindings
 	for i := range commonKeyBindings {
 		kb := commonKeyBindings[i]
 		if kb.Key == key {
@@ -166,15 +168,16 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		}
 	}
 
-	// All the above assume that bash is running in the default Emacs setting
-	for i := range emacsKeyBindings {
-		kb := emacsKeyBindings[i]
-		if kb.Key == key {
-			p.buf = kb.Fn(p.buf)
+	if p.keyBindMode == EmacsKeyBind {
+		for i := range emacsKeyBindings {
+			kb := emacsKeyBindings[i]
+			if kb.Key == key {
+				p.buf = kb.Fn(p.buf)
+			}
 		}
 	}
 
-	// Custom keybindings
+	// Custom key bindings
 	for i := range p.keyBindings {
 		kb := p.keyBindings[i]
 		if kb.Key == key {
