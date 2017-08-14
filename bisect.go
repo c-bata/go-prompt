@@ -2,9 +2,6 @@ package prompt
 
 import "sort"
 
-// Thanks!! https://play.golang.org/p/y9NRj_XVIW
-// TODO: Add unit tests
-
 // BisectLeft to Locate the insertion point for v in a to maintain sorted order.
 func BisectLeft(a []int, v int) int {
 	return bisectLeftRange(a, v, 0, len(a))
