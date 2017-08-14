@@ -1,5 +1,8 @@
 # go-prompt
 
+![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)
+![Go Report Card](https://goreportcard.com/badge/github.com/c-bata/go-prompt)
+
 Library for building a powerful interactive prompt, inspired by [python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit).
 Easy building a multi-platform binary of the command line tools because built with Golang.
 
