@@ -14,7 +14,7 @@ type Document struct {
 // NewDocument return the new empty document.
 func NewDocument() *Document {
 	return &Document{
-		Text: "",
+		Text:           "",
 		CursorPosition: 0,
 	}
 }

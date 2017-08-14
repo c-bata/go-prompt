@@ -103,7 +103,7 @@ func formatTexts(o []string, max int, prefix, suffix string) (new []string, widt
 		log.Println("[WARN] formatTexts: max is lower than length of prefix and suffix.")
 		return n, 0
 	}
-	if lenPrefix + width + lenSuffix > max {
+	if lenPrefix+width+lenSuffix > max {
 		width = max - lenPrefix - lenSuffix
 	}
 
@@ -114,7 +114,7 @@ func formatTexts(o []string, max int, prefix, suffix string) (new []string, widt
 			spaces := strings.Repeat(" ", width-x)
 			n[i] = prefix + o[i] + spaces + suffix
 		} else if x > width {
-			n[i] = prefix + string(r[:width - lenShorten]) + shortenSuffix + suffix
+			n[i] = prefix + string(r[:width-lenShorten]) + shortenSuffix + suffix
 		}
 	}
 	return n, lenPrefix + width + lenSuffix
@@ -137,7 +137,7 @@ func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width int) {
 	if leftWidth == 0 {
 		return []Suggest{}, 0
 	}
-	right, rightWidth := formatTexts(right, max - leftWidth, rightPrefix, rightSuffix)
+	right, rightWidth := formatTexts(right, max-leftWidth, rightPrefix, rightSuffix)
 
 	for i := 0; i < num; i++ {
 		new[i] = Suggest{Text: left[i], Description: right[i]}

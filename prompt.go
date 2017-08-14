@@ -164,7 +164,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	for i := range commonKeyBindings {
 		kb := commonKeyBindings[i]
 		if kb.Key == key {
-			p.buf = kb.Fn(p.buf)
+			kb.Fn(p.buf)
 		}
 	}
 
@@ -172,7 +172,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		for i := range emacsKeyBindings {
 			kb := emacsKeyBindings[i]
 			if kb.Key == key {
-				p.buf = kb.Fn(p.buf)
+				kb.Fn(p.buf)
 			}
 		}
 	}
@@ -181,7 +181,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	for i := range p.keyBindings {
 		kb := p.keyBindings[i]
 		if kb.Key == key {
-			p.buf = kb.Fn(p.buf)
+			kb.Fn(p.buf)
 		}
 	}
 	return
