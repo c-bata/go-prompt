@@ -1,8 +1,8 @@
 package main
 
 import (
-	"os/exec"
 	"os"
+	"os/exec"
 
 	"github.com/c-bata/go-prompt"
 )

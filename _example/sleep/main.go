@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"time"
 	"context"
+	"fmt"
 	"os/exec"
+	"time"
 
 	"github.com/c-bata/go-prompt"
 )
