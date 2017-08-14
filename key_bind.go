@@ -1,6 +1,6 @@
 package prompt
 
-type KeyBindFunc func(*Buffer) *Buffer
+type KeyBindFunc func(*Buffer)
 
 type KeyBind struct {
 	Key Key
@@ -11,59 +11,52 @@ type KeyBindMode string
 
 const (
 	CommonKeyBind KeyBindMode = "common"
-	EmacsKeyBind KeyBindMode = "emacs"
+	EmacsKeyBind  KeyBindMode = "emacs"
 )
 
-var commonKeyBindings = []KeyBind {
+var commonKeyBindings = []KeyBind{
 	// Go to the End of the line
 	{
 		Key: End,
-		Fn: func(buf *Buffer) *Buffer {
+		Fn: func(buf *Buffer) {
 			x := []rune(buf.Document().TextAfterCursor())
 			buf.CursorRight(len(x))
-			return buf
 		},
 	},
 	// Go to the beginning of the line
 	{
 		Key: Home,
-		Fn: func(buf *Buffer) *Buffer {
+		Fn: func(buf *Buffer) {
 			x := []rune(buf.Document().TextBeforeCursor())
 			buf.CursorLeft(len(x))
-			return buf
 		},
 	},
 	// Delete character under the cursor
 	{
 		Key: Delete,
-		Fn: func(buf *Buffer) *Buffer {
+		Fn: func(buf *Buffer) {
 			buf.Delete(1)
-			return buf
 		},
 	},
 	// Backspace
 	{
 		Key: Backspace,
-		Fn: func(buf *Buffer) *Buffer {
+		Fn: func(buf *Buffer) {
 			buf.DeleteBeforeCursor(1)
-			return buf
 		},
 	},
 	// Right allow: Forward one character
 	{
 		Key: Right,
-		Fn: func(buf *Buffer) *Buffer {
+		Fn: func(buf *Buffer) {
 			buf.CursorRight(1)
-			return buf
 		},
 	},
 	// Left allow: Backward one character
 	{
 		Key: Left,
-		Fn: func(buf *Buffer) *Buffer {
+		Fn: func(buf *Buffer) {
 			buf.CursorLeft(1)
-			return buf
 		},
 	},
-
 }
