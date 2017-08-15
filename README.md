@@ -1,20 +1,44 @@
-# go-prompt
-
-![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)
-![Go Report Card](https://goreportcard.com/badge/github.com/c-bata/go-prompt)
+# go-prompt ![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square) ![Go Report Card](https://goreportcard.com/badge/github.com/c-bata/go-prompt)
 
 Library for building a powerful interactive prompt, inspired by [python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit).
 Easy building a multi-platform binary of the command line tools because built with Golang.
 
-![demo](https://github.com/c-bata/assets/raw/master/go-prompt/kube-prompt.gif)
+```go
+package main
 
-(This is a GIF animation of kube-prompt.)
+import (
+	"fmt"
+	"github.com/c-bata/go-prompt"
+)
+
+func completer(d prompt.Document) []prompt.Suggest {
+	s := []prompt.Suggest{
+		{Text: "users", Description: "Store the username and age"},
+		{Text: "articles", Description: "Store the article text posted by user"},
+		{Text: "comments", Description: "Store the text commented to articles"},
+	}
+	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
+}
+
+func main() {
+	fmt.Println("Please select table.")
+	t := prompt.Input("> ", completer)
+	fmt.Println("You selected " + t)
+}
+```
+
 
 #### Projects using go-prompt
 
 * [kube-prompt : An interactive kubernetes client featuring auto-complete written in Go.](https://github.com/c-bata/kube-prompt)
 
 ## Features
+
+### Powerful auto-completion
+
+![demo](https://github.com/c-bata/assets/raw/master/go-prompt/kube-prompt.gif)
+
+(This is a GIF animation of kube-prompt.)
 
 ### Flexible options
 
@@ -43,36 +67,11 @@ KeyBinding          | Description
 <kbd>Ctrl + K</kbd> | Cut the Line after the cursor to the clipboard.
 <kbd>Ctrl + U</kbd> | Cut/delete the Line before the cursor to the clipboard.
 
+### History
 
-### Easy to use
+You can use up-arrow and down-arrow to walk through the history of commands executed.
 
-Usage is like this:
-
-```go
-package main
-
-import (
-	"fmt"
-	"github.com/c-bata/go-prompt"
-)
-
-func completer(d prompt.Document) []prompt.Suggest {
-	s := []prompt.Suggest{
-		{Text: "users", Description: "Store the username and age"},
-		{Text: "articles", Description: "Store the article text posted by user"},
-		{Text: "comments", Description: "Store the text commented to articles"},
-	}
-	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
-}
-
-func main() {
-	fmt.Println("Please select table.")
-	t := prompt.Input("> ", completer)
-	fmt.Println("You selected " + t)
-}
-```
-
-More practical example is available from `_example` directory and [a source code of kube-prompt](https://github.com/c-bata/kube-prompt).
+![History](https://github.com/c-bata/assets/raw/master/go-prompt/history.gif)
 
 
 ## Links
@@ -91,3 +90,4 @@ Masashi Shibata
 ## LICENSE
 
 This software is licensed under the MIT License (See [LICENSE](./LICENSE) ).
+
