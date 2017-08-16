@@ -1,7 +1,7 @@
 # go-prompt ![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square) ![Go Report Card](https://goreportcard.com/badge/github.com/c-bata/go-prompt)
 
 Library for building a powerful interactive prompt, inspired by [python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit).
-Easy building a multi-platform binary of the command line tools because built with Golang.
+Easy building a multi-platform binary of the command line tools because written in Golang.
 
 ```go
 package main
@@ -37,7 +37,7 @@ func main() {
 
 ### Powerful auto-completion
 
-![demo](https://github.com/c-bata/assets/raw/master/go-prompt/kube-prompt.gif)
+[![demo](https://github.com/c-bata/assets/raw/master/go-prompt/kube-prompt.gif)](https://github.com/c-bata/kube-prompt)
 
 (This is a GIF animation of kube-prompt.)
 
@@ -45,14 +45,14 @@ func main() {
 
 go-prompt provides many options. All options are listed in [Developer Guide](./DEVELOPER_GUIDE.md).
 
-![options](https://github.com/c-bata/assets/raw/master/go-prompt/prompt-options.png)
+[![options](https://github.com/c-bata/assets/raw/master/go-prompt/prompt-options.png)](#flexible-options)
 
 ### Keyboard Shortcuts
 
 Emacs-like keyboard shortcut is available by default (it's also default shortcuts in Bash shell).
 You can customize and expand these shortcuts.
 
-![keyboard shortcuts](https://github.com/c-bata/assets/raw/master/go-prompt/keyboard-shortcuts.gif)
+[![keyboard shortcuts](https://github.com/c-bata/assets/raw/master/go-prompt/keyboard-shortcuts.gif)](#keyboard-shortcuts)
 
 KeyBinding          | Description
 --------------------|---------------------------------------------------------
@@ -72,7 +72,7 @@ KeyBinding          | Description
 
 You can use up-arrow and down-arrow to walk through the history of commands executed.
 
-![History](https://github.com/c-bata/assets/raw/master/go-prompt/history.gif)
+[![History](https://github.com/c-bata/assets/raw/master/go-prompt/history.gif)](#history)
 
 
 ## Links
