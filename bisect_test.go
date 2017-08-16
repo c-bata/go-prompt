@@ -11,11 +11,11 @@ func TestBisectRight(t *testing.T) {
 
 	r := BisectRight(in, 0)
 	if r != 0 {
-		t.Error("number 0 should inserted at 0 position, but got %d", r)
+		t.Errorf("number 0 should inserted at 0 position, but got %d", r)
 	}
 
 	r = BisectRight(in, 4)
 	if r != 5 {
-		t.Error("number 4 should inserted at 5 position, but got %d", r)
+		t.Errorf("number 4 should inserted at 5 position, but got %d", r)
 	}
 }

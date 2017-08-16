@@ -382,12 +382,12 @@ func TestDocument_OnLastLine(t *testing.T) {
 		CursorPosition: len("line 1\nline"),
 	}
 	ac := d.OnLastLine()
-	if ac != false {
+	if ac {
 		t.Errorf("Should be %#v, got %#v", false, ac)
 	}
 	d.CursorPosition = len("line 1\nline 2\nline")
 	ac = d.OnLastLine()
-	if ac != true {
+	if !ac {
 		t.Errorf("Should be %#v, got %#v", true, ac)
 	}
 }
