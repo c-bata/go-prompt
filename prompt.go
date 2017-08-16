@@ -4,8 +4,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
 
@@ -59,12 +57,12 @@ func (p *Prompt) Run() {
 
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
-	go readBuffer(bufCh, stopReadBufCh)
+	go p.readBuffer(bufCh, stopReadBufCh)
 
 	exitCh := make(chan int)
 	winSizeCh := make(chan *WinSize)
 	stopHandleSignalCh := make(chan struct{})
-	go handleSignals(p.in, exitCh, winSizeCh, stopHandleSignalCh)
+	go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 
 	for {
 		select {
@@ -87,8 +85,8 @@ func (p *Prompt) Run() {
 
 				// Set raw mode
 				p.in.Setup()
-				go readBuffer(bufCh, stopReadBufCh)
-				go handleSignals(p.in, exitCh, winSizeCh, stopHandleSignalCh)
+				go p.readBuffer(bufCh, stopReadBufCh)
+				go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 			} else {
 				p.completion.Update(*p.buf.Document())
 				p.renderer.Render(p.buf, p.completion)
@@ -217,7 +215,7 @@ func (p *Prompt) Input() string {
 	p.renderer.Render(p.buf, p.completion)
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
-	go readBuffer(bufCh, stopReadBufCh)
+	go p.readBuffer(bufCh, stopReadBufCh)
 
 	for {
 		select {
@@ -248,61 +246,4 @@ func (p *Prompt) setUp() {
 func (p *Prompt) tearDown() {
 	p.in.TearDown()
 	p.renderer.TearDown()
-}
-
-func readBuffer(bufCh chan []byte, stopCh chan struct{}) {
-	buf := make([]byte, maxReadBytes)
-
-	log.Printf("[INFO] readBuffer start")
-	for {
-		time.Sleep(10 * time.Millisecond)
-		select {
-		case <-stopCh:
-			log.Print("[INFO] stop readBuffer")
-			return
-		default:
-			if n, err := syscall.Read(syscall.Stdin, buf); err == nil {
-				cbuf := make([]byte, n)
-				copy(cbuf, buf[:n])
-				bufCh <- cbuf
-			}
-		}
-	}
-}
-
-func handleSignals(in ConsoleParser, exitCh chan int, winSizeCh chan *WinSize, stop chan struct{}) {
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(
-		sigCh,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT,
-		syscall.SIGWINCH,
-	)
-
-	for {
-		select {
-		case <-stop:
-			log.Println("[INFO] stop handleSignals")
-			return
-		case s := <-sigCh:
-			switch s {
-			case syscall.SIGINT: // kill -SIGINT XXXX or Ctrl+c
-				log.Println("[SIGNAL] Catch SIGINT")
-				exitCh <- 0
-
-			case syscall.SIGTERM: // kill -SIGTERM XXXX
-				log.Println("[SIGNAL] Catch SIGTERM")
-				exitCh <- 1
-
-			case syscall.SIGQUIT: // kill -SIGQUIT XXXX
-				log.Println("[SIGNAL] Catch SIGQUIT")
-				exitCh <- 0
-
-			case syscall.SIGWINCH:
-				log.Println("[SIGNAL] Catch SIGWINCH")
-				winSizeCh <- in.GetWinSize()
-			}
-		}
-	}
 }

@@ -1,7 +1,5 @@
 package prompt
 
-import "syscall"
-
 // Option is the type to replace default parameters.
 // prompt.New accepts any number of options (this is functional option pattern).
 type Option func(prompt *Prompt) error
@@ -176,10 +174,10 @@ func OptionAddKeyBind(b ...KeyBind) Option {
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 	pt := &Prompt{
-		in: &VT100Parser{fd: syscall.Stdin},
+		in: NewVT100StandardInputParser(),
 		renderer: &Render{
 			prefix:                       "> ",
-			out:                          &VT100Writer{fd: syscall.Stdout},
+			out:                          NewVT100StandardOutputWriter(),
 			prefixTextColor:              Blue,
 			prefixBGColor:                DefaultColor,
 			inputTextColor:               DefaultColor,
