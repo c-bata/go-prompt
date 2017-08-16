@@ -54,7 +54,14 @@ func (d *Document) GetWordBeforeCursor() string {
 	return x[d.FindStartOfPreviousWord():]
 }
 
-// FindStartOfPreviousWord return an index relative to the cursor position
+// GetWordBeforeCursorWithSpace returns the word before the cursor.
+// Unlike GetWordBeforeCursor, it returns string containing space
+func (d *Document) GetWordBeforeCursorWithSpace() string {
+	x := d.TextBeforeCursor()
+	return x[d.FindStartOfPreviousWordWithSpace():]
+}
+
+// FindStartOfPreviousWord returns an index relative to the cursor position
 // pointing to the start of the previous word. Return `None` if nothing was found.
 func (d *Document) FindStartOfPreviousWord() int {
 	// Reverse the text before the cursor, in order to do an efficient backwards search.
@@ -62,6 +69,24 @@ func (d *Document) FindStartOfPreviousWord() int {
 	l := len(x)
 	for i := l; i > 0; i-- {
 		if x[i-1:i] == " " {
+			return i
+		}
+	}
+	return 0
+}
+
+// FindStartOfPreviousWordWithSpace is almost the same as FindStartOfPreviousWord.
+// The only difference is to ignore contiguous spaces.
+func (d *Document) FindStartOfPreviousWordWithSpace() int {
+	// Reverse the text before the cursor, in order to do an efficient backwards search.
+	x := d.TextBeforeCursor()
+	l := len(x)
+	appear := false
+	for i := l; i > 0; i-- {
+		if x[i-1:i] != " " {
+			appear = true
+		}
+		if x[i-1:i] == " " && appear {
 			return i
 		}
 	}

@@ -103,7 +103,7 @@ var emacsKeyBindings = []KeyBind{
 	{
 		Key: ControlW,
 		Fn: func(buf *Buffer) {
-			buf.DeleteBeforeCursor(len([]rune(buf.Document().GetWordBeforeCursor())))
+			buf.DeleteBeforeCursor(len([]rune(buf.Document().GetWordBeforeCursorWithSpace())))
 		},
 	},
 }
