@@ -195,11 +195,11 @@ func (w *VT100Writer) ClearTitle() {
 func (w *VT100Writer) SetColor(fg, bg Color, bold bool) {
 	f, ok := foregroundANSIColors[fg]
 	if !ok {
-		f, _ = foregroundANSIColors[DefaultColor]
+		f = foregroundANSIColors[DefaultColor]
 	}
 	b, ok := backgroundANSIColors[bg]
 	if !ok {
-		b, _ = backgroundANSIColors[DefaultColor]
+		b = backgroundANSIColors[DefaultColor]
 	}
 	syscall.Write(syscall.Stdout, []byte{0x1b, 0x5b, 0x33, 0x39, 0x3b, 0x34, 0x39, 0x6d})
 	w.WriteRaw([]byte{0x1b, 0x5b})

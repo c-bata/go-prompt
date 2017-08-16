@@ -54,7 +54,7 @@ func (t *VT100Parser) setRawMode() error {
 	n.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG
 	n.Cc[syscall.VMIN] = 1
 	n.Cc[syscall.VTIME] = 0
-	termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*syscall.Termios)(&n))
+	termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &n)
 	return nil
 }
 
@@ -67,7 +67,7 @@ func (t *VT100Parser) resetRawMode() error {
 
 func (t *VT100Parser) GetKey(b []byte) Key {
 	for _, k := range asciiSequences {
-		if bytes.Compare(k.ASCIICode, b) == 0 {
+		if bytes.Equal(k.ASCIICode, b) {
 			return k.Key
 		}
 	}
