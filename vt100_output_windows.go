@@ -1,14 +1,16 @@
-// +build !windows
+// +build windows
 
 package prompt
 
 import (
+	"io"
 	"strconv"
-	"syscall"
+
+	"github.com/mattn/go-colorable"
 )
 
 type VT100Writer struct {
-	fd     int
+	out    io.Writer
 	buffer []byte
 }
 
@@ -35,7 +37,7 @@ func (w *VT100Writer) WriteStr(data string) {
 }
 
 func (w *VT100Writer) Flush() error {
-	_, err := syscall.Write(w.fd, w.buffer)
+	_, err := w.out.Write(w.buffer)
 	if err != nil {
 		return err
 	}
@@ -98,10 +100,8 @@ func (w *VT100Writer) CursorGoTo(row, col int) {
 }
 
 func (w *VT100Writer) CursorUp(n int) {
-	if n == 0 {
-		return
-	} else if n < 0 {
-		w.CursorDown(-n)
+	if n < 0 {
+		w.CursorDown(n)
 		return
 	}
 	s := strconv.Itoa(n)
@@ -112,10 +112,8 @@ func (w *VT100Writer) CursorUp(n int) {
 }
 
 func (w *VT100Writer) CursorDown(n int) {
-	if n == 0 {
-		return
-	} else if n < 0 {
-		w.CursorUp(-n)
+	if n < 0 {
+		w.CursorUp(n)
 		return
 	}
 	s := strconv.Itoa(n)
@@ -201,13 +199,13 @@ func (w *VT100Writer) ClearTitle() {
 func (w *VT100Writer) SetColor(fg, bg Color, bold bool) {
 	f, ok := foregroundANSIColors[fg]
 	if !ok {
-		f = foregroundANSIColors[DefaultColor]
+		f, _ = foregroundANSIColors[DefaultColor]
 	}
 	b, ok := backgroundANSIColors[bg]
 	if !ok {
-		b = backgroundANSIColors[DefaultColor]
+		b, _ = backgroundANSIColors[DefaultColor]
 	}
-	syscall.Write(syscall.Stdout, []byte{0x1b, 0x5b, 0x33, 0x39, 0x3b, 0x34, 0x39, 0x6d})
+	w.out.Write([]byte{0x1b, 0x5b, 0x33, 0x39, 0x3b, 0x34, 0x39, 0x6d})
 	w.WriteRaw([]byte{0x1b, 0x5b})
 	if !bold {
 		w.WriteRaw([]byte{0x30, 0x3b})
@@ -296,6 +294,6 @@ var _ ConsoleWriter = &VT100Writer{}
 
 func NewVT100StandardOutputWriter() *VT100Writer {
 	return &VT100Writer{
-		fd: syscall.Stdout,
+		out: colorable.NewColorableStdout(),
 	}
 }
