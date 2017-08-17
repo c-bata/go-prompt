@@ -1,4 +1,4 @@
-# go-prompt ![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square) ![Go Report Card](https://goreportcard.com/badge/github.com/c-bata/go-prompt)
+# go-prompt
 
 Library for building a powerful interactive prompt, inspired by [python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit).
 Easy building a multi-platform binary of the command line tools because written in Golang.
@@ -32,7 +32,6 @@ func main() {
 
 * [kube-prompt : An interactive kubernetes client featuring auto-complete written in Go.](https://github.com/c-bata/kube-prompt)
 * (If you create a CLI using go-prompt and want your own project to be listed here, Please submit a Github Issue.)
-* (If you can't think of CLI ideas, you might want to look at the [projects using python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit#projects-using-prompt_toolkit).)
 
 ## Features
 
@@ -79,6 +78,7 @@ You can use up-arrow and down-arrow to walk through the history of commands exec
 ## Links
 
 * [Developer Guide](./DEVELOPER_GUIDE.md).
+* [Change Log](./CHANGELOG.md)
 * [GoDoc](http://godoc.org/github.com/c-bata/go-prompt).
 
 ## Author
