@@ -3,7 +3,7 @@ package prompt
 func dummyExecutor(in string) { return }
 
 // Input get the input data from the user and return it.
-func Input(prefix string, completer Completer, opts ...option) string {
+func Input(prefix string, completer Completer, opts ...Option) string {
 	pt := New(dummyExecutor, completer)
 	pt.renderer.prefixTextColor = DefaultColor
 	pt.renderer.prefix = prefix
@@ -17,7 +17,7 @@ func Input(prefix string, completer Completer, opts ...option) string {
 }
 
 // Choose to the shortcut of input function to select from string array.
-func Choose(prefix string, choices []string, opts ...option) string {
+func Choose(prefix string, choices []string, opts ...Option) string {
 	completer := newChoiceCompleter(choices, FilterHasPrefix)
 	pt := New(dummyExecutor, completer)
 	pt.renderer.prefixTextColor = DefaultColor
