@@ -2,8 +2,10 @@ package prompt
 
 import "strings"
 
+// Filter is the type to filter the prompt.Suggestion array.
 type Filter func([]Suggest, string, bool) []Suggest
 
+// FilterHasPrefix checks whether the string completions.Text begins with sub.
 func FilterHasPrefix(completions []Suggest, sub string, ignoreCase bool) []Suggest {
 	if sub == "" {
 		return completions
@@ -25,6 +27,7 @@ func FilterHasPrefix(completions []Suggest, sub string, ignoreCase bool) []Sugge
 	return ret
 }
 
+// FilterHasSuffix checks whether the completion.Text ends with sub.
 func FilterHasSuffix(completions []Suggest, sub string, ignoreCase bool) []Suggest {
 	if sub == "" {
 		return completions
@@ -46,6 +49,7 @@ func FilterHasSuffix(completions []Suggest, sub string, ignoreCase bool) []Sugge
 	return ret
 }
 
+// FilterContains checks whether the completion.Text contains sub.
 func FilterContains(completions []Suggest, sub string, ignoreCase bool) []Suggest {
 	if sub == "" {
 		return completions
