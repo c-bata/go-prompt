@@ -1,5 +1,9 @@
 package prompt
 
+import (
+	"syscall"
+)
+
 /*
 
 ========
@@ -20,7 +24,7 @@ Moving the cursor
 Editing
 -------
 
-* [ ] Ctrl + L   Clear the Screen, similar to the clear command
+* [x] Ctrl + L   Clear the Screen, similar to the clear command
 * [x] Ctrl + d   Delete character under the cursor
 * [x] Ctrl + h   Delete character before the cursor (Backspace)
 
@@ -104,6 +108,15 @@ var emacsKeyBindings = []KeyBind{
 		Key: ControlW,
 		Fn: func(buf *Buffer) {
 			buf.DeleteBeforeCursor(len([]rune(buf.Document().GetWordBeforeCursorWithSpace())))
+		},
+	},
+	// Clear the Screen, similar to the clear command
+	{
+		Key: ControlL,
+		Fn: func(buf *Buffer) {
+			out := &VT100Writer{fd: syscall.Stdout}
+			out.EraseScreen()
+			out.CursorGoTo(0, 0)
 		},
 	},
 }
