@@ -87,6 +87,7 @@ Masashi Shibata
 
 * Twitter: [@c\_bata\_](https://twitter.com/c_bata_/)
 * Github: [@c-bata](https://github.com/c-bata/)
+* Facebook: [Masashi Shibata](https://www.facebook.com/masashi.cbata)
 
 ## LICENSE
 
