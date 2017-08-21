@@ -1,6 +1,9 @@
 package prompt
 
+// Key is the type express the key inserted from user.
 type Key int
+
+// ASCIICode is the type contains Key and it's ascii byte array.
 type ASCIICode struct {
 	Key       Key
 	ASCIICode []byte

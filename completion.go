@@ -16,11 +16,13 @@ const (
 	completionMargin = leftMargin + rightMargin
 )
 
+// Suggest is printed when completing.
 type Suggest struct {
 	Text        string
 	Description string
 }
 
+// CompletionManager manages which suggestion is now selected.
 type CompletionManager struct {
 	selected  int // -1 means nothing one is selected.
 	tmp       []Suggest
@@ -28,6 +30,7 @@ type CompletionManager struct {
 	completer Completer
 }
 
+// GetSelectedSuggestion returns the selected item.
 func (c *CompletionManager) GetSelectedSuggestion() (s Suggest, ok bool) {
 	if c.selected == -1 {
 		return Suggest{}, false
@@ -39,33 +42,39 @@ func (c *CompletionManager) GetSelectedSuggestion() (s Suggest, ok bool) {
 	return c.tmp[c.selected], true
 }
 
+// GetSelectedSuggestion returns the list of suggestion.
 func (c *CompletionManager) GetSuggestions() []Suggest {
 	return c.tmp
 }
 
+// Reset to select nothing.
 func (c *CompletionManager) Reset() {
 	c.selected = -1
 	c.Update(*NewDocument())
 	return
 }
 
+// Update to update the suggestions.
 func (c *CompletionManager) Update(in Document) {
 	c.tmp = c.completer(in)
 	return
 }
 
+// Previous to select the previous suggestion item.
 func (c *CompletionManager) Previous() {
 	c.selected--
 	c.update()
 	return
 }
 
+// Next to select the next suggestion item.
 func (c *CompletionManager) Next() {
 	c.selected++
 	c.update()
 	return
 }
 
+// Completing returns whether the CompletionManager selects something one.
 func (c *CompletionManager) Completing() bool {
 	return c.selected != -1
 }
@@ -145,6 +154,7 @@ func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width int) {
 	return new, leftWidth + rightWidth
 }
 
+// NewCompletionManager returns initialized CompletionManager object.
 func NewCompletionManager(completer Completer, max uint16) *CompletionManager {
 	return &CompletionManager{
 		selected:  -1,

@@ -14,9 +14,13 @@ const (
 	envEnableLog = "GO_PROMPT_ENABLE_LOG"
 )
 
+// Executor is called when user input something text.
 type Executor func(string)
+
+// Completer should return the suggest item from Document.
 type Completer func(Document) []Suggest
 
+// Prompt is core struct of go-prompt.
 type Prompt struct {
 	in          ConsoleParser
 	buf         *Buffer
@@ -28,10 +32,12 @@ type Prompt struct {
 	keyBindMode KeyBindMode
 }
 
+// Exec is the struct contains user input context.
 type Exec struct {
 	input string
 }
 
+// Run starts prompt.
 func (p *Prompt) Run() {
 	// Logging
 	if os.Getenv(envEnableLog) != "true" {
@@ -187,6 +193,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	return
 }
 
+// Input just returns user input text.
 func (p *Prompt) Input() string {
 	// Logging
 	if os.Getenv(envEnableLog) != "true" {

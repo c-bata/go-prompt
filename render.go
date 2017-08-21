@@ -1,5 +1,6 @@
 package prompt
 
+// Render to render prompt information from state of Buffer.
 type Render struct {
 	out    ConsoleWriter
 	prefix string
@@ -23,6 +24,7 @@ type Render struct {
 	selectedDescriptionBGColor   Color
 }
 
+// Setup to initialize console output.
 func (r *Render) Setup() {
 	if r.title != "" {
 		r.out.SetTitle(r.title)
@@ -36,6 +38,7 @@ func (r *Render) renderPrefix() {
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
+// TearDown to clear title and erasing.
 func (r *Render) TearDown() {
 	r.out.ClearTitle()
 	r.out.EraseDown()
@@ -52,6 +55,7 @@ func (r *Render) prepareArea(lines int) {
 	return
 }
 
+// UpdateWinSize called when window size is changed.
 func (r *Render) UpdateWinSize(ws *WinSize) {
 	r.row = ws.Row
 	r.col = ws.Col
@@ -124,6 +128,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	return
 }
 
+// Render renders to the console.
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	// Erasing
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
@@ -154,6 +159,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	r.out.Flush()
 }
 
+// BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer) {
 	// CR
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
