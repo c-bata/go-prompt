@@ -61,7 +61,8 @@ func (p *Prompt) Run() {
 
 	exitCh := make(chan int)
 	winSizeCh := make(chan *WinSize)
-	go handleSignals(p.in, exitCh, winSizeCh)
+	stopHandleSignalCh := make(chan struct{})
+	go handleSignals(p.in, exitCh, winSizeCh, stopHandleSignalCh)
 
 	for {
 		select {
@@ -72,6 +73,7 @@ func (p *Prompt) Run() {
 			} else if e != nil {
 				// Stop goroutine to run readBuffer function
 				stopReadBufCh <- struct{}{}
+				stopHandleSignalCh <- struct{}{}
 
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
@@ -84,6 +86,7 @@ func (p *Prompt) Run() {
 				// Set raw mode
 				p.in.Setup()
 				go readBuffer(bufCh, stopReadBufCh)
+				go handleSignals(p.in, exitCh, winSizeCh, stopHandleSignalCh)
 			} else {
 				p.completion.Update(*p.buf.Document())
 				p.renderer.Render(p.buf, p.completion)
@@ -263,7 +266,7 @@ func readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	}
 }
 
-func handleSignals(in ConsoleParser, exitCh chan int, winSizeCh chan *WinSize) {
+func handleSignals(in ConsoleParser, exitCh chan int, winSizeCh chan *WinSize, stop chan struct{}) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(
 		sigCh,
@@ -274,25 +277,28 @@ func handleSignals(in ConsoleParser, exitCh chan int, winSizeCh chan *WinSize) {
 	)
 
 	for {
-		s := <-sigCh
-		switch s {
-		case syscall.SIGINT: // kill -SIGINT XXXX or Ctrl+c
-			log.Println("[SIGNAL] Catch SIGINT")
-			exitCh <- 0
+		select {
+		case <- stop:
+			log.Println("[INFO] stop handleSignals")
+			return
+		case s := <-sigCh:
+			switch s {
+			case syscall.SIGINT: // kill -SIGINT XXXX or Ctrl+c
+				log.Println("[SIGNAL] Catch SIGINT")
+				exitCh <- 0
 
-		case syscall.SIGTERM: // kill -SIGTERM XXXX
-			log.Println("[SIGNAL] Catch SIGTERM")
-			exitCh <- 1
+			case syscall.SIGTERM: // kill -SIGTERM XXXX
+				log.Println("[SIGNAL] Catch SIGTERM")
+				exitCh <- 1
 
-		case syscall.SIGQUIT: // kill -SIGQUIT XXXX
-			log.Println("[SIGNAL] Catch SIGQUIT")
-			exitCh <- 0
+			case syscall.SIGQUIT: // kill -SIGQUIT XXXX
+				log.Println("[SIGNAL] Catch SIGQUIT")
+				exitCh <- 0
 
-		case syscall.SIGWINCH:
-			log.Println("[SIGNAL] Catch SIGWINCH")
-			winSizeCh <- in.GetWinSize()
-		default:
-			time.Sleep(10 * time.Millisecond)
+			case syscall.SIGWINCH:
+				log.Println("[SIGNAL] Catch SIGWINCH")
+				winSizeCh <- in.GetWinSize()
+			}
 		}
 	}
 }
