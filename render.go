@@ -148,7 +148,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(line)
 	r.out.SetColor(DefaultColor, DefaultColor, false)
-	r.out.CursorBackward(len(line) - buffer.CursorPosition)
+	r.out.CursorBackward(len([]rune(line)) - buffer.CursorPosition)
 	r.renderCompletion(buffer, completion)
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
 		r.out.CursorBackward(len([]rune(buffer.Document().GetWordBeforeCursor())))
