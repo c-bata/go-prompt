@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 func (p *Prompt) handleSignals(exitCh chan int, winSizeCh chan *WinSize, stop chan struct{}) {
@@ -33,9 +32,6 @@ func (p *Prompt) handleSignals(exitCh chan int, winSizeCh chan *WinSize, stop ch
 		case syscall.SIGQUIT: // kill -SIGQUIT XXXX
 			log.Println("[SIGNAL] Catch SIGQUIT")
 			exitCh <- 0
-
-		default:
-			time.Sleep(10 * time.Millisecond)
 		}
 	}
 }
