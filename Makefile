@@ -20,6 +20,10 @@ lint: ## Run golint and go vet.
 test:  ## Run the tests.
 	@go test .
 
+.PHONY: race-test
+race-test:  ## Checking the race condition.
+	@go test -race .
+
 .PHONY: help
 help: ## Show help text
 	@echo "Commands:"
