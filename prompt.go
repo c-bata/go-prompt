@@ -12,6 +12,8 @@ import (
 const (
 	logfile      = "/tmp/go-prompt-debug.log"
 	envEnableLog = "GO_PROMPT_ENABLE_LOG"
+
+	maxReadBytes = 1024
 )
 
 // Executor is called when user input something text.
@@ -249,7 +251,7 @@ func (p *Prompt) tearDown() {
 }
 
 func readBuffer(bufCh chan []byte, stopCh chan struct{}) {
-	buf := make([]byte, 1024)
+	buf := make([]byte, maxReadBytes)
 
 	log.Printf("[INFO] readBuffer start")
 	for {
@@ -260,7 +262,9 @@ func readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 			return
 		default:
 			if n, err := syscall.Read(syscall.Stdin, buf); err == nil {
-				bufCh <- buf[:n]
+				cbuf := make([]byte, n)
+				copy(cbuf, buf[:n])
+				bufCh <- cbuf
 			}
 		}
 	}
@@ -278,7 +282,7 @@ func handleSignals(in ConsoleParser, exitCh chan int, winSizeCh chan *WinSize, s
 
 	for {
 		select {
-		case <- stop:
+		case <-stop:
 			log.Println("[INFO] stop handleSignals")
 			return
 		case s := <-sigCh:
