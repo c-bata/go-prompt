@@ -30,7 +30,8 @@ func main() {
 
 #### Projects using go-prompt
 
-* [kube-prompt : An interactive kubernetes client featuring auto-complete written in Go.](https://github.com/c-bata/kube-prompt)
+* [c-bata/kube-prompt : An interactive kubernetes client featuring auto-complete written in Go.](https://github.com/c-bata/kube-prompt)
+* [kris-nova/kubicorn : Simple. Cloud Native. Kubernetes. Infrastructure.](https://github.com/kris-nova/kubicorn)
 * [rancher/cli : The Rancher Command Line Interface (CLI)is a unified tool to manage your Rancher server](https://github.com/rancher/cli)
 * (If you create a CLI using go-prompt and want your own project to be listed here, Please submit a Github Issue.)
 
