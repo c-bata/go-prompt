@@ -14,7 +14,10 @@ func (h *History) Add(input string) {
 }
 
 func (h *History) Clear() {
-	copy(h.tmp, h.histories)
+	h.tmp = make([]string, len(h.histories))
+	for i := range h.histories {
+		h.tmp[i] = h.histories[i]
+	}
 	h.tmp = append(h.tmp, "")
 	h.selected = len(h.tmp) - 1
 }
