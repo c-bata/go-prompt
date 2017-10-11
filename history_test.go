@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestClear(t *testing.T) {
+func TestHistoryClear(t *testing.T) {
 	h := NewHistory()
 	h.Add("foo")
 	h.Clear()
@@ -19,7 +19,7 @@ func TestClear(t *testing.T) {
 	}
 }
 
-func TestAdd(t *testing.T) {
+func TestHistoryAdd(t *testing.T) {
 	h := NewHistory()
 	h.Add("echo 1")
 	expected := &History{
@@ -32,7 +32,7 @@ func TestAdd(t *testing.T) {
 	}
 }
 
-func TestOlder(t *testing.T) {
+func TestHistoryOlder(t *testing.T) {
 	h := NewHistory()
 	h.Add("echo 1")
 
