@@ -11,10 +11,12 @@ var ApplicationState struct {
 	CWD string
 }
 
+// livePrompt returns our desired prompt.
 func livePrompt() string {
 	return fmt.Sprintf("(%s) >> ", ApplicationState.CWD)
 }
 
+// executor sets ApplicationState.CWD so the current input string
 func executor(in string) {
 	ApplicationState.CWD = strings.Split(in, " ")[1]
 }

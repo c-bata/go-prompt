@@ -132,11 +132,10 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 // Render renders to the console.
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 
-	// fall back to the default prompt/prefix is livePrefix is not set
+	// fallback to the default static prefix if livePrefix is not specified.
 	if p := r.livePrefix(); p != "" {
 		r.prefix = p
 	}
-
 	// Erasing
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
 	r.out.EraseDown()

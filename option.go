@@ -38,7 +38,7 @@ func OptionPrefix(x string) Option {
 	}
 }
 
-// OptionLivePrefix to set a custom "live" prompt prefix string. This accepts a function will be called each time the prompt is rendered.
+// OptionLivePrefix to set a dynamic prefix/prompt string. This option accepts a func() string which is then called on each redraw.
 func OptionLivePrefix(f func() string) Option {
 	return func(p *Prompt) error {
 		p.renderer.livePrefix = f
