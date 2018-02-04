@@ -34,6 +34,7 @@ func main() {
 * [rancher/cli : The Rancher Command Line Interface (CLI)is a unified tool to manage your Rancher server](https://github.com/rancher/cli)
 * [kris-nova/kubicorn : Simple. Cloud Native. Kubernetes. Infrastructure.](https://github.com/kris-nova/kubicorn)
 * [cch123/asm-cli : Interactive shell of assembly language(X86/X64) based on unicorn and rasm2](https://github.com/cch123/asm-cli)
+* [ktr0731/evans : more expressive universal gRPC client](https://github.com/ktr0731/evans)
 * (If you create a CLI using go-prompt and want your own project to be listed here, Please submit a Github Issue.)
 
 ## Features
