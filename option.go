@@ -194,6 +194,8 @@ func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 			descriptionBGColor:           Turquoise,
 			selectedDescriptionTextColor: White,
 			selectedDescriptionBGColor:   Cyan,
+			scrollbarThumbColor:          DarkGray,
+			scrollbarBGColor:             Cyan,
 		},
 		buf:         NewBuffer(),
 		executor:    executor,
