@@ -39,6 +39,15 @@ func (r *Render) Setup() {
 	}
 }
 
+// getCurrentPrefix to get current prefix.
+// If live-prefix is enabled, return live-prefix.
+func (r *Render) getCurrentPrefix() string {
+	if prefix, ok := r.livePrefixCallback(); ok {
+		return prefix
+	}
+	return r.prefix
+}
+
 func (r *Render) renderPrefix(p string) {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
 	r.out.WriteStr(p)
@@ -100,16 +109,17 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 		return
 	}
 
+	prefix := r.getCurrentPrefix()
 	formatted, width := formatSuggestions(
 		suggestions,
-		int(r.col)-len(r.prefix)-1, // -1 means a width of scrollbar
+		int(r.col)-len(prefix)-1, // -1 means a width of scrollbar
 	)
 	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
 	l := len(formatted)
 	r.prepareArea(windowHeight)
 
 	// +1 means a width of scrollbar.
-	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor()) + 1) % int(r.col)
+	d := (len(prefix) + len(buf.Document().TextBeforeCursor()) + 1) % int(r.col)
 	if d == 0 { // the cursor is on right end.
 		r.out.CursorBackward(width)
 	} else if d+width > int(r.col) {
@@ -158,10 +168,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 
 // Render renders to the console.
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
-	prefix, ok := r.livePrefixCallback()
-	if !ok {
-		prefix = r.prefix
-	}
+	prefix := r.getCurrentPrefix()
 
 	// Erasing
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(prefix))
@@ -169,7 +176,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 
 	// prepare area
 	line := buffer.Text()
-	h := ((len(r.prefix) + len(line)) / int(r.col)) + 1 + int(completion.max)
+	h := ((len(prefix) + len(line)) / int(r.col)) + 1 + int(completion.max)
 	if h > int(r.row) || completionMargin > int(r.col) {
 		r.renderWindowTooSmall()
 		return
@@ -195,10 +202,11 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer) {
 	// CR
-	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
+	prefix := r.getCurrentPrefix()
+	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(prefix))
 	// Erasing and Render
 	r.out.EraseDown()
-	r.renderPrefix(r.prefix)
+	r.renderPrefix(prefix)
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(buffer.Document().Text + "\n")
 	r.out.SetColor(DefaultColor, DefaultColor, false)
