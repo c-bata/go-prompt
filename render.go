@@ -174,8 +174,13 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	// In situations where a psuedo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col > 0 {
+		if len(buffer.Document().Text) == 0 {
+			r.out.CursorBackward(int(r.col))
+			r.out.SaveCursor()
+		}
 		// Erasing
-		r.out.CursorBackward(int(r.col) + len(line) + len(prefix))
+		r.out.UnSaveCursor()
+		r.out.SaveCursor()
 		r.out.EraseDown()
 
 		// prepare area
@@ -206,8 +211,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer) {
 	// CR
-	prefix := r.getCurrentPrefix()
-	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(prefix))
+	r.out.UnSaveCursor()
 	// Erasing and Render
 	r.out.EraseDown()
 	r.renderPrefix()
