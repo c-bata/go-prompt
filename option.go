@@ -42,7 +42,6 @@ func OptionLivePrefix(f func() (prefix string, useLivePrefix bool)) Option {
 		p.renderer.livePrefixCallback = f
 		return nil
 	}
-
 }
 
 func OptionPrefixTextColor(x Color) Option {
