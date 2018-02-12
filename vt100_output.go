@@ -96,8 +96,10 @@ func (w *VT100Writer) CursorGoTo(row, col int) {
 }
 
 func (w *VT100Writer) CursorUp(n int) {
-	if n < 0 {
-		w.CursorDown(n)
+	if n == 0 {
+		return
+	} else if n < 0 {
+		w.CursorDown(-n)
 		return
 	}
 	s := strconv.Itoa(n)
@@ -108,8 +110,10 @@ func (w *VT100Writer) CursorUp(n int) {
 }
 
 func (w *VT100Writer) CursorDown(n int) {
-	if n < 0 {
-		w.CursorUp(n)
+	if n == 0 {
+		return
+	} else if n < 0 {
+		w.CursorUp(-n)
 		return
 	}
 	s := strconv.Itoa(n)
