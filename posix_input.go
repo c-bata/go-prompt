@@ -1,3 +1,5 @@
+// +build !windows
+
 package prompt
 
 import (
@@ -9,12 +11,14 @@ import (
 	"github.com/pkg/term/termios"
 )
 
-type VT100Parser struct {
+const maxReadBytes = 1024
+
+type PosixParser struct {
 	fd          int
 	origTermios syscall.Termios
 }
 
-func (t *VT100Parser) Setup() error {
+func (t *PosixParser) Setup() error {
 	// Set NonBlocking mode because if syscall.Read block this goroutine, it cannot receive data from stopCh.
 	if err := syscall.SetNonblock(t.fd, true); err != nil {
 		log.Println("[ERROR] Cannot set non blocking mode.")
@@ -27,7 +31,7 @@ func (t *VT100Parser) Setup() error {
 	return nil
 }
 
-func (t *VT100Parser) TearDown() error {
+func (t *PosixParser) TearDown() error {
 	if err := syscall.SetNonblock(t.fd, false); err != nil {
 		log.Println("[ERROR] Cannot set blocking mode.")
 		return err
@@ -39,7 +43,16 @@ func (t *VT100Parser) TearDown() error {
 	return nil
 }
 
-func (t *VT100Parser) setRawMode() error {
+func (t *PosixParser) Read() ([]byte, error) {
+	buf := make([]byte, maxReadBytes)
+	n, err := syscall.Read(syscall.Stdin, buf)
+	if err != nil {
+		return []byte{}, err
+	}
+	return buf[:n], nil
+}
+
+func (t *PosixParser) setRawMode() error {
 	x := t.origTermios.Lflag
 	if x &^= syscall.ICANON; x != 0 && x == t.origTermios.Lflag {
 		// fd is already raw mode
@@ -58,14 +71,14 @@ func (t *VT100Parser) setRawMode() error {
 	return nil
 }
 
-func (t *VT100Parser) resetRawMode() error {
+func (t *PosixParser) resetRawMode() error {
 	if t.origTermios.Lflag == 0 {
 		return nil
 	}
 	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.origTermios)
 }
 
-func (t *VT100Parser) GetKey(b []byte) Key {
+func (t *PosixParser) GetKey(b []byte) Key {
 	for _, k := range asciiSequences {
 		if bytes.Equal(k.ASCIICode, b) {
 			return k.Key
@@ -83,7 +96,7 @@ type ioctlWinsize struct {
 }
 
 // GetWinSize returns winsize struct which is the response of ioctl(2).
-func (t *VT100Parser) GetWinSize() *WinSize {
+func (t *PosixParser) GetWinSize() *WinSize {
 	ws := &ioctlWinsize{}
 	retCode, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
@@ -237,10 +250,10 @@ var asciiSequences []*ASCIICode = []*ASCIICode{
 	{Key: Ignore, ASCIICode: []byte{0x1b, 0x5b, 0x46}}, // Linux console
 }
 
-var _ ConsoleParser = &VT100Parser{}
+var _ ConsoleParser = &PosixParser{}
 
-func NewVT100StandardInputParser() *VT100Parser {
-	return &VT100Parser{
+func NewStandardInputParser() *PosixParser {
+	return &PosixParser{
 		fd: syscall.Stdin,
 	}
 }

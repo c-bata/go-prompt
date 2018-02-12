@@ -1,9 +1,5 @@
 package prompt
 
-import (
-	"syscall"
-)
-
 /*
 
 ========
@@ -114,7 +110,7 @@ var emacsKeyBindings = []KeyBind{
 	{
 		Key: ControlL,
 		Fn: func(buf *Buffer) {
-			out := &VT100Writer{fd: syscall.Stdout}
+			out := NewStandardOutputWriter()
 			out.EraseScreen()
 			out.CursorGoTo(0, 0)
 		},
