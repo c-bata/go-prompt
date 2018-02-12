@@ -107,7 +107,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	l := len(formatted)
 	r.prepareArea(windowHeight)
 
-	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor())) % int(r.col)
+	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor()) + 1) % int(r.col)
 	if d == 0 { // the cursor is on right end.
 		r.out.CursorBackward(width)
 	} else if d+width > int(r.col) {
