@@ -42,7 +42,7 @@ func main() {
 		completer,
 		prompt.OptionPrefix(">>> "),
 		prompt.OptionLivePrefix(changeLivePrefix),
-		prompt.OptionTitle("sql-prompt"),
+		prompt.OptionTitle("live-prefix-example"),
 	)
 	p.Run()
 }
