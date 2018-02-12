@@ -38,6 +38,14 @@ func OptionPrefix(x string) Option {
 	}
 }
 
+// OptionLivePrefix to set a dynamic prefix/prompt string. This option accepts a func() string which is then called on each redraw.
+func OptionLivePrefix(f func() string) Option {
+	return func(p *Prompt) error {
+		p.renderer.livePrefix = f
+		return nil
+	}
+}
+
 func OptionPrefixTextColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.prefixTextColor = x
@@ -179,6 +187,7 @@ func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 		in: &VT100Parser{fd: syscall.Stdin},
 		renderer: &Render{
 			prefix:                       "> ",
+			livePrefix:                   func() string { return "" },
 			out:                          &VT100Writer{fd: syscall.Stdout},
 			prefixTextColor:              Blue,
 			prefixBGColor:                DefaultColor,

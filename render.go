@@ -6,11 +6,12 @@ import (
 
 // Render to render prompt information from state of Buffer.
 type Render struct {
-	out    ConsoleWriter
-	prefix string
-	title  string
-	row    uint16
-	col    uint16
+	out        ConsoleWriter
+	livePrefix func() string
+	prefix     string
+	title      string
+	row        uint16
+	col        uint16
 	// colors
 	prefixTextColor              Color
 	prefixBGColor                Color
@@ -157,6 +158,11 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 
 // Render renders to the console.
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
+
+	// fallback to the default static prefix if livePrefix is not specified.
+	if p := r.livePrefix(); p != "" {
+		r.prefix = p
+	}
 	// Erasing
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
 	r.out.EraseDown()
