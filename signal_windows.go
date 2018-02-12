@@ -19,19 +19,25 @@ func (p *Prompt) handleSignals(exitCh chan int, winSizeCh chan *WinSize, stop ch
 	)
 
 	for {
-		s := <-sigCh
-		switch s {
-		case syscall.SIGINT: // kill -SIGINT XXXX or Ctrl+c
-			log.Println("[SIGNAL] Catch SIGINT")
-			exitCh <- 0
+		select {
+		case <-stop:
+			log.Println("[INFO] stop handleSignals")
+			return
+		case s := <-sigCh:
+			switch s {
 
-		case syscall.SIGTERM: // kill -SIGTERM XXXX
-			log.Println("[SIGNAL] Catch SIGTERM")
-			exitCh <- 1
+			case syscall.SIGINT: // kill -SIGINT XXXX or Ctrl+c
+				log.Println("[SIGNAL] Catch SIGINT")
+				exitCh <- 0
 
-		case syscall.SIGQUIT: // kill -SIGQUIT XXXX
-			log.Println("[SIGNAL] Catch SIGQUIT")
-			exitCh <- 0
+			case syscall.SIGTERM: // kill -SIGTERM XXXX
+				log.Println("[SIGNAL] Catch SIGTERM")
+				exitCh <- 1
+
+			case syscall.SIGQUIT: // kill -SIGQUIT XXXX
+				log.Println("[SIGNAL] Catch SIGQUIT")
+				exitCh <- 0
+			}
 		}
 	}
 }
