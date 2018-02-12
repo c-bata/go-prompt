@@ -6,12 +6,13 @@ import (
 
 // Render to render prompt information from state of Buffer.
 type Render struct {
-	out    ConsoleWriter
-	prefix string
-	title  string
-	row    uint16
-	col    uint16
-	// colors
+	out                ConsoleWriter
+	prefix             string
+	livePrefixCallback func() (prefix string, useLivePrefix bool)
+	title              string
+	row                uint16
+	col                uint16
+	// colors,
 	prefixTextColor              Color
 	prefixBGColor                Color
 	inputTextColor               Color
@@ -38,9 +39,9 @@ func (r *Render) Setup() {
 	}
 }
 
-func (r *Render) renderPrefix() {
+func (r *Render) renderPrefix(p string) {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
-	r.out.WriteStr(r.prefix)
+	r.out.WriteStr(p)
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
@@ -157,8 +158,13 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 
 // Render renders to the console.
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
+	prefix, ok := r.livePrefixCallback()
+	if !ok {
+		prefix = r.prefix
+	}
+
 	// Erasing
-	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
+	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(prefix))
 	r.out.EraseDown()
 
 	// prepare area
@@ -170,7 +176,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	}
 
 	// Rendering
-	r.renderPrefix()
+	r.renderPrefix(prefix)
 
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(line)
@@ -192,7 +198,7 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
 	// Erasing and Render
 	r.out.EraseDown()
-	r.renderPrefix()
+	r.renderPrefix(r.prefix)
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(buffer.Document().Text + "\n")
 	r.out.SetColor(DefaultColor, DefaultColor, false)
