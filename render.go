@@ -1,5 +1,9 @@
 package prompt
 
+import (
+	"math"
+)
+
 // Render to render prompt information from state of Buffer.
 type Render struct {
 	out    ConsoleWriter
@@ -22,6 +26,8 @@ type Render struct {
 	descriptionBGColor           Color
 	selectedDescriptionTextColor Color
 	selectedDescriptionBGColor   Color
+	scrollbarThumbColor          Color
+	scrollbarBGColor             Color
 }
 
 // Setup to initialize console output.
@@ -72,49 +78,70 @@ func (r *Render) renderWindowTooSmall() {
 }
 
 func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
-	max := completions.max
-	if max > r.row {
-		max = r.row
+	windowHeight := len(completions.tmp)
+	if windowHeight > int(completions.max) {
+		windowHeight = int(completions.max)
+	}
+	contentHeight := len(completions.tmp)
+
+	fractionVisible := float64(windowHeight) / float64(contentHeight)
+	fractionAbove := float64(completions.verticalScroll) / float64(contentHeight)
+
+	scrollbarHeight := int(math.Min(float64(windowHeight), math.Max(1, float64(windowHeight)*fractionVisible)))
+	scrollbarTop := int(float64(windowHeight) * fractionAbove)
+
+	isScrollThumb := func(row int) bool {
+		return scrollbarTop <= row && row <= scrollbarTop+scrollbarHeight
 	}
 
 	suggestions := completions.GetSuggestions()
 	if l := len(completions.GetSuggestions()); l == 0 {
 		return
-	} else if l > int(max) {
-		suggestions = suggestions[:max]
 	}
 
 	formatted, width := formatSuggestions(
 		suggestions,
-		int(r.col)-len(r.prefix),
+		int(r.col)-len(r.prefix)-1, // -1 means a width of scrollbar
 	)
+	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
 	l := len(formatted)
-	r.prepareArea(l)
+	r.prepareArea(windowHeight)
 
-	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor())) % int(r.col)
+	// +1 means a width of scrollbar.
+	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor()) + 1) % int(r.col)
 	if d == 0 { // the cursor is on right end.
 		r.out.CursorBackward(width)
 	} else if d+width > int(r.col) {
 		r.out.CursorBackward(d + width - int(r.col))
 	}
 
+	selected := completions.selected - completions.verticalScroll
+
 	r.out.SetColor(White, Cyan, false)
 	for i := 0; i < l; i++ {
 		r.out.CursorDown(1)
-		if i == completions.selected {
+		if i == selected {
 			r.out.SetColor(r.selectedSuggestionTextColor, r.selectedSuggestionBGColor, true)
 		} else {
 			r.out.SetColor(r.suggestionTextColor, r.suggestionBGColor, false)
 		}
 		r.out.WriteStr(formatted[i].Text)
 
-		if i == completions.selected {
+		if i == selected {
 			r.out.SetColor(r.selectedDescriptionTextColor, r.selectedDescriptionBGColor, false)
 		} else {
 			r.out.SetColor(r.descriptionTextColor, r.descriptionBGColor, false)
 		}
 		r.out.WriteStr(formatted[i].Description)
-		r.out.CursorBackward(width)
+
+		if isScrollThumb(i) {
+			r.out.SetColor(DefaultColor, r.scrollbarThumbColor, false)
+		} else {
+			r.out.SetColor(DefaultColor, r.scrollbarBGColor, false)
+		}
+		r.out.WriteStr(" ")
+		// +1 means a width of scrollbar.
+		r.out.CursorBackward(width + 1)
 	}
 	if d == 0 { // the cursor is on right end.
 		// DON'T CURSOR DOWN HERE. Because the line doesn't erase properly.

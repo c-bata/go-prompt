@@ -28,6 +28,8 @@ type CompletionManager struct {
 	tmp       []Suggest
 	max       uint16
 	completer Completer
+
+	verticalScroll int
 }
 
 // GetSelectedSuggestion returns the selected item.
@@ -50,6 +52,7 @@ func (c *CompletionManager) GetSuggestions() []Suggest {
 // Reset to select nothing.
 func (c *CompletionManager) Reset() {
 	c.selected = -1
+	c.verticalScroll = 0
 	c.Update(*NewDocument())
 	return
 }
@@ -62,6 +65,9 @@ func (c *CompletionManager) Update(in Document) {
 
 // Previous to select the previous suggestion item.
 func (c *CompletionManager) Previous() {
+	if c.verticalScroll == c.selected && c.selected > 0 {
+		c.verticalScroll--
+	}
 	c.selected--
 	c.update()
 	return
@@ -69,6 +75,9 @@ func (c *CompletionManager) Previous() {
 
 // Next to select the next suggestion item.
 func (c *CompletionManager) Next() {
+	if c.verticalScroll+int(c.max)-1 == c.selected {
+		c.verticalScroll++
+	}
 	c.selected++
 	c.update()
 	return
@@ -84,10 +93,12 @@ func (c *CompletionManager) update() {
 	if len(c.tmp) < max {
 		max = len(c.tmp)
 	}
-	if c.selected >= max {
+
+	if c.selected >= len(c.tmp) {
 		c.Reset()
 	} else if c.selected < -1 {
-		c.selected = max - 1
+		c.selected = len(c.tmp) - 1
+		c.verticalScroll = len(c.tmp) - max
 	}
 }
 
@@ -160,5 +171,7 @@ func NewCompletionManager(completer Completer, max uint16) *CompletionManager {
 		selected:  -1,
 		max:       max,
 		completer: completer,
+
+		verticalScroll: 0,
 	}
 }
