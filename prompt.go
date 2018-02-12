@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	logfile      = "/tmp/go-prompt-debug.log"
-	envEnableLog = "GO_PROMPT_ENABLE_LOG"
+	envDebugLogPath = "GO_PROMPT_LOG_PATH"
 )
 
 // Executor is called when user input something text.
@@ -37,10 +36,9 @@ type Exec struct {
 
 // Run starts prompt.
 func (p *Prompt) Run() {
-	// Logging
-	if os.Getenv(envEnableLog) != "true" {
+	if l := os.Getenv(envDebugLogPath); l == "" {
 		log.SetOutput(ioutil.Discard)
-	} else if f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
+	} else if f, err := os.OpenFile(l, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
 		log.SetOutput(ioutil.Discard)
 	} else {
 		defer f.Close()
@@ -198,10 +196,9 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 
 // Input just returns user input text.
 func (p *Prompt) Input() string {
-	// Logging
-	if os.Getenv(envEnableLog) != "true" {
+	if l := os.Getenv(envDebugLogPath); l == "" {
 		log.SetOutput(ioutil.Discard)
-	} else if f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
+	} else if f, err := os.OpenFile(l, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
 		log.SetOutput(ioutil.Discard)
 	} else {
 		defer f.Close()
