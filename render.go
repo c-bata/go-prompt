@@ -6,12 +6,13 @@ import (
 
 // Render to render prompt information from state of Buffer.
 type Render struct {
-	out    ConsoleWriter
-	prefix string
-	title  string
-	row    uint16
-	col    uint16
-	// colors
+	out                ConsoleWriter
+	prefix             string
+	livePrefixCallback func() (prefix string, useLivePrefix bool)
+	title              string
+	row                uint16
+	col                uint16
+	// colors,
 	prefixTextColor              Color
 	prefixBGColor                Color
 	inputTextColor               Color
@@ -38,9 +39,18 @@ func (r *Render) Setup() {
 	}
 }
 
+// getCurrentPrefix to get current prefix.
+// If live-prefix is enabled, return live-prefix.
+func (r *Render) getCurrentPrefix() string {
+	if prefix, ok := r.livePrefixCallback(); ok {
+		return prefix
+	}
+	return r.prefix
+}
+
 func (r *Render) renderPrefix() {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
-	r.out.WriteStr(r.prefix)
+	r.out.WriteStr(r.getCurrentPrefix())
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
@@ -99,16 +109,17 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 		return
 	}
 
+	prefix := r.getCurrentPrefix()
 	formatted, width := formatSuggestions(
 		suggestions,
-		int(r.col)-len(r.prefix)-1, // -1 means a width of scrollbar
+		int(r.col)-len(prefix)-1, // -1 means a width of scrollbar
 	)
 	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
 	l := len(formatted)
 	r.prepareArea(windowHeight)
 
 	// +1 means a width of scrollbar.
-	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor()) + 1) % int(r.col)
+	d := (len(prefix) + len(buf.Document().TextBeforeCursor()) + 1) % int(r.col)
 	if d == 0 { // the cursor is on right end.
 		r.out.CursorBackward(width)
 	} else if d+width > int(r.col) {
@@ -143,7 +154,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 		// +1 means a width of scrollbar.
 		r.out.CursorBackward(width + 1)
 	}
-	if d == 0 { // the cursor is on right end.
+	if d == 0 && len(prefix) + len(buf.Text()) != 0 { // the cursor is on right end.
 		// DON'T CURSOR DOWN HERE. Because the line doesn't erase properly.
 		r.out.CursorForward(width + 1)
 	} else if d+width > int(r.col) {
@@ -157,13 +168,15 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 
 // Render renders to the console.
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
+	prefix := r.getCurrentPrefix()
+
 	// Erasing
-	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
+	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(prefix))
 	r.out.EraseDown()
 
 	// prepare area
 	line := buffer.Text()
-	h := ((len(r.prefix) + len(line)) / int(r.col)) + 1 + int(completion.max)
+	h := ((len(prefix) + len(line)) / int(r.col)) + 1 + int(completion.max)
 	if h > int(r.row) || completionMargin > int(r.col) {
 		r.renderWindowTooSmall()
 		return
@@ -189,7 +202,8 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer) {
 	// CR
-	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(r.prefix))
+	prefix := r.getCurrentPrefix()
+	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(prefix))
 	// Erasing and Render
 	r.out.EraseDown()
 	r.renderPrefix()

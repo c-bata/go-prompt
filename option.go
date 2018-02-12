@@ -36,6 +36,14 @@ func OptionPrefix(x string) Option {
 	}
 }
 
+// OptionLivePrefix to change the prefix dynamically by callback function
+func OptionLivePrefix(f func() (prefix string, useLivePrefix bool)) Option {
+	return func(p *Prompt) error {
+		p.renderer.livePrefixCallback = f
+		return nil
+	}
+}
+
 func OptionPrefixTextColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.prefixTextColor = x
@@ -178,6 +186,7 @@ func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 		renderer: &Render{
 			prefix:                       "> ",
 			out:                          NewStandardOutputWriter(),
+			livePrefixCallback:           func() (string, bool) { return "", false },
 			prefixTextColor:              Blue,
 			prefixBGColor:                DefaultColor,
 			inputTextColor:               DefaultColor,
