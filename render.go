@@ -12,6 +12,9 @@ type Render struct {
 	title              string
 	row                uint16
 	col                uint16
+
+	previousBufferSize int
+
 	// colors,
 	prefixTextColor              Color
 	prefixBGColor                Color
@@ -171,6 +174,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
 
+<<<<<<< HEAD
 	// In situations where a psuedo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col > 0 {
@@ -179,9 +183,11 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 			r.out.SaveCursor()
 		}
 		// Erasing
-		r.out.UnSaveCursor()
-		r.out.SaveCursor()
+		r.out.CursorUp((r.previousBufferSize - 1) / int(r.col))
+		r.out.WriteRawStr("\r")
 		r.out.EraseDown()
+
+		r.previousBufferSize = len(buffer.Document().TextBeforeCursor()) + len(prefix)
 
 		// prepare area
 		h := ((len(prefix) + len(line)) / int(r.col)) + 1 + int(completion.max)
@@ -210,13 +216,15 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer) {
-	// CR
-	r.out.UnSaveCursor()
 	// Erasing and Render
+	r.out.CursorUp((len(buffer.Document().Text) + len(r.getCurrentPrefix()) - 1) / int(r.col))
+	r.out.WriteRawStr("\r")
 	r.out.EraseDown()
 	r.renderPrefix()
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(buffer.Document().Text + "\n")
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 	r.out.Flush()
+
+	r.previousBufferSize = 0
 }
