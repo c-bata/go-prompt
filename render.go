@@ -154,7 +154,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 		// +1 means a width of scrollbar.
 		r.out.CursorBackward(width + 1)
 	}
-	if d == 0 { // the cursor is on right end.
+	if d == 0 && len(prefix) + len(buf.Text()) != 0 { // the cursor is on right end.
 		// DON'T CURSOR DOWN HERE. Because the line doesn't erase properly.
 		r.out.CursorForward(width + 1)
 	} else if d+width > int(r.col) {
