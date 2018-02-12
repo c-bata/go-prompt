@@ -1,104 +1,50 @@
-// +build !windows
+// +build windows
 
 package prompt
 
 import (
 	"bytes"
-	"log"
 	"syscall"
-	"unsafe"
 
-	"github.com/pkg/term/termios"
+	"github.com/mattn/go-tty"
 )
 
 type VT100Parser struct {
-	fd          int
-	origTermios syscall.Termios
+	fd  syscall.Handle
+	tty *tty.TTY
 }
 
 func (t *VT100Parser) Setup() error {
-	// Set NonBlocking mode because if syscall.Read block this goroutine, it cannot receive data from stopCh.
-	if err := syscall.SetNonblock(t.fd, true); err != nil {
-		log.Println("[ERROR] Cannot set non blocking mode.")
+	tty, err := tty.Open()
+	if err != nil {
 		return err
 	}
-	if err := t.setRawMode(); err != nil {
-		log.Println("[ERROR] Cannot set raw mode.")
-		return err
-	}
+	t.tty = tty
 	return nil
 }
 
 func (t *VT100Parser) TearDown() error {
-	if err := syscall.SetNonblock(t.fd, false); err != nil {
-		log.Println("[ERROR] Cannot set blocking mode.")
-		return err
-	}
-	if err := t.resetRawMode(); err != nil {
-		log.Println("[ERROR] Cannot reset from raw mode.")
-		return err
-	}
-	return nil
-}
-
-func (t *VT100Parser) setRawMode() error {
-	x := t.origTermios.Lflag
-	if x &^= syscall.ICANON; x != 0 && x == t.origTermios.Lflag {
-		// fd is already raw mode
-		return nil
-	}
-	var n syscall.Termios
-	if err := termios.Tcgetattr(uintptr(t.fd), &t.origTermios); err != nil {
-		return err
-	}
-	n = t.origTermios
-	// "&^=" used like: https://play.golang.org/p/8eJw3JxS4O
-	n.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG
-	n.Cc[syscall.VMIN] = 1
-	n.Cc[syscall.VTIME] = 0
-	termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &n)
-	return nil
-}
-
-func (t *VT100Parser) resetRawMode() error {
-	if t.origTermios.Lflag == 0 {
-		return nil
-	}
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.origTermios)
+	return t.tty.Close()
 }
 
 func (t *VT100Parser) GetKey(b []byte) Key {
 	for _, k := range asciiSequences {
-		if bytes.Equal(k.ASCIICode, b) {
+		if bytes.Compare(k.ASCIICode, b) == 0 {
 			return k.Key
 		}
 	}
 	return NotDefined
 }
 
-// winsize is winsize struct got from the ioctl(2) system call.
-type ioctlWinsize struct {
-	Row uint16
-	Col uint16
-	X   uint16 // pixel value
-	Y   uint16 // pixel value
-}
-
 // GetWinSize returns winsize struct which is the response of ioctl(2).
 func (t *VT100Parser) GetWinSize() *WinSize {
-	ws := &ioctlWinsize{}
-	retCode, _, errno := syscall.Syscall(
-		syscall.SYS_IOCTL,
-		uintptr(t.fd),
-		uintptr(syscall.TIOCGWINSZ),
-		uintptr(unsafe.Pointer(ws)))
-
-	if int(retCode) == -1 {
-		panic(errno)
+	w, h, err := t.tty.Size()
+	if err != nil {
+		panic(err)
 	}
 	return &WinSize{
-		Row: ws.Row,
-		Col: ws.Col,
+		Row: uint16(h),
+		Col: uint16(w),
 	}
 }
 
@@ -144,23 +90,23 @@ var asciiSequences []*ASCIICode = []*ASCIICode{
 	{Key: Right, ASCIICode: []byte{0x1b, 0x5b, 0x43}},
 	{Key: Left, ASCIICode: []byte{0x1b, 0x5b, 0x44}},
 	{Key: Home, ASCIICode: []byte{0x1b, 0x5b, 0x48}},
-	{Key: Home, ASCIICode: []byte{0x1b, 0x30, 0x48}},
-	{Key: End, ASCIICode: []byte{0x1b, 0x5b, 0x46}},
-	{Key: End, ASCIICode: []byte{0x1b, 0x30, 0x46}},
+	{Key: Home, ASCIICode: []byte{0x1b, 0x4f, 0x48}},
+	{Key: End, ASCIICode: []byte{0x1b, 0x5b, 0x70}},
+	{Key: End, ASCIICode: []byte{0x1b, 0x4f, 0x70}},
 
 	{Key: Enter, ASCIICode: []byte{0xa}},
 	{Key: Delete, ASCIICode: []byte{0x1b, 0x5b, 0x33, 0x7e}},
-	{Key: ShiftDelete, ASCIICode: []byte{0x1b, 0x5b, 0x33, 0x3b, 0x32, 0x7e}},
-	{Key: ControlDelete, ASCIICode: []byte{0x1b, 0x5b, 0x33, 0x3b, 0x35, 0x7e}},
-	{Key: Home, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x7e}},
-	{Key: End, ASCIICode: []byte{0x1b, 0x5b, 0x34, 0x7e}},
-	{Key: PageUp, ASCIICode: []byte{0x1b, 0x5b, 0x35, 0x7e}},
-	{Key: PageDown, ASCIICode: []byte{0x1b, 0x5b, 0x36, 0x7e}},
-	{Key: Home, ASCIICode: []byte{0x1b, 0x5b, 0x37, 0x7e}},
-	{Key: End, ASCIICode: []byte{0x1b, 0x5b, 0x38, 0x7e}},
+	{Key: ShiftDelete, ASCIICode: []byte{0x1b, 0x5b, 0x33, 0x3b, 0x02, 0x7e}},
+	{Key: ControlDelete, ASCIICode: []byte{0x1b, 0x5b, 0x33, 0x3b, 0x05, 0x7e}},
+	{Key: Home, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x7e}},
+	{Key: End, ASCIICode: []byte{0x1b, 0x5b, 0x04, 0x7e}},
+	{Key: PageUp, ASCIICode: []byte{0x1b, 0x5b, 0x05, 0x7e}},
+	{Key: PageDown, ASCIICode: []byte{0x1b, 0x5b, 0x06, 0x7e}},
+	{Key: Home, ASCIICode: []byte{0x1b, 0x5b, 0x07, 0x7e}},
+	{Key: End, ASCIICode: []byte{0x1b, 0x5b, 0x09, 0x7e}},
 	{Key: Tab, ASCIICode: []byte{0x9}},
 	{Key: BackTab, ASCIICode: []byte{0x1b, 0x5b, 0x5a}},
-	{Key: Insert, ASCIICode: []byte{0x1b, 0x5b, 0x32, 0x7e}},
+	{Key: Insert, ASCIICode: []byte{0x1b, 0x5b, 0x02, 0x7e}},
 
 	{Key: F1, ASCIICode: []byte{0x1b, 0x4f, 0x50}},
 	{Key: F2, ASCIICode: []byte{0x1b, 0x4f, 0x51}},
@@ -196,28 +142,28 @@ var asciiSequences []*ASCIICode = []*ASCIICode{
 	{Key: F20, ASCIICode: []byte{0x1b, 0x5b, 0x34, 0x7e}},
 
 	// Xterm
-	{Key: F13, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x3b, 0x32, 0x50}},
-	{Key: F14, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x3b, 0x32, 0x51}},
-	// &ASCIICode{Key: F15, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x3b, 0x32, 0x52}},  // Conflicts with CPR response
-	{Key: F16, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x3b, 0x32, 0x52}},
-	{Key: F17, ASCIICode: []byte{0x1b, 0x5b, 0x15, 0x3b, 0x32, 0x7e}},
-	{Key: F18, ASCIICode: []byte{0x1b, 0x5b, 0x17, 0x3b, 0x32, 0x7e}},
-	{Key: F19, ASCIICode: []byte{0x1b, 0x5b, 0x18, 0x3b, 0x32, 0x7e}},
-	{Key: F20, ASCIICode: []byte{0x1b, 0x5b, 0x19, 0x3b, 0x32, 0x7e}},
-	{Key: F21, ASCIICode: []byte{0x1b, 0x5b, 0x20, 0x3b, 0x32, 0x7e}},
-	{Key: F22, ASCIICode: []byte{0x1b, 0x5b, 0x21, 0x3b, 0x32, 0x7e}},
-	{Key: F23, ASCIICode: []byte{0x1b, 0x5b, 0x23, 0x3b, 0x32, 0x7e}},
-	{Key: F24, ASCIICode: []byte{0x1b, 0x5b, 0x24, 0x3b, 0x32, 0x7e}},
+	{Key: F13, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x3b, 0x02, 0x50}},
+	{Key: F14, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x3b, 0x02, 0x51}},
+	// &ASCIICode{Key: F15, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x3b, 0x02, 0x52}},  // Conflicts with CPR response
+	{Key: F16, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x3b, 0x02, 0x52}},
+	{Key: F17, ASCIICode: []byte{0x1b, 0x5b, 0x15, 0x3b, 0x02, 0x7e}},
+	{Key: F18, ASCIICode: []byte{0x1b, 0x5b, 0x17, 0x3b, 0x02, 0x7e}},
+	{Key: F19, ASCIICode: []byte{0x1b, 0x5b, 0x18, 0x3b, 0x02, 0x7e}},
+	{Key: F20, ASCIICode: []byte{0x1b, 0x5b, 0x19, 0x3b, 0x02, 0x7e}},
+	{Key: F21, ASCIICode: []byte{0x1b, 0x5b, 0x20, 0x3b, 0x02, 0x7e}},
+	{Key: F22, ASCIICode: []byte{0x1b, 0x5b, 0x21, 0x3b, 0x02, 0x7e}},
+	{Key: F23, ASCIICode: []byte{0x1b, 0x5b, 0x23, 0x3b, 0x02, 0x7e}},
+	{Key: F24, ASCIICode: []byte{0x1b, 0x5b, 0x24, 0x3b, 0x02, 0x7e}},
 
-	{Key: ControlUp, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x3b, 0x35, 0x41}},
-	{Key: ControlDown, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x3b, 0x35, 0x42}},
-	{Key: ControlRight, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x3b, 0x35, 0x43}},
-	{Key: ControlLeft, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x3b, 0x35, 0x44}},
+	{Key: ControlUp, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x3b, 0x5a}},
+	{Key: ControlDown, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x3b, 0x5b}},
+	{Key: ControlRight, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x3b, 0x5c}},
+	{Key: ControlLeft, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x3b, 0x5d}},
 
-	{Key: ShiftUp, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x3b, 0x32, 0x41}},
-	{Key: ShiftDown, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x3b, 0x32, 0x42}},
-	{Key: ShiftRight, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x3b, 0x32, 0x43}},
-	{Key: ShiftLeft, ASCIICode: []byte{0x1b, 0x5b, 0x31, 0x3b, 0x32, 0x44}},
+	{Key: ShiftUp, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x2a}},
+	{Key: ShiftDown, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x2b}},
+	{Key: ShiftRight, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x2c}},
+	{Key: ShiftLeft, ASCIICode: []byte{0x1b, 0x5b, 0x01, 0x2d}},
 
 	// Tmux sends following keystrokes when control+arrow is pressed, but for
 	// Emacs ansi-term sends the same sequences for normal arrow keys. Consider
@@ -227,10 +173,10 @@ var asciiSequences []*ASCIICode = []*ASCIICode{
 	{Key: Right, ASCIICode: []byte{0x1b, 0x4f, 0x43}},
 	{Key: Left, ASCIICode: []byte{0x1b, 0x4f, 0x44}},
 
-	{Key: ControlUp, ASCIICode: []byte{0x1b, 0x5b, 0x35, 0x41}},
-	{Key: ControlDown, ASCIICode: []byte{0x1b, 0x5b, 0x35, 0x42}},
-	{Key: ControlRight, ASCIICode: []byte{0x1b, 0x5b, 0x35, 0x43}},
-	{Key: ControlLeft, ASCIICode: []byte{0x1b, 0x5b, 0x35, 0x44}},
+	{Key: ControlUp, ASCIICode: []byte{0x1b, 0x5b, 0x05, 0x41}},
+	{Key: ControlDown, ASCIICode: []byte{0x1b, 0x5b, 0x05, 0x42}},
+	{Key: ControlRight, ASCIICode: []byte{0x1b, 0x5b, 0x05, 0x43}},
+	{Key: ControlLeft, ASCIICode: []byte{0x1b, 0x5b, 0x05, 0x44}},
 
 	{Key: ControlRight, ASCIICode: []byte{0x1b, 0x5b, 0x4f, 0x63}}, // rxvt
 	{Key: ControlLeft, ASCIICode: []byte{0x1b, 0x5b, 0x4f, 0x64}},  // rxvt
@@ -238,8 +184,6 @@ var asciiSequences []*ASCIICode = []*ASCIICode{
 	{Key: Ignore, ASCIICode: []byte{0x1b, 0x5b, 0x45}}, // Xterm
 	{Key: Ignore, ASCIICode: []byte{0x1b, 0x5b, 0x46}}, // Linux console
 }
-
-var _ ConsoleParser = &VT100Parser{}
 
 func NewVT100StandardInputParser() *VT100Parser {
 	return &VT100Parser{
