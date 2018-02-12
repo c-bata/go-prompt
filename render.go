@@ -154,7 +154,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 		// +1 means a width of scrollbar.
 		r.out.CursorBackward(width + 1)
 	}
-	if d == 0 && len(prefix) + len(buf.Text()) != 0 { // the cursor is on right end.
+	if d == 0 && len(prefix)+len(buf.Text()) != 0 { // the cursor is on right end.
 		// DON'T CURSOR DOWN HERE. Because the line doesn't erase properly.
 		r.out.CursorForward(width + 1)
 	} else if d+width > int(r.col) {
@@ -168,18 +168,20 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 
 // Render renders to the console.
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
+	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
 
-	// Erasing
-	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(prefix))
-	r.out.EraseDown()
+	if r.col > 0 {
+		// Erasing
+		r.out.CursorBackward(int(r.col) + len(line) + len(prefix))
+		r.out.EraseDown()
 
-	// prepare area
-	line := buffer.Text()
-	h := ((len(prefix) + len(line)) / int(r.col)) + 1 + int(completion.max)
-	if h > int(r.row) || completionMargin > int(r.col) {
-		r.renderWindowTooSmall()
-		return
+		// prepare area
+		h := ((len(prefix) + len(line)) / int(r.col)) + 1 + int(completion.max)
+		if h > int(r.row) || completionMargin > int(r.col) {
+			r.renderWindowTooSmall()
+			return
+		}
 	}
 
 	// Rendering
