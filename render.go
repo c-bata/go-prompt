@@ -48,9 +48,9 @@ func (r *Render) getCurrentPrefix() string {
 	return r.prefix
 }
 
-func (r *Render) renderPrefix(p string) {
+func (r *Render) renderPrefix() {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
-	r.out.WriteStr(p)
+	r.out.WriteStr(r.getCurrentPrefix())
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
@@ -183,7 +183,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	}
 
 	// Rendering
-	r.renderPrefix(prefix)
+	r.renderPrefix()
 
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(line)
@@ -206,7 +206,7 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	r.out.CursorBackward(int(r.col) + len(buffer.Text()) + len(prefix))
 	// Erasing and Render
 	r.out.EraseDown()
-	r.renderPrefix(prefix)
+	r.renderPrefix()
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(buffer.Document().Text + "\n")
 	r.out.SetColor(DefaultColor, DefaultColor, false)
