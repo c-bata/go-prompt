@@ -4,7 +4,7 @@ import "github.com/c-bata/go-prompt"
 
 func main() {
 	l := 20
-	out := prompt.NewVT100StandardOutputWriter()
+	out := prompt.NewStandardOutputWriter()
 	out.EraseScreen()
 	for i := 0; i < l; i++ {
 		out.CursorGoTo(i, 0)

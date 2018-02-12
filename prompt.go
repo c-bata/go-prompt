@@ -10,8 +10,6 @@ import (
 const (
 	logfile      = "/tmp/go-prompt-debug.log"
 	envEnableLog = "GO_PROMPT_ENABLE_LOG"
-
-	maxReadBytes = 1024
 )
 
 // Executor is called when user input something text.
@@ -122,6 +120,8 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		}
 	case BackTab:
 		p.completion.Previous()
+	case ControlSpace:
+		return
 	default:
 		if s, ok := p.completion.GetSelectedSuggestion(); ok {
 			w := p.buf.Document().GetWordBeforeCursor()
@@ -233,6 +233,22 @@ func (p *Prompt) Input() string {
 			}
 		default:
 			time.Sleep(10 * time.Millisecond)
+		}
+	}
+}
+
+func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
+	log.Printf("[INFO] readBuffer start")
+	for {
+		time.Sleep(10 * time.Millisecond)
+		select {
+		case <-stopCh:
+			log.Print("[INFO] stop readBuffer")
+			return
+		default:
+			if b, err := p.in.Read(); err == nil {
+				bufCh <- b
+			}
 		}
 	}
 }

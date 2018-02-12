@@ -174,10 +174,10 @@ func OptionAddKeyBind(b ...KeyBind) Option {
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 	pt := &Prompt{
-		in: NewVT100StandardInputParser(),
+		in: NewStandardInputParser(),
 		renderer: &Render{
 			prefix:                       "> ",
-			out:                          NewVT100StandardOutputWriter(),
+			out:                          NewStandardOutputWriter(),
 			prefixTextColor:              Blue,
 			prefixBGColor:                DefaultColor,
 			inputTextColor:               DefaultColor,

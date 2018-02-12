@@ -4,30 +4,31 @@ package prompt
 
 import (
 	"bytes"
-	"syscall"
+	"unicode/utf8"
 
 	"github.com/mattn/go-tty"
 )
 
-type VT100Parser struct {
-	fd  syscall.Handle
+const maxReadBytes = 1024
+
+type WindowsParser struct {
 	tty *tty.TTY
 }
 
-func (t *VT100Parser) Setup() error {
-	tty, err := tty.Open()
+func (p *WindowsParser) Setup() error {
+	t, err := tty.Open()
 	if err != nil {
 		return err
 	}
-	t.tty = tty
+	p.tty = t
 	return nil
 }
 
-func (t *VT100Parser) TearDown() error {
-	return t.tty.Close()
+func (p *WindowsParser) TearDown() error {
+	return p.tty.Close()
 }
 
-func (t *VT100Parser) GetKey(b []byte) Key {
+func (p *WindowsParser) GetKey(b []byte) Key {
 	for _, k := range asciiSequences {
 		if bytes.Compare(k.ASCIICode, b) == 0 {
 			return k.Key
@@ -36,9 +37,19 @@ func (t *VT100Parser) GetKey(b []byte) Key {
 	return NotDefined
 }
 
+func (p *WindowsParser) Read() ([]byte, error) {
+	buf := make([]byte, maxReadBytes)
+	r, err := p.tty.ReadRune()
+	if err != nil {
+		return []byte{}, err
+	}
+	n := utf8.EncodeRune(buf[:], r)
+	return buf[:n], nil
+}
+
 // GetWinSize returns winsize struct which is the response of ioctl(2).
-func (t *VT100Parser) GetWinSize() *WinSize {
-	w, h, err := t.tty.Size()
+func (p *WindowsParser) GetWinSize() *WinSize {
+	w, h, err := p.tty.Size()
 	if err != nil {
 		panic(err)
 	}
@@ -185,8 +196,6 @@ var asciiSequences []*ASCIICode = []*ASCIICode{
 	{Key: Ignore, ASCIICode: []byte{0x1b, 0x5b, 0x46}}, // Linux console
 }
 
-func NewVT100StandardInputParser() *VT100Parser {
-	return &VT100Parser{
-		fd: syscall.Stdin,
-	}
+func NewStandardInputParser() *WindowsParser {
+	return &WindowsParser{}
 }

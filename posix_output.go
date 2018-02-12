@@ -1,43 +1,41 @@
-// +build windows
+// +build !windows
 
 package prompt
 
 import (
-	"io"
 	"strconv"
-
-	"github.com/mattn/go-colorable"
+	"syscall"
 )
 
-type VT100Writer struct {
-	out    io.Writer
+type PosixWriter struct {
+	fd     int
 	buffer []byte
 }
 
-func (w *VT100Writer) WriteRaw(data []byte) {
+func (w *PosixWriter) WriteRaw(data []byte) {
 	w.buffer = append(w.buffer, data...)
 	// Flush because sometimes the render is broken when a large amount data in buffer.
 	w.Flush()
 	return
 }
 
-func (w *VT100Writer) Write(data []byte) {
+func (w *PosixWriter) Write(data []byte) {
 	w.WriteRaw(byteFilter(data, writeFilter))
 	return
 }
 
-func (w *VT100Writer) WriteRawStr(data string) {
+func (w *PosixWriter) WriteRawStr(data string) {
 	w.WriteRaw([]byte(data))
 	return
 }
 
-func (w *VT100Writer) WriteStr(data string) {
+func (w *PosixWriter) WriteStr(data string) {
 	w.Write([]byte(data))
 	return
 }
 
-func (w *VT100Writer) Flush() error {
-	_, err := w.out.Write(w.buffer)
+func (w *PosixWriter) Flush() error {
+	_, err := syscall.Write(w.fd, w.buffer)
 	if err != nil {
 		return err
 	}
@@ -47,48 +45,48 @@ func (w *VT100Writer) Flush() error {
 
 /* Erase */
 
-func (w *VT100Writer) EraseScreen() {
+func (w *PosixWriter) EraseScreen() {
 	w.WriteRaw([]byte{0x1b, 0x5b, 0x32, 0x4a})
 	return
 }
 
-func (w *VT100Writer) EraseUp() {
+func (w *PosixWriter) EraseUp() {
 	w.WriteRaw([]byte{0x1b, 0x5b, 0x31, 0x4a})
 	return
 }
 
-func (w *VT100Writer) EraseDown() {
+func (w *PosixWriter) EraseDown() {
 	w.WriteRaw([]byte{0x1b, 0x5b, 0x4a})
 	return
 }
 
-func (w *VT100Writer) EraseStartOfLine() {
+func (w *PosixWriter) EraseStartOfLine() {
 	w.WriteRaw([]byte{0x1b, 0x5b, 0x31, 0x4b})
 	return
 }
 
-func (w *VT100Writer) EraseEndOfLine() {
+func (w *PosixWriter) EraseEndOfLine() {
 	w.WriteRaw([]byte{0x1b, 0x5b, 0x4b})
 	return
 }
 
-func (w *VT100Writer) EraseLine() {
+func (w *PosixWriter) EraseLine() {
 	w.WriteRaw([]byte{0x1b, 0x5b, 0x32, 0x4b})
 	return
 }
 
 /* Cursor */
 
-func (w *VT100Writer) ShowCursor() {
+func (w *PosixWriter) ShowCursor() {
 	w.WriteRaw([]byte{0x1b, 0x5b, 0x3f, 0x31, 0x32, 0x6c, 0x1b, 0x5b, 0x3f, 0x32, 0x35, 0x68})
 }
 
-func (w *VT100Writer) HideCursor() {
+func (w *PosixWriter) HideCursor() {
 	w.WriteRaw([]byte{0x1b, 0x5b, 0x3f, 0x32, 0x35, 0x6c})
 	return
 }
 
-func (w *VT100Writer) CursorGoTo(row, col int) {
+func (w *PosixWriter) CursorGoTo(row, col int) {
 	r := strconv.Itoa(row)
 	c := strconv.Itoa(col)
 	w.WriteRaw([]byte{0x1b, 0x5b})
@@ -99,9 +97,11 @@ func (w *VT100Writer) CursorGoTo(row, col int) {
 	return
 }
 
-func (w *VT100Writer) CursorUp(n int) {
-	if n < 0 {
-		w.CursorDown(n)
+func (w *PosixWriter) CursorUp(n int) {
+	if n == 0 {
+		return
+	} else if n < 0 {
+		w.CursorDown(-n)
 		return
 	}
 	s := strconv.Itoa(n)
@@ -111,9 +111,11 @@ func (w *VT100Writer) CursorUp(n int) {
 	return
 }
 
-func (w *VT100Writer) CursorDown(n int) {
-	if n < 0 {
-		w.CursorUp(n)
+func (w *PosixWriter) CursorDown(n int) {
+	if n == 0 {
+		return
+	} else if n < 0 {
+		w.CursorUp(-n)
 		return
 	}
 	s := strconv.Itoa(n)
@@ -123,7 +125,7 @@ func (w *VT100Writer) CursorDown(n int) {
 	return
 }
 
-func (w *VT100Writer) CursorForward(n int) {
+func (w *PosixWriter) CursorForward(n int) {
 	if n == 0 {
 		return
 	} else if n < 0 {
@@ -137,7 +139,7 @@ func (w *VT100Writer) CursorForward(n int) {
 	return
 }
 
-func (w *VT100Writer) CursorBackward(n int) {
+func (w *PosixWriter) CursorBackward(n int) {
 	if n == 0 {
 		return
 	} else if n < 0 {
@@ -151,61 +153,61 @@ func (w *VT100Writer) CursorBackward(n int) {
 	return
 }
 
-func (w *VT100Writer) AskForCPR() {
+func (w *PosixWriter) AskForCPR() {
 	// CPR: Cursor Position Request.
 	w.WriteRaw([]byte{0x1b, 0x5b, 0x36, 0x6e})
 	w.Flush()
 	return
 }
 
-func (w *VT100Writer) SaveCursor() {
+func (w *PosixWriter) SaveCursor() {
 	w.WriteRaw([]byte{0x1b, 0x5b, 0x73})
 	return
 }
 
-func (w *VT100Writer) UnSaveCursor() {
+func (w *PosixWriter) UnSaveCursor() {
 	w.WriteRaw([]byte{0x1b, 0x5b, 0x75})
 	return
 }
 
 /* Scrolling */
 
-func (w *VT100Writer) ScrollDown() {
+func (w *PosixWriter) ScrollDown() {
 	w.WriteRaw([]byte{0x1b, 0x44})
 	return
 }
 
-func (w *VT100Writer) ScrollUp() {
+func (w *PosixWriter) ScrollUp() {
 	w.WriteRaw([]byte{0x1b, 0x4d})
 	return
 }
 
 /* Title */
 
-func (w *VT100Writer) SetTitle(title string) {
+func (w *PosixWriter) SetTitle(title string) {
 	w.WriteRaw([]byte{0x1b, 0x5d, 0x32, 0x3b})
 	w.WriteRaw(byteFilter([]byte(title), setTextFilter))
 	w.WriteRaw([]byte{0x07})
 	return
 }
 
-func (w *VT100Writer) ClearTitle() {
+func (w *PosixWriter) ClearTitle() {
 	w.WriteRaw([]byte{0x1b, 0x5d, 0x32, 0x3b, 0x07})
 	return
 }
 
 /* Font */
 
-func (w *VT100Writer) SetColor(fg, bg Color, bold bool) {
+func (w *PosixWriter) SetColor(fg, bg Color, bold bool) {
 	f, ok := foregroundANSIColors[fg]
 	if !ok {
-		f, _ = foregroundANSIColors[DefaultColor]
+		f = foregroundANSIColors[DefaultColor]
 	}
 	b, ok := backgroundANSIColors[bg]
 	if !ok {
-		b, _ = backgroundANSIColors[DefaultColor]
+		b = backgroundANSIColors[DefaultColor]
 	}
-	w.out.Write([]byte{0x1b, 0x5b, 0x33, 0x39, 0x3b, 0x34, 0x39, 0x6d})
+	syscall.Write(syscall.Stdout, []byte{0x1b, 0x5b, 0x33, 0x39, 0x3b, 0x34, 0x39, 0x6d})
 	w.WriteRaw([]byte{0x1b, 0x5b})
 	if !bold {
 		w.WriteRaw([]byte{0x30, 0x3b})
@@ -290,10 +292,10 @@ func byteFilter(buf []byte, fn ...func(b byte) bool) []byte {
 	return byteFilter(ret, fn[1:]...)
 }
 
-var _ ConsoleWriter = &VT100Writer{}
+var _ ConsoleWriter = &PosixWriter{}
 
-func NewVT100StandardOutputWriter() *VT100Writer {
-	return &VT100Writer{
-		out: colorable.NewColorableStdout(),
+func NewStandardOutputWriter() *PosixWriter {
+	return &PosixWriter{
+		fd: syscall.Stdout,
 	}
 }

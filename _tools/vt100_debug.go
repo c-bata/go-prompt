@@ -38,7 +38,7 @@ func main() {
 	bufCh := make(chan []byte, 128)
 	go readBuffer(bufCh)
 	fmt.Print("> ")
-	parser := prompt.NewVT100StandardInputParser()
+	parser := prompt.NewStandardInputParser()
 
 	for {
 		b := <-bufCh
