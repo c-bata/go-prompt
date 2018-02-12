@@ -101,12 +101,13 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 
 	formatted, width := formatSuggestions(
 		suggestions,
-		int(r.col)-len(r.prefix)-1,
+		int(r.col)-len(r.prefix)-1, // -1 means a width of scrollbar
 	)
 	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
 	l := len(formatted)
 	r.prepareArea(windowHeight)
 
+	// +1 means a width of scrollbar.
 	d := (len(r.prefix) + len(buf.Document().TextBeforeCursor()) + 1) % int(r.col)
 	if d == 0 { // the cursor is on right end.
 		r.out.CursorBackward(width)
@@ -139,6 +140,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 			r.out.SetColor(DefaultColor, r.scrollbarBGColor, false)
 		}
 		r.out.WriteStr(" ")
+		// +1 means a width of scrollbar.
 		r.out.CursorBackward(width + 1)
 	}
 	if d == 0 { // the cursor is on right end.
