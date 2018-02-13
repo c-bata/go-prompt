@@ -142,6 +142,20 @@ func OptionSelectedDescriptionBGColor(x Color) Option {
 	}
 }
 
+func OptionScrollbarThumbColor(x Color) Option {
+	return func(p *Prompt) error {
+		p.renderer.scrollbarThumbColor = x
+		return nil
+	}
+}
+
+func OptionScrollbarBGColor(x Color) Option {
+	return func(p *Prompt) error {
+		p.renderer.scrollbarBGColor = x
+		return nil
+	}
+}
+
 // OptionMaxSuggestion specify the max number of displayed suggestions.
 func OptionMaxSuggestion(x uint16) Option {
 	return func(p *Prompt) error {

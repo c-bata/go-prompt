@@ -65,6 +65,8 @@ It is difficult to describe by text. So please see below figure:
 * **OptionDescriptionBGColor(prompt.Color)** : default `prompt.Turquoise`
 * **OptionSelectedDescriptionTextColor(prompt.Color)** : default `prompt.White`
 * **OptionSelectedDescriptionBGColor(prompt.Color)** : default `prompt.Cyan`
+* **OptionScrollbarThumbColor** : `prompt.DarkGray`
+* **OptionScrollbarBGColor** : `prompt.Cyan`
 
 **Other Options**
 
@@ -76,6 +78,9 @@ Option to set history.
 
 #### `OptionPrefix(string)` : default `"> "`
 Option to set prefix string.
+
+#### `OptionLivePrefix(func() (prefix string, useLivePrefix bool))` : default `nil`
+Option to set a callback function for updating prefix string dynamically.
 
 #### `OptionMaxSuggestions(x uint16)` : default `6`
 The max number of displayed suggestions.
