@@ -208,7 +208,8 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer) {
 	// Erasing and Render
-	r.clearLine(buffer)
+	cursor := stringWidth(buffer.Document().TextBeforeCursor()) + stringWidth(r.getCurrentPrefix())
+	r.clear(cursor)
 	r.renderPrefix()
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(buffer.Document().Text + "\n")
@@ -216,11 +217,6 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	r.out.Flush()
 
 	r.previousCursor = 0
-}
-
-func (r *Render) clearLine(buffer *Buffer) {
-	cursor := stringWidth(buffer.Document().TextBeforeCursor()) + stringWidth(r.getCurrentPrefix())
-	r.clear(cursor)
 }
 
 func (r *Render) clear(cursor int) {
