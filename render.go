@@ -1,9 +1,5 @@
 package prompt
 
-import (
-	"math"
-)
-
 // Render to render prompt information from state of Buffer.
 type Render struct {
 	out                ConsoleWriter
@@ -13,7 +9,7 @@ type Render struct {
 	row                uint16
 	col                uint16
 
-	previousBufferSize int
+	previousCursor int
 
 	// colors,
 	prefixTextColor              Color
@@ -91,48 +87,46 @@ func (r *Render) renderWindowTooSmall() {
 }
 
 func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
+	suggestions := completions.GetSuggestions()
+	if len(completions.GetSuggestions()) == 0 {
+		return
+	}
+	prefix := r.getCurrentPrefix()
+	formatted, width := formatSuggestions(
+		suggestions,
+		int(r.col)-stringWidth(prefix)-1, // -1 means a width of scrollbar
+	)
+	// +1 means a width of scrollbar.
+	width += 1
+
 	windowHeight := len(completions.tmp)
 	if windowHeight > int(completions.max) {
 		windowHeight = int(completions.max)
 	}
+	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
+	r.prepareArea(windowHeight)
+
+	cursor := stringWidth(prefix) + stringWidth(buf.Document().TextBeforeCursor())
+	x, _ := r.toPos(cursor)
+	if x+width >= int(r.col) {
+		r.out.CursorBackward(x + width - int(r.col))
+	}
+
 	contentHeight := len(completions.tmp)
 
 	fractionVisible := float64(windowHeight) / float64(contentHeight)
 	fractionAbove := float64(completions.verticalScroll) / float64(contentHeight)
 
-	scrollbarHeight := int(math.Min(float64(windowHeight), math.Max(1, float64(windowHeight)*fractionVisible)))
+	scrollbarHeight := int(clamp(float64(windowHeight), 1, float64(windowHeight)*fractionVisible))
 	scrollbarTop := int(float64(windowHeight) * fractionAbove)
 
 	isScrollThumb := func(row int) bool {
 		return scrollbarTop <= row && row <= scrollbarTop+scrollbarHeight
 	}
 
-	suggestions := completions.GetSuggestions()
-	if l := len(completions.GetSuggestions()); l == 0 {
-		return
-	}
-
-	prefix := r.getCurrentPrefix()
-	formatted, width := formatSuggestions(
-		suggestions,
-		int(r.col)-len(prefix)-1, // -1 means a width of scrollbar
-	)
-	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
-	l := len(formatted)
-	r.prepareArea(windowHeight)
-
-	// +1 means a width of scrollbar.
-	d := (len(prefix) + len(buf.Document().TextBeforeCursor()) + 1) % int(r.col)
-	if d == 0 { // the cursor is on right end.
-		r.out.CursorBackward(width)
-	} else if d+width > int(r.col) {
-		r.out.CursorBackward(d + width - int(r.col))
-	}
-
 	selected := completions.selected - completions.verticalScroll
-
 	r.out.SetColor(White, Cyan, false)
-	for i := 0; i < l; i++ {
+	for i := 0; i < windowHeight; i++ {
 		r.out.CursorDown(1)
 		if i == selected {
 			r.out.SetColor(r.selectedSuggestionTextColor, r.selectedSuggestionBGColor, true)
@@ -154,17 +148,14 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 			r.out.SetColor(DefaultColor, r.scrollbarBGColor, false)
 		}
 		r.out.WriteStr(" ")
-		// +1 means a width of scrollbar.
-		r.out.CursorBackward(width + 1)
-	}
-	if d == 0 && len(prefix)+len(buf.Text()) != 0 { // the cursor is on right end.
-		// DON'T CURSOR DOWN HERE. Because the line doesn't erase properly.
-		r.out.CursorForward(width + 1)
-	} else if d+width > int(r.col) {
-		r.out.CursorForward(d + width - int(r.col))
+		r.out.CursorBackward(width)
 	}
 
-	r.out.CursorUp(l)
+	if x+width >= int(r.col) {
+		r.out.CursorForward(x + width - int(r.col))
+	}
+
+	r.out.CursorUp(windowHeight)
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 	return
 }
@@ -173,24 +164,18 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
+	cursor := stringWidth(prefix) + stringWidth(line)
 
-<<<<<<< HEAD
 	// In situations where a psuedo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col > 0 {
-		if len(buffer.Document().Text) == 0 {
-			r.out.CursorBackward(int(r.col))
-			r.out.SaveCursor()
-		}
 		// Erasing
-		r.out.CursorUp((r.previousBufferSize - 1) / int(r.col))
-		r.out.WriteRawStr("\r")
-		r.out.EraseDown()
-
-		r.previousBufferSize = len(buffer.Document().TextBeforeCursor()) + len(prefix)
+		r.clear(r.previousCursor)
 
 		// prepare area
-		h := ((len(prefix) + len(line)) / int(r.col)) + 1 + int(completion.max)
+		_, y := r.toPos(cursor)
+
+		h := y + 1 + int(completion.max)
 		if h > int(r.row) || completionMargin > int(r.col) {
 			r.renderWindowTooSmall()
 			return
@@ -199,32 +184,89 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 
 	// Rendering
 	r.renderPrefix()
-
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(line)
 	r.out.SetColor(DefaultColor, DefaultColor, false)
-	r.out.CursorBackward(len([]rune(line)) - buffer.CursorPosition)
+
+	cursor = r.backward(cursor, stringWidth(line)-buffer.CursorPosition)
+
 	r.renderCompletion(buffer, completion)
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
-		r.out.CursorBackward(len([]rune(buffer.Document().GetWordBeforeCursor())))
+		cursor = r.backward(cursor, stringWidth(buffer.Document().GetWordBeforeCursor()))
+
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
 		r.out.WriteStr(suggest.Text)
 		r.out.SetColor(DefaultColor, DefaultColor, false)
+
+		cursor += stringWidth(suggest.Text)
 	}
 	r.out.Flush()
+
+	r.previousCursor = cursor
 }
 
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer) {
 	// Erasing and Render
-	r.out.CursorUp((len(buffer.Document().Text) + len(r.getCurrentPrefix()) - 1) / int(r.col))
-	r.out.WriteRawStr("\r")
-	r.out.EraseDown()
+	r.clearLine(buffer)
 	r.renderPrefix()
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(buffer.Document().Text + "\n")
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 	r.out.Flush()
 
-	r.previousBufferSize = 0
+	r.previousCursor = 0
+}
+
+func (r *Render) clearLine(buffer *Buffer) {
+	cursor := stringWidth(buffer.Document().TextBeforeCursor()) + stringWidth(r.getCurrentPrefix())
+	r.clear(cursor)
+}
+
+func (r *Render) clear(cursor int) {
+	r.backward(cursor, cursor)
+	r.out.EraseDown()
+}
+
+func (r *Render) backward(from, n int) int {
+	return r.move(from, from-n)
+}
+
+func (r *Render) move(from, to int) int {
+	_, fromY := r.toPos(from)
+	toX, toY := r.toPos(to)
+
+	r.out.CursorUp(fromY - toY)
+	r.out.WriteRaw([]byte{'\r'})
+	r.out.CursorForward(toX)
+	return to
+}
+
+// toPos returns the relative position from the beginning of the string.
+// the coordinate system with the beginning of the string as (0,0) and the width as r.col.
+// the cursor points to the next character, but it points to that character only at the right end (x == r.col - 1).
+// x will not return 0 except for the first row.
+func (r *Render) toPos(cursor int) (x, y int) {
+	col := int(r.col)
+
+	if cursor > 0 && cursor%col == 0 {
+		return col - 1, cursor/col - 1
+	}
+
+	return cursor % col, cursor / col
+}
+
+func stringWidth(s string) int {
+	return len(s)
+}
+
+func clamp(high, low, x float64) float64 {
+	switch {
+	case high < x:
+		return high
+	case x < low:
+		return low
+	default:
+		return x
+	}
 }
