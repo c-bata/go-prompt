@@ -8,7 +8,7 @@ import (
 
 var LivePrefixState struct {
 	LivePrefix string
-	IsEnable bool
+	IsEnable   bool
 }
 
 func executor(in string) {
@@ -33,7 +33,7 @@ func completer(in prompt.Document) []prompt.Suggest {
 }
 
 func changeLivePrefix() (string, bool) {
-	return LivePrefixState.LivePrefix , LivePrefixState.IsEnable
+	return LivePrefixState.LivePrefix, LivePrefixState.IsEnable
 }
 
 func main() {
