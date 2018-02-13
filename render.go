@@ -97,7 +97,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 		int(r.col)-len(prefix)-1, // -1 means a width of scrollbar
 	)
 	// +1 means a width of scrollbar.
-	width += 1
+	width++
 
 	windowHeight := len(formatted)
 	if windowHeight > int(completions.max) {

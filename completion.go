@@ -44,7 +44,7 @@ func (c *CompletionManager) GetSelectedSuggestion() (s Suggest, ok bool) {
 	return c.tmp[c.selected], true
 }
 
-// GetSelectedSuggestion returns the list of suggestion.
+// GetSuggestions returns the list of suggestion.
 func (c *CompletionManager) GetSuggestions() []Suggest {
 	return c.tmp
 }

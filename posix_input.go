@@ -18,6 +18,7 @@ type PosixParser struct {
 	origTermios syscall.Termios
 }
 
+// Setup should be called before starting input
 func (t *PosixParser) Setup() error {
 	// Set NonBlocking mode because if syscall.Read block this goroutine, it cannot receive data from stopCh.
 	if err := syscall.SetNonblock(t.fd, true); err != nil {
@@ -31,6 +32,7 @@ func (t *PosixParser) Setup() error {
 	return nil
 }
 
+// TearDown should be called after stopping input
 func (t *PosixParser) TearDown() error {
 	if err := syscall.SetNonblock(t.fd, false); err != nil {
 		log.Println("[ERROR] Cannot set blocking mode.")
@@ -43,6 +45,7 @@ func (t *PosixParser) TearDown() error {
 	return nil
 }
 
+// Read returns byte array.
 func (t *PosixParser) Read() ([]byte, error) {
 	buf := make([]byte, maxReadBytes)
 	n, err := syscall.Read(syscall.Stdin, buf)
@@ -78,6 +81,7 @@ func (t *PosixParser) resetRawMode() error {
 	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.origTermios)
 }
 
+// GetKey returns Key correspond to input byte codes.
 func (t *PosixParser) GetKey(b []byte) Key {
 	for _, k := range asciiSequences {
 		if bytes.Equal(k.ASCIICode, b) {
@@ -95,7 +99,7 @@ type ioctlWinsize struct {
 	Y   uint16 // pixel value
 }
 
-// GetWinSize returns winsize struct which is the response of ioctl(2).
+// GetWinSize returns WinSize object to represent width and height of terminal.
 func (t *PosixParser) GetWinSize() *WinSize {
 	ws := &ioctlWinsize{}
 	retCode, _, errno := syscall.Syscall(
@@ -113,7 +117,7 @@ func (t *PosixParser) GetWinSize() *WinSize {
 	}
 }
 
-var asciiSequences []*ASCIICode = []*ASCIICode{
+var asciiSequences = []*ASCIICode{
 	{Key: Escape, ASCIICode: []byte{0x1b}},
 
 	{Key: ControlSpace, ASCIICode: []byte{0x00}},

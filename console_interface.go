@@ -1,10 +1,12 @@
 package prompt
 
+// WinSize represents the width and height of terminal.
 type WinSize struct {
 	Row uint16
 	Col uint16
 }
 
+// Color represents color on terminal.
 type Color int
 
 const (
@@ -31,19 +33,21 @@ const (
 	White
 )
 
+// ConsoleParser is an interface to abstract input layer.
 type ConsoleParser interface {
-	// Setup
+	// Setup should be called before starting input
 	Setup() error
-	// TearDown
+	// TearDown should be called after stopping input
 	TearDown() error
-	// GetSCIICode returns ASCIICode correspond to input byte codes.
+	// GetKey returns Key correspond to input byte codes.
 	GetKey(b []byte) Key
-	// GetWinSize returns winsize struct which is the response of ioctl(2).
+	// GetWinSize returns WinSize object to represent width and height of terminal.
 	GetWinSize() *WinSize
 	// Read returns byte array.
 	Read() ([]byte, error)
 }
 
+// ConsoleWriter is an interface to abstract output layer.
 type ConsoleWriter interface {
 	/* Write */
 

@@ -15,6 +15,7 @@ type WindowsParser struct {
 	tty *tty.TTY
 }
 
+// Setup should be called before starting input
 func (p *WindowsParser) Setup() error {
 	t, err := tty.Open()
 	if err != nil {
@@ -24,10 +25,12 @@ func (p *WindowsParser) Setup() error {
 	return nil
 }
 
+// TearDown should be called after stopping input
 func (p *WindowsParser) TearDown() error {
 	return p.tty.Close()
 }
 
+// GetKey returns Key correspond to input byte codes.
 func (p *WindowsParser) GetKey(b []byte) Key {
 	for _, k := range asciiSequences {
 		if bytes.Compare(k.ASCIICode, b) == 0 {
@@ -37,6 +40,7 @@ func (p *WindowsParser) GetKey(b []byte) Key {
 	return NotDefined
 }
 
+// Read returns byte array.
 func (p *WindowsParser) Read() ([]byte, error) {
 	buf := make([]byte, maxReadBytes)
 	r, err := p.tty.ReadRune()
@@ -47,7 +51,7 @@ func (p *WindowsParser) Read() ([]byte, error) {
 	return buf[:n], nil
 }
 
-// GetWinSize returns winsize struct which is the response of ioctl(2).
+// GetWinSize returns WinSize object to represent width and height of terminal.
 func (p *WindowsParser) GetWinSize() *WinSize {
 	w, h, err := p.tty.Size()
 	if err != nil {
