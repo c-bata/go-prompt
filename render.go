@@ -171,6 +171,8 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
 
+	// In situations where a psuedo tty is allocated (e.g. within a docker container),
+	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col > 0 {
 		// Erasing
 		r.out.CursorBackward(int(r.col) + len(line) + len(prefix))
