@@ -94,7 +94,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	prefix := r.getCurrentPrefix()
 	formatted, width := formatSuggestions(
 		suggestions,
-		int(r.col)-stringWidth(prefix)-1, // -1 means a width of scrollbar
+		int(r.col)-len(prefix)-1, // -1 means a width of scrollbar
 	)
 	// +1 means a width of scrollbar.
 	width += 1
@@ -106,7 +106,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
 	r.prepareArea(windowHeight)
 
-	cursor := stringWidth(prefix) + stringWidth(buf.Document().TextBeforeCursor())
+	cursor := len(prefix) + len(buf.Document().TextBeforeCursor())
 	x, _ := r.toPos(cursor)
 	if x+width >= int(r.col) {
 		r.out.CursorBackward(x + width - int(r.col))
@@ -164,7 +164,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
-	cursor := stringWidth(prefix) + stringWidth(line)
+	cursor := len(prefix) + len(line)
 
 	// In situations where a psuedo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
@@ -188,17 +188,17 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	r.out.WriteStr(line)
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 
-	cursor = r.backward(cursor, stringWidth(line)-buffer.CursorPosition)
+	cursor = r.backward(cursor, len(line)-buffer.CursorPosition)
 
 	r.renderCompletion(buffer, completion)
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
-		cursor = r.backward(cursor, stringWidth(buffer.Document().GetWordBeforeCursor()))
+		cursor = r.backward(cursor, len(buffer.Document().GetWordBeforeCursor()))
 
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
 		r.out.WriteStr(suggest.Text)
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
-		cursor += stringWidth(suggest.Text)
+		cursor += len(suggest.Text)
 	}
 	r.out.Flush()
 
@@ -208,7 +208,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer) {
 	// Erasing and Render
-	cursor := stringWidth(buffer.Document().TextBeforeCursor()) + stringWidth(r.getCurrentPrefix())
+	cursor := len(buffer.Document().TextBeforeCursor()) + len(r.getCurrentPrefix())
 	r.clear(cursor)
 	r.renderPrefix()
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
@@ -250,10 +250,6 @@ func (r *Render) toPos(cursor int) (x, y int) {
 	}
 
 	return cursor % col, cursor / col
-}
-
-func stringWidth(s string) int {
-	return len(s)
 }
 
 func clamp(high, low, x float64) float64 {
