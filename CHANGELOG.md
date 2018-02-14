@@ -1,10 +1,17 @@
 # Change Log
 
+## v0.2.2 (2018/??/??)
+
+### Fixed
+
+* Fix a bug in docker container [issue #39](https://github.com/c-bata/go-prompt/issues/39)
+
 ## v0.2.1 (2018/02/14)
 
 ### What's New?
 
-* It seems that windows support is almost perfect.
+* ~~It seems that windows support is almost perfect.~~
+    * A critical bug is found :( When you change a terminal window size, the layout will be broken because current implementation cannot catch signal for updating window size on Windows.
 
 ### Fixed
 
