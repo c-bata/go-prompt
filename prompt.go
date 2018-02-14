@@ -243,6 +243,7 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 			if b, err := p.in.Read(); err == nil && !(b[0] == 0 && len(b) == 1) {
 				bch <- b
 			}
+			time.Sleep(10 * time.Millisecond)
 		}
 	}()
 
