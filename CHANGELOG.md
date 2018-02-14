@@ -4,8 +4,6 @@
 
 ### What's New?
 
-![scrollbar](https://github.com/c-bata/assets/raw/master/go-prompt/pagination.gif)
-
 * Supports scrollbar when there are too many matched suggestions
 * Windows support (but please caution because this is still not perfect).
 * Add OptionLivePrefix to update the prefix dynamically
@@ -22,7 +20,7 @@
 
 New core developers are joined (alphabetical order).
 
-* Nao YONASHIRO (Github @orisano)
+* Nao Yonashiro (Github @orisano)
 * Ryoma Abe (Github @Allajah)
 * Yusuke Nakamura (Github @unasuke)
 
