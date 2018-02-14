@@ -13,6 +13,7 @@ import (
 
 const maxReadBytes = 1024
 
+// PosixParser is a ConsoleParser implementation for POSIX environment.
 type PosixParser struct {
 	fd          int
 	origTermios syscall.Termios
@@ -256,6 +257,7 @@ var asciiSequences = []*ASCIICode{
 
 var _ ConsoleParser = &PosixParser{}
 
+// NewStandardInputParser returns ConsoleParser object to read from stdin.
 func NewStandardInputParser() *PosixParser {
 	return &PosixParser{
 		fd: syscall.Stdin,

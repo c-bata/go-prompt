@@ -11,6 +11,7 @@ import (
 
 const maxReadBytes = 1024
 
+// WindowsParser is a ConsoleParser implementation for Win32 console.
 type WindowsParser struct {
 	tty *tty.TTY
 }
@@ -200,6 +201,7 @@ var asciiSequences []*ASCIICode = []*ASCIICode{
 	{Key: Ignore, ASCIICode: []byte{0x1b, 0x5b, 0x46}}, // Linux console
 }
 
+// NewStandardInputParser returns ConsoleParser object to read from stdin.
 func NewStandardInputParser() *WindowsParser {
 	return &WindowsParser{}
 }
