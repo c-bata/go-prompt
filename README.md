@@ -47,7 +47,7 @@ func main() {
 
 ### Flexible options
 
-go-prompt provides many options. All options are listed in [Developer Guide](./DEVELOPER_GUIDE.md).
+go-prompt provides many options. Please check [option section of GoDoc](https://godoc.org/github.com/c-bata/go-prompt#Option) for more details.
 
 [![options](https://github.com/c-bata/assets/raw/master/go-prompt/prompt-options.png)](#flexible-options)
 
@@ -92,7 +92,6 @@ We confirmed go-prompt works fine on following terminals:
 
 ## Links
 
-* [Developer Guide](./DEVELOPER_GUIDE.md).
 * [Change Log](./CHANGELOG.md)
 * [GoDoc](http://godoc.org/github.com/c-bata/go-prompt).
 
