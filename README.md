@@ -71,6 +71,7 @@ KeyBinding          | Description
 <kbd>Ctrl + W</kbd> | Cut the Word before the cursor to the clipboard.
 <kbd>Ctrl + K</kbd> | Cut the Line after the cursor to the clipboard.
 <kbd>Ctrl + U</kbd> | Cut/delete the Line before the cursor to the clipboard.
+<kbd>Ctrl + L</kbd> | Clear the screen
 
 ### History
 
