@@ -236,16 +236,23 @@ func (p *Prompt) Input() string {
 
 func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	log.Printf("[INFO] readBuffer start")
+
+	bch := make(chan []byte)
+	go func() {
+		for {
+			if b, err := p.in.Read(); err == nil && !(b[0] == 0 && len(b) == 1) {
+				bch <- b
+			}
+		}
+	}()
+
 	for {
-		time.Sleep(10 * time.Millisecond)
 		select {
 		case <-stopCh:
 			log.Print("[INFO] stop readBuffer")
 			return
-		default:
-			if b, err := p.in.Read(); err == nil {
-				bufCh <- b
-			}
+		case buf := <-bch:
+			bufCh <- buf
 		}
 	}
 }
