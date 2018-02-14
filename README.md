@@ -1,7 +1,7 @@
 # go-prompt
 
 Library for building a powerful interactive prompt, inspired by [python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit).
-Easy building a multi-platform binary of the command line tools because written in Golang.
+More easy to build a multi-platform binary of the command line tools because written in Golang.
 
 ```go
 package main
@@ -82,7 +82,7 @@ You can use up-arrow and down-arrow to walk through the history of commands exec
 
 ### Multiple platform support
 
-We confirmed following terminals
+We confirmed go-prompt works fine on following terminals:
 
 * iTerm2 (macOS)
 * Terminal.app (macOS)
