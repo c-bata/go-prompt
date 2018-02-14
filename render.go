@@ -162,7 +162,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 
 // Render renders to the console.
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
-	// In situations where a psuedo tty is allocated (e.g. within a docker container),
+	// In situations where a pseudo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col == 0 {
 		return
