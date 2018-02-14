@@ -49,7 +49,7 @@ func (p *WindowsParser) Read() ([]byte, error) {
 		return []byte{}, err
 	}
 	n := utf8.EncodeRune(buf[:], r)
-	for p.tty.Buffered() {
+	for p.tty.Buffered() && n < maxReadBytes {
 		r, err := p.tty.ReadRune()
 		if err != nil {
 			break
