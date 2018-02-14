@@ -162,24 +162,26 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 
 // Render renders to the console.
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
+	// In situations where a pseudo tty is allocated (e.g. within a docker container),
+	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
+	if r.col == 0 {
+		return
+	}
+
+	// Erasing
+	r.clear(r.previousCursor)
+
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
 	cursor := len(prefix) + len(line)
 
-	// In situations where a psuedo tty is allocated (e.g. within a docker container),
-	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
-	if r.col > 0 {
-		// Erasing
-		r.clear(r.previousCursor)
+	// prepare area
+	_, y := r.toPos(cursor)
 
-		// prepare area
-		_, y := r.toPos(cursor)
-
-		h := y + 1 + int(completion.max)
-		if h > int(r.row) || completionMargin > int(r.col) {
-			r.renderWindowTooSmall()
-			return
-		}
+	h := y + 1 + int(completion.max)
+	if h > int(r.row) || completionMargin > int(r.col) {
+		r.renderWindowTooSmall()
+		return
 	}
 
 	// Rendering
