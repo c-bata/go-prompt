@@ -80,6 +80,16 @@ You can use up-arrow and down-arrow to walk through the history of commands exec
 [![History](https://github.com/c-bata/assets/raw/master/go-prompt/history.gif)](#history)
 
 
+### Multiple platform support
+
+We confirmed following terminals
+
+* iTerm2 (macOS)
+* Terminal.app (macOS)
+* Command Prompt (Windows)
+* GNU Terminal (Ubuntu)
+
+
 ## Links
 
 * [Developer Guide](./DEVELOPER_GUIDE.md).
