@@ -190,6 +190,10 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	}
 
 	// Rendering
+	r.out.HideCursor()
+	defer func() {
+		r.out.ShowCursor()
+	}()
 	r.renderPrefix()
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(line)
