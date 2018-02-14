@@ -1,5 +1,7 @@
 package prompt
 
+import "runtime"
+
 // Render to render prompt information from state of Buffer.
 type Render struct {
 	out                ConsoleWriter
@@ -109,7 +111,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	cursor := len(prefix) + len(buf.Document().TextBeforeCursor())
 	x, _ := r.toPos(cursor)
 	if x+width >= int(r.col) {
-		r.out.CursorBackward(x + width - int(r.col))
+		cursor = r.backward(cursor, x+width-int(r.col))
 	}
 
 	contentHeight := len(completions.tmp)
@@ -148,7 +150,10 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 			r.out.SetColor(DefaultColor, r.scrollbarBGColor, false)
 		}
 		r.out.WriteStr(" ")
-		r.out.CursorBackward(width)
+		r.out.SetColor(DefaultColor, DefaultColor, false)
+
+		r.lineWrap(cursor + width)
+		r.backward(cursor+width, width)
 	}
 
 	if x+width >= int(r.col) {
@@ -189,6 +194,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(line)
 	r.out.SetColor(DefaultColor, DefaultColor, false)
+	r.lineWrap(cursor)
 
 	cursor = r.backward(cursor, len(line)-buffer.CursorPosition)
 
@@ -201,7 +207,9 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
 		cursor += len(suggest.Text)
+		r.lineWrap(cursor)
 	}
+
 	r.out.Flush()
 
 	r.previousCursor = cursor
@@ -231,12 +239,11 @@ func (r *Render) backward(from, n int) int {
 }
 
 func (r *Render) move(from, to int) int {
-	_, fromY := r.toPos(from)
+	fromX, fromY := r.toPos(from)
 	toX, toY := r.toPos(to)
 
 	r.out.CursorUp(fromY - toY)
-	r.out.WriteRaw([]byte{'\r'})
-	r.out.CursorForward(toX)
+	r.out.CursorBackward(fromX - toX)
 	return to
 }
 
@@ -246,12 +253,13 @@ func (r *Render) move(from, to int) int {
 // x will not return 0 except for the first row.
 func (r *Render) toPos(cursor int) (x, y int) {
 	col := int(r.col)
-
-	if cursor > 0 && cursor%col == 0 {
-		return col - 1, cursor/col - 1
-	}
-
 	return cursor % col, cursor / col
+}
+
+func (r *Render) lineWrap(cursor int) {
+	if runtime.GOOS != "windows" && cursor > 0 && cursor%int(r.col) == 0 {
+		r.out.WriteRaw([]byte{'\n'})
+	}
 }
 
 func clamp(high, low, x float64) float64 {
