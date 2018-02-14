@@ -1,5 +1,16 @@
 # Change Log
 
+## v0.2.1 (2018/??/??)
+
+### What's New?
+
+* It seems that windows support is almost perfect.
+
+### Fixed
+
+* Fix a Shift+Tab handling on Windows.
+* Fix 4-dimension arrow keys handling on Windows.
+
 ## v0.2.0 (2018/02/13)
 
 ### What's New?
