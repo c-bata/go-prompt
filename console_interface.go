@@ -53,11 +53,11 @@ type ConsoleWriter interface {
 
 	// WriteRaw to write raw byte array.
 	WriteRaw(data []byte)
-	// Write to write byte array without control sequences.
+	// Write to write safety byte array by removing control sequences.
 	Write(data []byte)
 	// WriteStr to write raw string.
 	WriteRawStr(data string)
-	// WriteStr to write string without control sequences.
+	// WriteStr to write safety string by removing control sequences.
 	WriteStr(data string)
 	// Flush to flush buffer.
 	Flush() error
