@@ -248,9 +248,6 @@ func (r *Render) move(from, to int) int {
 }
 
 // toPos returns the relative position from the beginning of the string.
-// the coordinate system with the beginning of the string as (0,0) and the width as r.col.
-// the cursor points to the next character, but it points to that character only at the right end (x == r.col - 1).
-// x will not return 0 except for the first row.
 func (r *Render) toPos(cursor int) (x, y int) {
 	col := int(r.col)
 	return cursor % col, cursor / col
