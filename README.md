@@ -1,5 +1,8 @@
 # go-prompt
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/c-bata/go-prompt)](https://goreportcard.com/report/github.com/c-bata/go-prompt)
+![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)
+
 Library for building a powerful interactive prompt, inspired by [python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit).
 More easy to build a multi-platform binary of the command line tools because written in Golang.
 
@@ -93,7 +96,8 @@ We confirmed go-prompt works fine on following terminals:
 ## Links
 
 * [Change Log](./CHANGELOG.md)
-* [GoDoc](http://godoc.org/github.com/c-bata/go-prompt).
+* [GoDoc](http://godoc.org/github.com/c-bata/go-prompt)
+* [gocover.io](https://gocover.io/github.com/c-bata/go-prompt)
 
 ## Author
 
