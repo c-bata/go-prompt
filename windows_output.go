@@ -3,6 +3,7 @@
 package prompt
 
 import (
+	"bytes"
 	"io"
 	"strconv"
 
@@ -24,9 +25,9 @@ func (w *WindowsWriter) WriteRaw(data []byte) {
 	return
 }
 
-// Write to write byte array without control sequences
+// Write to write safety byte array by removing control sequences.
 func (w *WindowsWriter) Write(data []byte) {
-	w.WriteRaw(byteFilter(data, writeFilter))
+	w.WriteRaw(bytes.Replace(data, []byte{0x1b}, []byte{'?'}, -1))
 	return
 }
 
@@ -36,7 +37,7 @@ func (w *WindowsWriter) WriteRawStr(data string) {
 	return
 }
 
-// WriteStr to write string without control sequences
+// WriteStr to write safety string by removing control sequences.
 func (w *WindowsWriter) WriteStr(data string) {
 	w.Write([]byte(data))
 	return
@@ -214,8 +215,26 @@ func (w *WindowsWriter) ScrollUp() {
 
 // SetTitle sets a title of terminal window.
 func (w *WindowsWriter) SetTitle(title string) {
+	titleBytes := []byte(title)
+	patterns := []struct {
+		from []byte
+		to   []byte
+	}{
+		{
+			from: []byte{0x13},
+			to:   []byte{},
+		},
+		{
+			from: []byte{0x07},
+			to:   []byte{},
+		},
+	}
+	for i := range patterns {
+		titleBytes = bytes.Replace(titleBytes, patterns[i].from, patterns[i].to, -1)
+	}
+
 	w.WriteRaw([]byte{0x1b, 0x5d, 0x32, 0x3b})
-	w.WriteRaw(byteFilter([]byte(title), setTextFilter))
+	w.WriteRaw(titleBytes)
 	w.WriteRaw([]byte{0x07})
 	return
 }
@@ -299,28 +318,6 @@ var backgroundANSIColors = map[Color][]byte{
 	Fuchsia:   {0x31, 0x30, 0x35}, // 105
 	Turquoise: {0x31, 0x30, 0x36}, // 106
 	White:     {0x31, 0x30, 0x37}, // 107
-}
-
-func writeFilter(buf byte) bool {
-	return buf != 0x1b && buf != 0x3f
-}
-
-func setTextFilter(buf byte) bool {
-	return buf != 0x1b && buf != 0x07
-}
-
-func byteFilter(buf []byte, fn ...func(b byte) bool) []byte {
-	if len(fn) == 0 {
-		return buf
-	}
-	ret := make([]byte, 0, len(buf))
-	f := fn[0]
-	for i, n := range buf {
-		if f(n) {
-			ret = append(ret, buf[i])
-		}
-	}
-	return byteFilter(ret, fn[1:]...)
 }
 
 var _ ConsoleWriter = &WindowsWriter{}
