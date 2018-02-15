@@ -71,7 +71,7 @@ func (p *WindowsParser) GetWinSize() *WinSize {
 	}
 }
 
-var asciiSequences []*ASCIICode = []*ASCIICode{
+var asciiSequences = []*ASCIICode{
 	{Key: Escape, ASCIICode: []byte{0x1b}},
 
 	{Key: ControlSpace, ASCIICode: []byte{0x00}},

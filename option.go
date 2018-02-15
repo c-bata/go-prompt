@@ -44,6 +44,7 @@ func OptionLivePrefix(f func() (prefix string, useLivePrefix bool)) Option {
 	}
 }
 
+// OptionPrefixTextColor change a text color of prefix string
 func OptionPrefixTextColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.prefixTextColor = x
@@ -51,6 +52,7 @@ func OptionPrefixTextColor(x Color) Option {
 	}
 }
 
+// OptionPrefixBackgroundColor to change a background color of prefix string
 func OptionPrefixBackgroundColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.prefixBGColor = x
@@ -58,6 +60,7 @@ func OptionPrefixBackgroundColor(x Color) Option {
 	}
 }
 
+// OptionInputTextColor to change a color of text which is input by user
 func OptionInputTextColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.inputTextColor = x
@@ -65,6 +68,7 @@ func OptionInputTextColor(x Color) Option {
 	}
 }
 
+// OptionInputBGColor to change a color of background which is input by user
 func OptionInputBGColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.inputBGColor = x
@@ -72,6 +76,7 @@ func OptionInputBGColor(x Color) Option {
 	}
 }
 
+// OptionPreviewSuggestionTextColor to change a text color which is completed
 func OptionPreviewSuggestionTextColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.previewSuggestionTextColor = x
@@ -79,6 +84,7 @@ func OptionPreviewSuggestionTextColor(x Color) Option {
 	}
 }
 
+// OptionPreviewSuggestionBGColor to change a background color which is completed
 func OptionPreviewSuggestionBGColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.previewSuggestionBGColor = x
@@ -86,6 +92,7 @@ func OptionPreviewSuggestionBGColor(x Color) Option {
 	}
 }
 
+// OptionSuggestionTextColor to change a text color in drop down suggestions.
 func OptionSuggestionTextColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.suggestionTextColor = x
@@ -93,6 +100,7 @@ func OptionSuggestionTextColor(x Color) Option {
 	}
 }
 
+// OptionSuggestionBGColor change a background color in drop down suggestions.
 func OptionSuggestionBGColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.suggestionBGColor = x
@@ -100,6 +108,7 @@ func OptionSuggestionBGColor(x Color) Option {
 	}
 }
 
+// OptionSelectedSuggestionTextColor to change a text color for completed text which is selected inside suggestions drop down box.
 func OptionSelectedSuggestionTextColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.selectedSuggestionTextColor = x
@@ -107,6 +116,7 @@ func OptionSelectedSuggestionTextColor(x Color) Option {
 	}
 }
 
+// OptionSelectedSuggestionBGColor to change a background color for completed text which is selected inside suggestions drop down box.
 func OptionSelectedSuggestionBGColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.selectedSuggestionBGColor = x
@@ -114,6 +124,7 @@ func OptionSelectedSuggestionBGColor(x Color) Option {
 	}
 }
 
+// OptionDescriptionTextColor to change a background color of description text in drop down suggestions.
 func OptionDescriptionTextColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.descriptionTextColor = x
@@ -121,6 +132,7 @@ func OptionDescriptionTextColor(x Color) Option {
 	}
 }
 
+// OptionDescriptionBGColor to change a background color of description text in drop down suggestions.
 func OptionDescriptionBGColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.descriptionBGColor = x
@@ -128,6 +140,7 @@ func OptionDescriptionBGColor(x Color) Option {
 	}
 }
 
+// OptionSelectedDescriptionTextColor to change a text color of description which is selected inside suggestions drop down box.
 func OptionSelectedDescriptionTextColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.selectedDescriptionTextColor = x
@@ -135,6 +148,7 @@ func OptionSelectedDescriptionTextColor(x Color) Option {
 	}
 }
 
+// OptionSelectedDescriptionBGColor to change a background color of description which is selected inside suggestions drop down box.
 func OptionSelectedDescriptionBGColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.selectedDescriptionBGColor = x
@@ -142,6 +156,7 @@ func OptionSelectedDescriptionBGColor(x Color) Option {
 	}
 }
 
+// OptionScrollbarThumbColor to change a thumb color on scrollbar.
 func OptionScrollbarThumbColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.scrollbarThumbColor = x
@@ -149,6 +164,7 @@ func OptionScrollbarThumbColor(x Color) Option {
 	}
 }
 
+// OptionScrollbarBGColor to change a background color of scrollbar.
 func OptionScrollbarBGColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.scrollbarBGColor = x
