@@ -4,12 +4,19 @@ package prompt
 
 import (
 	"bytes"
+	"errors"
+	"syscall"
 	"unicode/utf8"
+	"unsafe"
 
 	"github.com/mattn/go-tty"
 )
 
 const maxReadBytes = 1024
+
+var kernel32 = syscall.NewLazyDLL("kernel32.dll")
+
+var procGetNumberOfConsoleInputEvents = kernel32.NewProc("GetNumberOfConsoleInputEvents")
 
 // WindowsParser is a ConsoleParser implementation for Win32 console.
 type WindowsParser struct {
@@ -43,11 +50,21 @@ func (p *WindowsParser) GetKey(b []byte) Key {
 
 // Read returns byte array.
 func (p *WindowsParser) Read() ([]byte, error) {
-	buf := make([]byte, maxReadBytes)
+	var ev uint32
+	r0, _, err := procGetNumberOfConsoleInputEvents.Call(p.tty.Input().Fd(), uintptr(unsafe.Pointer(&ev)))
+	if r0 == 0 {
+		return nil, err
+	}
+	if ev == 0 {
+		return nil, errors.New("EAGAIN")
+	}
+
 	r, err := p.tty.ReadRune()
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
+
+	buf := make([]byte, maxReadBytes)
 	n := utf8.EncodeRune(buf[:], r)
 	for p.tty.Buffered() && n < maxReadBytes {
 		r, err := p.tty.ReadRune()
