@@ -1,5 +1,6 @@
 // Code generated "This is a fake comment to avoid golint errors"; DO NOT EDIT.
 // FIXME: This is a little bit stupid, but there are many public constants which is no value for writing godoc comment.
+
 package prompt
 
 // Key is the type express the key inserted from user.
