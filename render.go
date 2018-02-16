@@ -1,6 +1,8 @@
 package prompt
 
-import "runtime"
+import (
+	"runtime"
+)
 
 // Render to render prompt information from state of Buffer.
 type Render struct {
