@@ -255,7 +255,6 @@ func (w *WindowsWriter) SetColor(fg, bg Color, bold bool) {
 	if !ok {
 		b, _ = backgroundANSIColors[DefaultColor]
 	}
-	w.out.Write([]byte{0x1b, 0x5b, 0x33, 0x39, 0x3b, 0x34, 0x39, 0x6d})
 	w.WriteRaw([]byte{0x1b, 0x5b})
 	if !bold {
 		w.WriteRaw([]byte{0x30, 0x3b})
