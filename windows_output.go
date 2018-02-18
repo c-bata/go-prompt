@@ -20,8 +20,6 @@ type WindowsWriter struct {
 // WriteRaw to write raw byte array
 func (w *WindowsWriter) WriteRaw(data []byte) {
 	w.buffer = append(w.buffer, data...)
-	// Flush because sometimes the render is broken when a large amount data in buffer.
-	w.Flush()
 	return
 }
 
