@@ -174,7 +174,6 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	if r.col == 0 {
 		return
 	}
-
 	r.backward(r.previousCursor, r.previousCursor)
 
 	line := buffer.Text()
@@ -190,11 +189,12 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 		return
 	}
 
+	defer r.out.Flush()
+
 	// Rendering
 	r.out.HideCursor()
-	defer func() {
-		r.out.ShowCursor()
-	}()
+	defer r.out.ShowCursor()
+
 	r.renderPrefix()
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(line)
@@ -216,9 +216,6 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 		cursor += len(suggest.Text)
 		r.lineWrap(cursor)
 	}
-
-	r.out.Flush()
-
 	r.previousCursor = cursor
 }
 
