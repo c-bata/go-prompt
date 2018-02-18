@@ -12,7 +12,7 @@ func OptionParser(x ConsoleParser) Option {
 	}
 }
 
-// OptionWriter to set a custom ConsoleWriter object. An argument should implement ConsoleWriter interace.
+// OptionWriter to set a custom ConsoleWriter object. An argument should implement ConsoleWriter interface.
 func OptionWriter(x ConsoleWriter) Option {
 	return func(p *Prompt) error {
 		p.renderer.out = x
