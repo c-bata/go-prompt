@@ -1,6 +1,8 @@
 package prompt
 
-import "runtime"
+import (
+	"runtime"
+)
 
 // Render to render prompt information from state of Buffer.
 type Render struct {
@@ -172,9 +174,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	if r.col == 0 {
 		return
 	}
-
-	// Erasing
-	r.clear(r.previousCursor)
+	r.backward(r.previousCursor, r.previousCursor)
 
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
@@ -189,12 +189,19 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 		return
 	}
 
+	defer r.out.Flush()
+
 	// Rendering
+	r.out.HideCursor()
+	defer r.out.ShowCursor()
+
 	r.renderPrefix()
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(line)
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 	r.lineWrap(cursor)
+
+	r.out.EraseDown()
 
 	cursor = r.backward(cursor, len(line)-buffer.CursorPosition)
 
@@ -209,9 +216,6 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 		cursor += len(suggest.Text)
 		r.lineWrap(cursor)
 	}
-
-	r.out.Flush()
-
 	r.previousCursor = cursor
 }
 
