@@ -167,7 +167,11 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		p.buf.InsertText(string(b), false, true)
 	}
 
-	// Key bindings
+	p.handleKeyBinding(key)
+	return
+}
+
+func (p *Prompt) handleKeyBinding(key Key) {
 	for i := range commonKeyBindings {
 		kb := commonKeyBindings[i]
 		if kb.Key == key {
@@ -191,7 +195,6 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 			kb.Fn(p.buf)
 		}
 	}
-	return
 }
 
 // Input just returns user input text.
