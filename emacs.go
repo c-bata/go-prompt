@@ -113,6 +113,7 @@ var emacsKeyBindings = []KeyBind{
 			out := NewStandardOutputWriter()
 			out.EraseScreen()
 			out.CursorGoTo(0, 0)
+			out.Flush()
 		},
 	},
 }
