@@ -86,7 +86,6 @@ func (r *Render) renderWindowTooSmall() {
 	r.out.EraseScreen()
 	r.out.SetColor(DarkRed, White, false)
 	r.out.WriteStr("Your console window is too small...")
-	r.out.Flush()
 	return
 }
 
@@ -174,7 +173,8 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	if r.col == 0 {
 		return
 	}
-	r.backward(r.previousCursor, r.previousCursor)
+	defer r.out.Flush()
+	r.move(r.previousCursor, 0)
 
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
@@ -188,8 +188,6 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 		r.renderWindowTooSmall()
 		return
 	}
-
-	defer r.out.Flush()
 
 	// Rendering
 	r.out.HideCursor()
@@ -238,15 +236,21 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	r.previousCursor = 0
 }
 
+// clear erases the screen from a beginning of input
+// even if there is line break which means input length exceeds a window's width.
 func (r *Render) clear(cursor int) {
-	r.backward(cursor, cursor)
+	r.move(cursor, 0)
 	r.out.EraseDown()
 }
 
+// backward moves cursor to backward from a current cursor position
+// regardless there is a line break.
 func (r *Render) backward(from, n int) int {
 	return r.move(from, from-n)
 }
 
+// move moves cursor to specified position from the beginning of input
+// even if there is a line break.
 func (r *Render) move(from, to int) int {
 	fromX, fromY := r.toPos(from)
 	toX, toY := r.toPos(to)
