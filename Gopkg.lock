@@ -17,7 +17,7 @@
   branch = "master"
   name = "github.com/mattn/go-tty"
   packages = ["."]
-  revision = "5128a79c1473f8efe218f7a0e992e2c43ffa0bab"
+  revision = "061c12e2dc3ef933c21c2249823e6f42e6935c40"
 
 [[projects]]
   branch = "master"
