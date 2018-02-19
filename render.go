@@ -212,9 +212,14 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
 		r.out.WriteStr(suggest.Text)
 		r.out.SetColor(DefaultColor, DefaultColor, false)
-
 		cursor += len(suggest.Text)
+
+		rest := buffer.Document().TextAfterCursor()
+		r.out.WriteStr(rest)
+		cursor += len(rest)
 		r.lineWrap(cursor)
+
+		cursor = r.backward(cursor, len(rest))
 	}
 	r.previousCursor = cursor
 }
