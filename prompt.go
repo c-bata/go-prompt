@@ -161,8 +161,6 @@ func (p *Prompt) handleCompletionKeyBinding(key Key, completing bool) {
 		}
 	case BackTab:
 		p.completion.Previous()
-	case ControlSpace:
-		return
 	default:
 		if s, ok := p.completion.GetSelectedSuggestion(); ok {
 			w := p.buf.Document().GetWordBeforeCursor()
