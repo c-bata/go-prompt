@@ -82,7 +82,7 @@ func TestFormatShortSuggestion(t *testing.T) {
 				{Text: " --include-extended-apis       ", Description: " --------------... "},
 			},
 			max:     50,
-			exWidth: len(" --include-extended-apis       " + " If true, includ..."),
+			exWidth: len(" --include-extended-apis       " + " ---------------..."),
 		},
 		{
 			in: []Suggest{
