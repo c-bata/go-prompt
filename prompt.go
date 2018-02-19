@@ -105,31 +105,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 
 	// completion
 	completing := p.completion.Completing()
-	switch key {
-	case Down:
-		if completing {
-			p.completion.Next()
-		}
-	case Tab, ControlI:
-		p.completion.Next()
-	case Up:
-		if completing {
-			p.completion.Previous()
-		}
-	case BackTab:
-		p.completion.Previous()
-	case ControlSpace:
-		return
-	default:
-		if s, ok := p.completion.GetSelectedSuggestion(); ok {
-			w := p.buf.Document().GetWordBeforeCursor()
-			if w != "" {
-				p.buf.DeleteBeforeCursor(len([]rune(w)))
-			}
-			p.buf.InsertText(s.Text, false, true)
-		}
-		p.completion.Reset()
-	}
+	p.handleCompletionKeyBinding(key, completing)
 
 	switch key {
 	case Enter, ControlJ, ControlM:
@@ -169,6 +145,34 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 
 	p.handleKeyBinding(key)
 	return
+}
+
+func (p *Prompt) handleCompletionKeyBinding(key Key, completing bool) {
+	switch key {
+	case Down:
+		if completing {
+			p.completion.Next()
+		}
+	case Tab, ControlI:
+		p.completion.Next()
+	case Up:
+		if completing {
+			p.completion.Previous()
+		}
+	case BackTab:
+		p.completion.Previous()
+	case ControlSpace:
+		return
+	default:
+		if s, ok := p.completion.GetSelectedSuggestion(); ok {
+			w := p.buf.Document().GetWordBeforeCursor()
+			if w != "" {
+				p.buf.DeleteBeforeCursor(len([]rune(w)))
+			}
+			p.buf.InsertText(s.Text, false, true)
+		}
+		p.completion.Reset()
+	}
 }
 
 func (p *Prompt) handleKeyBinding(key Key) {
