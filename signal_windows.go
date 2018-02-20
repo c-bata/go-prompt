@@ -38,6 +38,8 @@ func (p *Prompt) handleSignals(exitCh chan int, winSizeCh chan *WinSize, stop ch
 				log.Println("[SIGNAL] Catch SIGQUIT")
 				exitCh <- 0
 			}
+		case w := <-p.in.(*WindowsParser).tty.SIGWINCH():
+			winSizeCh <- &WinSize{Row: uint16(w.H), Col: uint16(w.W)}
 		}
 	}
 }
