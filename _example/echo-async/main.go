@@ -14,32 +14,35 @@ func executor(in string) {
 type asyncCompleter struct {
 	minDelay time.Duration
 	lastTime time.Time
+	lastSugg []prompt.Suggest
 }
 
 func newAsyncCompleter(minDelay time.Duration) *asyncCompleter {
-	return &asyncCompleter{minDelay: minDelay, lastTime: time.Now()}
+	return &asyncCompleter{minDelay: minDelay, lastTime: time.Now(), lastSugg: []prompt.Suggest{}}
 }
 
 func (c *asyncCompleter) completer(in prompt.Document) []prompt.Suggest {
 	// Completer is called twice, but first call seems to not be ready to process input.
 	// If we don't do this, the delta time will always be very fast and completion never invoked
 	if in.GetWordBeforeCursor() == "" {
-		return nil
-	}
-	now := time.Now()
-	since := now.Sub(c.lastTime)
-	c.lastTime = now
+		now := time.Now()
+		since := now.Sub(c.lastTime)
+		c.lastTime = now
 
-	if since > c.minDelay {
-		s := []prompt.Suggest{
-			{Text: "users", Description: "Store the username and age"},
-			{Text: "articles", Description: "Store the article text posted by user"},
-			{Text: "comments", Description: "Store the text commented to articles"},
-			{Text: "groups", Description: "Combine users with specific rules"},
+		s := []prompt.Suggest{}
+		if since > c.minDelay {
+			// Do latency sensitive population of suggest slice here
+			s = []prompt.Suggest{
+				{Text: "users", Description: "Store the username and age"},
+				{Text: "articles", Description: "Store the article text posted by user"},
+				{Text: "comments", Description: "Store the text commented to articles"},
+				{Text: "groups", Description: "Combine users with specific rules"},
+			}
 		}
-		return prompt.FilterHasPrefix(s, in.GetWordBeforeCursor(), true)
+		c.lastSugg = s
+		return s
 	}
-	return nil
+	return prompt.FilterHasPrefix(c.lastSugg, in.GetWordBeforeCursor(), true)
 }
 
 func main() {
