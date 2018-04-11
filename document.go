@@ -1,8 +1,6 @@
 package prompt
 
 import (
-	"fmt"
-	"io/ioutil"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -132,7 +130,6 @@ func (d *Document) FindStartOfPreviousWordWithSpace() int {
 func (d *Document) FindEndOfCurrentWordWithSpace() int {
 	// Reverse the text before the cursor, in order to do an efficient backwards search.
 	x := d.TextAfterCursor()
-	ioutil.WriteFile("/tmp/fff", []byte(fmt.Sprintf("[%s]", x)), 0644)
 	l := len(x)
 	appear := false
 	for i := 0; i < l; i++ {

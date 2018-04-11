@@ -17,6 +17,11 @@ func DeleteChar(buf *Buffer) {
 	buf.Delete(1)
 }
 
+// DeleteWord Delete word before the cursor
+func DeleteWord(buf *Buffer) {
+	buf.DeleteBeforeCursor(len([]rune(buf.Document().TextBeforeCursor())) - buf.Document().FindStartOfPreviousWordWithSpace())
+}
+
 // DeleteBeforeChar Go to Backspace
 func DeleteBeforeChar(buf *Buffer) {
 	buf.DeleteBeforeCursor(1)
@@ -34,7 +39,6 @@ func GoLeftChar(buf *Buffer) {
 
 // GoRightWord Forward one word
 func GoRightWord(buf *Buffer) {
-	// fmt.Printf("%#v\n", buf.Document().FindEndOfCurrentWordWithSpace())
 	buf.CursorRight(buf.Document().FindEndOfCurrentWordWithSpace())
 }
 
