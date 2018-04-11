@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"time"
+	"bytes"
 )
 
 const (
@@ -19,14 +20,15 @@ type Completer func(Document) []Suggest
 
 // Prompt is core struct of go-prompt.
 type Prompt struct {
-	in          ConsoleParser
-	buf         *Buffer
-	renderer    *Render
-	executor    Executor
-	history     *History
-	completion  *CompletionManager
-	keyBindings []KeyBind
-	keyBindMode KeyBindMode
+	in                ConsoleParser
+	buf               *Buffer
+	renderer          *Render
+	executor          Executor
+	history           *History
+	completion        *CompletionManager
+	keyBindings       []KeyBind
+	ASCIICodeBindings []ASCIICodeBind
+	keyBindMode       KeyBindMode
 }
 
 // Exec is the struct contains user input context.
@@ -140,6 +142,9 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 			return
 		}
 	case NotDefined:
+		if p.handleASCIICodeBinding(b) {
+			return
+		}
 		p.buf.InsertText(string(b), false, true)
 	}
 
@@ -197,6 +202,17 @@ func (p *Prompt) handleKeyBinding(key Key) {
 			kb.Fn(p.buf)
 		}
 	}
+}
+
+func (p *Prompt) handleASCIICodeBinding(b []byte) bool {
+	checked := false
+	for _, kb := range p.ASCIICodeBindings {
+		if bytes.Compare(kb.ASCIICode, b) == 0 {
+			kb.Fn(p.buf)
+			checked = true
+		}
+	}
+	return checked
 }
 
 // Input just returns user input text.
