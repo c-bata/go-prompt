@@ -97,7 +97,7 @@ func (b *Buffer) CursorLeft(count int) {
 	return
 }
 
-// CursorLineEnd move to right on the current line.
+// CursorRight move to right on the current line.
 func (b *Buffer) CursorRight(count int) {
 	l := b.Document().GetCursorRightPosition(count)
 	b.CursorPosition += l

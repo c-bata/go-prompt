@@ -1,11 +1,11 @@
 package prompt
 
 import (
+	"bytes"
 	"io/ioutil"
 	"log"
 	"os"
 	"time"
-	"bytes"
 )
 
 const (

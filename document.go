@@ -1,11 +1,11 @@
 package prompt
 
 import (
+	"fmt"
+	"io/ioutil"
 	"sort"
 	"strings"
 	"unicode/utf8"
-	"io/ioutil"
-	"fmt"
 )
 
 // Document has text displayed in terminal and cursor position.
@@ -101,6 +101,9 @@ func (d *Document) FindEndOfCurrentWord() int {
 	for i := 0; i < l; i++ {
 		if x[i:i+1] == " " {
 			return i
+		}
+		if i == l-1 {
+			return l
 		}
 	}
 	return 0
