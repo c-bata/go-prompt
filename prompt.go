@@ -65,6 +65,8 @@ func (p *Prompt) Run() {
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
 				p.renderer.BreakLine(p.buf)
+				stopReadBufCh <- struct{}{}
+				stopHandleSignalCh <- struct{}{}
 				return
 			} else if e != nil {
 				// Stop goroutine to run readBuffer function
@@ -224,6 +226,7 @@ func (p *Prompt) Input() string {
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
 				p.renderer.BreakLine(p.buf)
+				stopReadBufCh <- struct{}{}
 				return ""
 			} else if e != nil {
 				// Stop goroutine to run readBuffer function
