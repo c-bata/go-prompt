@@ -209,6 +209,14 @@ func OptionAddKeyBind(b ...KeyBind) Option {
 	}
 }
 
+// OptionAddKeyBind to set a custom key bind.
+func OptionAddASCIICodeBind(b ...ASCIICodeBind) Option {
+	return func(p *Prompt) error {
+		p.ASCIICodeBindings = append(p.ASCIICodeBindings, b...)
+		return nil
+	}
+}
+
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 	pt := &Prompt{

@@ -88,6 +88,49 @@ func TestDocument_GetWordBeforeCursor(t *testing.T) {
 	}
 }
 
+func TestDocument_GetWordAfterCursor(t *testing.T) {
+	pattern := []struct {
+		document *Document
+		expected string
+	}{
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple bana"),
+			},
+			expected: "",
+		},
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple "),
+			},
+			expected: "bana",
+		},
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple"),
+			},
+			expected: "",
+		},
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("ap"),
+			},
+			expected: "ple",
+		},
+	}
+
+	for k, p := range pattern {
+		ac := p.document.GetWordAfterCursor()
+		if ac != p.expected {
+			t.Errorf("[%d]Should be %#v, got %#v", k, p.expected, ac)
+		}
+	}
+}
+
 func TestDocument_GetWordBeforeCursorWithSpace(t *testing.T) {
 	pattern := []struct {
 		document *Document
@@ -113,6 +156,49 @@ func TestDocument_GetWordBeforeCursorWithSpace(t *testing.T) {
 		ac := p.document.GetWordBeforeCursorWithSpace()
 		if ac != p.expected {
 			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+		}
+	}
+}
+
+func TestDocument_GetWordAfterCursorWithSpace(t *testing.T) {
+	pattern := []struct {
+		document *Document
+		expected string
+	}{
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple bana"),
+			},
+			expected: "",
+		},
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple "),
+			},
+			expected: "bana",
+		},
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple"),
+			},
+			expected: " bana",
+		},
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("ap"),
+			},
+			expected: "ple",
+		},
+	}
+
+	for k, p := range pattern {
+		ac := p.document.GetWordAfterCursorWithSpace()
+		if ac != p.expected {
+			t.Errorf("[%d]Should be %#v, got %#v", k, p.expected, ac)
 		}
 	}
 }
@@ -146,6 +232,49 @@ func TestDocument_FindStartOfPreviousWord(t *testing.T) {
 	}
 }
 
+func TestDocument_FindEndOfCurrentWord(t *testing.T) {
+	pattern := []struct {
+		document *Document
+		expected int
+	}{
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple bana"),
+			},
+			expected: len(""),
+		},
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple "),
+			},
+			expected: len("bana"),
+		},
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple"),
+			},
+			expected: len(""),
+		},
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("ap"),
+			},
+			expected: len("ple"),
+		},
+	}
+
+	for k, p := range pattern {
+		ac := p.document.FindEndOfCurrentWord()
+		if ac != p.expected {
+			t.Errorf("[%d]Should be %#v, got %#v", k, p.expected, ac)
+		}
+	}
+}
+
 func TestDocument_FindStartOfPreviousWordWithSpace(t *testing.T) {
 	pattern := []struct {
 		document *Document
@@ -171,6 +300,49 @@ func TestDocument_FindStartOfPreviousWordWithSpace(t *testing.T) {
 		ac := p.document.FindStartOfPreviousWordWithSpace()
 		if ac != p.expected {
 			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+		}
+	}
+}
+
+func TestDocument_FindEndOfCurrentWordWithSpace(t *testing.T) {
+	pattern := []struct {
+		document *Document
+		expected int
+	}{
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple bana"),
+			},
+			expected: len(""),
+		},
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple "),
+			},
+			expected: len("bana"),
+		},
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("apple"),
+			},
+			expected: len(" bana"),
+		},
+		{
+			document: &Document{
+				Text:           "apple bana",
+				CursorPosition: len("ap"),
+			},
+			expected: len("ple"),
+		},
+	}
+
+	for k, p := range pattern {
+		ac := p.document.FindEndOfCurrentWordWithSpace()
+		if ac != p.expected {
+			t.Errorf("[%d]Should be %#v, got %#v", k, p.expected, ac)
 		}
 	}
 }

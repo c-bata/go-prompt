@@ -55,11 +55,25 @@ func (d *Document) GetWordBeforeCursor() string {
 	return x[d.FindStartOfPreviousWord():]
 }
 
+// GetWordAfterCursor returns the word after the cursor.
+// If we have whitespace after the cursor this returns an empty string.
+func (d *Document) GetWordAfterCursor() string {
+	x := d.TextAfterCursor()
+	return x[:d.FindEndOfCurrentWord()]
+}
+
 // GetWordBeforeCursorWithSpace returns the word before the cursor.
 // Unlike GetWordBeforeCursor, it returns string containing space
 func (d *Document) GetWordBeforeCursorWithSpace() string {
 	x := d.TextBeforeCursor()
 	return x[d.FindStartOfPreviousWordWithSpace():]
+}
+
+// GetWordAfterCursorWithSpace returns the word after the cursor.
+// Unlike GetWordAfterCursor, it returns string containing space
+func (d *Document) GetWordAfterCursorWithSpace() string {
+	x := d.TextAfterCursor()
+	return x[:d.FindEndOfCurrentWordWithSpace()]
 }
 
 // FindStartOfPreviousWord returns an index relative to the cursor position
@@ -71,6 +85,23 @@ func (d *Document) FindStartOfPreviousWord() int {
 	for i := l; i > 0; i-- {
 		if x[i-1:i] == " " {
 			return i
+		}
+	}
+	return 0
+}
+
+// FindEndOfCurrentWord returns an index relative to the cursor position
+// pointing to the end of the current word. Return `None` if nothing was found.
+func (d *Document) FindEndOfCurrentWord() int {
+	// Reverse the text before the cursor, in order to do an efficient backwards search.
+	x := d.TextAfterCursor()
+	l := len(x)
+	for i := 0; i < l; i++ {
+		if x[i:i+1] == " " {
+			return i
+		}
+		if i == l-1 {
+			return l
 		}
 	}
 	return 0
@@ -89,6 +120,27 @@ func (d *Document) FindStartOfPreviousWordWithSpace() int {
 		}
 		if x[i-1:i] == " " && appear {
 			return i
+		}
+	}
+	return 0
+}
+
+// FindEndOfCurrentWordWithSpace is almost the same as FindEndOfCurrentWord.
+// The only difference is to ignore contiguous spaces.
+func (d *Document) FindEndOfCurrentWordWithSpace() int {
+	// Reverse the text before the cursor, in order to do an efficient backwards search.
+	x := d.TextAfterCursor()
+	l := len(x)
+	appear := false
+	for i := 0; i < l; i++ {
+		if x[i:i+1] != " " {
+			appear = true
+		}
+		if x[i:i+1] == " " && appear {
+			return i
+		}
+		if i == l-1 {
+			return l
 		}
 	}
 	return 0
