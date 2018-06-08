@@ -81,30 +81,22 @@ func (d *Document) GetWordAfterCursorWithSpace() string {
 func (d *Document) FindStartOfPreviousWord() int {
 	// Reverse the text before the cursor, in order to do an efficient backwards search.
 	x := d.TextBeforeCursor()
-	l := len(x)
-	for i := l; i > 0; i-- {
-		if x[i-1:i] == " " {
-			return i
-		}
+	if i := strings.LastIndexByte(x, ' '); i != -1 {
+		return i + 1
+	} else {
+		return 0
 	}
-	return 0
 }
 
 // FindEndOfCurrentWord returns an index relative to the cursor position
 // pointing to the end of the current word. Return `None` if nothing was found.
 func (d *Document) FindEndOfCurrentWord() int {
-	// Reverse the text before the cursor, in order to do an efficient backwards search.
 	x := d.TextAfterCursor()
-	l := len(x)
-	for i := 0; i < l; i++ {
-		if x[i:i+1] == " " {
-			return i
-		}
-		if i == l-1 {
-			return l
-		}
+	if i := strings.IndexByte(x, ' '); i != -1 {
+		return i
+	} else {
+		return len(x)
 	}
-	return 0
 }
 
 // FindStartOfPreviousWordWithSpace is almost the same as FindStartOfPreviousWord.
@@ -112,38 +104,35 @@ func (d *Document) FindEndOfCurrentWord() int {
 func (d *Document) FindStartOfPreviousWordWithSpace() int {
 	// Reverse the text before the cursor, in order to do an efficient backwards search.
 	x := d.TextBeforeCursor()
-	l := len(x)
-	appear := false
-	for i := l; i > 0; i-- {
-		if x[i-1:i] != " " {
-			appear = true
-		}
-		if x[i-1:i] == " " && appear {
-			return i
-		}
+
+	end := lastIndexByteNot(x, ' ')
+	if end == -1 {
+		return 0
 	}
-	return 0
+
+	start := strings.LastIndexByte(x[:end], ' ')
+	if start == -1 {
+		return 0
+	}
+	return start + 1
 }
 
 // FindEndOfCurrentWordWithSpace is almost the same as FindEndOfCurrentWord.
 // The only difference is to ignore contiguous spaces.
 func (d *Document) FindEndOfCurrentWordWithSpace() int {
-	// Reverse the text before the cursor, in order to do an efficient backwards search.
 	x := d.TextAfterCursor()
-	l := len(x)
-	appear := false
-	for i := 0; i < l; i++ {
-		if x[i:i+1] != " " {
-			appear = true
-		}
-		if x[i:i+1] == " " && appear {
-			return i
-		}
-		if i == l-1 {
-			return l
-		}
+
+	start := indexByteNot(x, ' ')
+	if start == -1 {
+		return len(x)
 	}
-	return 0
+
+	end := strings.IndexByte(x[start:], ' ')
+	if end == -1 {
+		return len(x)
+	}
+
+	return start + end
 }
 
 // CurrentLineBeforeCursor returns the text from the start of the line until the cursor.
@@ -344,4 +333,23 @@ func bisectRightRange(a []int, v int, lo, hi int) int {
 	return sort.Search(len(s), func(i int) bool {
 		return s[i] > v
 	})
+}
+
+func indexByteNot(s string, c byte) int {
+	n := len(s)
+	for i := 0; i < n; i++ {
+		if s[i] != c {
+			return i
+		}
+	}
+	return -1
+}
+
+func lastIndexByteNot(s string, c byte) int {
+	for i := len(s) - 1; i >= 0; i-- {
+		if s[i] != c {
+			return i
+		}
+	}
+	return -1
 }
