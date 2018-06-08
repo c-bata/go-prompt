@@ -2,6 +2,11 @@
 
 ## v0.2.2 (2018/??/??)
 
+### What's new?
+
+* Add option to customize ascii code key bindings.
+* Add GetWordAfterCursor method in Document.
+
 ### Fixed
 
 * Fix a bug in docker container [issue #39](https://github.com/c-bata/go-prompt/issues/39)
