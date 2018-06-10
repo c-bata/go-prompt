@@ -37,6 +37,7 @@ func main() {
 * [kubicorn/kubicorn : Simple, cloud native infrastructure for Kubernetes.](https://github.com/kubicorn/kubicorn)
 * [cch123/asm-cli : Interactive shell of assembly language(X86/X64) based on unicorn and rasm2](https://github.com/cch123/asm-cli)
 * [ktr0731/evans : more expressive universal gRPC client](https://github.com/ktr0731/evans)
+* [CrushedPixel/moshpit: A Command-line tool for datamoshing.](https://github.com/CrushedPixel/moshpit)
 * (If you create a CLI utility using go-prompt and want your own project to be listed here, please submit a GitHub issue.)
 
 ## Features
