@@ -1,17 +1,15 @@
-// +build !windows
-
 package prompt
 
 import (
 	"bytes"
+	"io"
 	"strconv"
-	"syscall"
 )
 
 // PosixWriter is a ConsoleWriter implementation for POSIX environment.
 // To control terminal emulator, this outputs VT100 escape sequences.
 type PosixWriter struct {
-	fd     int
+	w      io.Writer
 	buffer []byte
 }
 
@@ -41,7 +39,7 @@ func (w *PosixWriter) WriteStr(data string) {
 
 // Flush to flush buffer
 func (w *PosixWriter) Flush() error {
-	_, err := syscall.Write(w.fd, w.buffer)
+	_, err := w.w.Write(w.buffer)
 	if err != nil {
 		return err
 	}
@@ -321,9 +319,7 @@ var backgroundANSIColors = map[Color][]byte{
 
 var _ ConsoleWriter = &PosixWriter{}
 
-// NewStandardOutputWriter returns ConsoleWriter object to write to stdout.
-func NewStandardOutputWriter() *PosixWriter {
-	return &PosixWriter{
-		fd: syscall.Stdout,
-	}
+// NewWrappedWriter wraps a given writer and returns a new PosixWriter
+func NewWrappedWriter(w io.Writer) *PosixWriter {
+	return &PosixWriter{w: w}
 }

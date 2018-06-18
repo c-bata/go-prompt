@@ -269,54 +269,6 @@ func (w *WindowsWriter) SetColor(fg, bg Color, bold bool) {
 	return
 }
 
-var foregroundANSIColors = map[Color][]byte{
-	DefaultColor: {0x33, 0x39}, // 39
-
-	// Low intensity.
-	Black:     {0x33, 0x30}, // 30
-	DarkRed:   {0x33, 0x31}, // 31
-	DarkGreen: {0x33, 0x32}, // 32
-	Brown:     {0x33, 0x33}, // 33
-	DarkBlue:  {0x33, 0x34}, // 34
-	Purple:    {0x33, 0x35}, // 35
-	Cyan:      {0x33, 0x36}, //36
-	LightGray: {0x33, 0x37}, //37
-
-	// High intensity.
-	DarkGray:  {0x39, 0x30}, // 90
-	Red:       {0x39, 0x31}, // 91
-	Green:     {0x39, 0x32}, // 92
-	Yellow:    {0x39, 0x33}, // 93
-	Blue:      {0x39, 0x34}, // 94
-	Fuchsia:   {0x39, 0x35}, // 95
-	Turquoise: {0x39, 0x36}, // 96
-	White:     {0x39, 0x37}, // 97
-}
-
-var backgroundANSIColors = map[Color][]byte{
-	DefaultColor: {0x34, 0x39}, // 49
-
-	// Low intensity.
-	Black:     {0x34, 0x30}, // 40
-	DarkRed:   {0x34, 0x31}, // 41
-	DarkGreen: {0x34, 0x32}, // 42
-	Brown:     {0x34, 0x33}, // 43
-	DarkBlue:  {0x34, 0x34}, // 44
-	Purple:    {0x34, 0x35}, // 45
-	Cyan:      {0x34, 0x36}, // 46
-	LightGray: {0x34, 0x37}, // 47
-
-	// High intensity
-	DarkGray:  {0x31, 0x30, 0x30}, // 100
-	Red:       {0x31, 0x30, 0x31}, // 101
-	Green:     {0x31, 0x30, 0x32}, // 102
-	Yellow:    {0x31, 0x30, 0x33}, // 103
-	Blue:      {0x31, 0x30, 0x34}, // 104
-	Fuchsia:   {0x31, 0x30, 0x35}, // 105
-	Turquoise: {0x31, 0x30, 0x36}, // 106
-	White:     {0x31, 0x30, 0x37}, // 107
-}
-
 var _ ConsoleWriter = &WindowsWriter{}
 
 // NewStandardOutputWriter returns ConsoleWriter object to write to stdout.
