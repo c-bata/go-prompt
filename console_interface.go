@@ -6,6 +6,7 @@ type WinSize struct {
 	Col uint16
 }
 
+// DisplayAttribute represents display  attributes like Blinking, Bold, Italic and so on.
 type DisplayAttribute int
 
 const (
@@ -163,5 +164,8 @@ type ConsoleWriter interface {
 	/* Font */
 
 	// SetColor sets text and background colors. and specify whether text is bold.
+	// Deprecated. This interface is not cool, please use SetDisplayAttributes.
 	SetColor(fg, bg Color, bold bool)
+	// SetDisplayAttributes set display attributes (Set colors, blink, bold, italic and so on).
+	SetDisplayAttributes(fg, bg Color, attrs ...DisplayAttribute)
 }
