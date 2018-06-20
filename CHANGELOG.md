@@ -6,10 +6,15 @@
 
 * Add option to customize ascii code key bindings.
 * Add GetWordAfterCursor method in Document.
+* Add SetDisplayAttributes in ConsoleWriter for flexible customizing display attributes.
 
 ### Fixed
 
 * Fix a bug in docker container [issue #39](https://github.com/c-bata/go-prompt/issues/39)
+
+### Removed or Deprecated
+
+* SetColor method in ConsoleWriter is deprecated. Please use SetDisplayAttributes instead.
 
 ## v0.2.1 (2018/02/14)
 
