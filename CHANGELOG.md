@@ -15,6 +15,7 @@
 ### Removed or Deprecated
 
 * SetColor method in ConsoleWriter is deprecated. Please use SetDisplayAttributes instead.
+* prompt.Choose shortcut function is deprecated.
 
 ## v0.2.1 (2018/02/14)
 
