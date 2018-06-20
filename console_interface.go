@@ -6,6 +6,33 @@ type WinSize struct {
 	Col uint16
 }
 
+type DisplayAttribute int
+
+const (
+	// DisplayReset reset all display attributes.
+	DisplayReset DisplayAttribute = iota
+	// DisplayBold set bold or increases intensity.
+	DisplayBold
+	// DisplayLowIntensity decreases intensity. Not widely supported.
+	DisplayLowIntensity
+	// DisplayItalic set italic. Not widely supported.
+	DisplayItalic
+	// DisplayUnderline set underline
+	DisplayUnderline
+	// DisplayBlink set blink (less than 150 per minute).
+	DisplayBlink
+	// DisplayBlink set blink (more than 150 per minute). Not widely supported.
+	DisplayRapidBlink
+	// DisplayReverse swap foreground and background colors.
+	DisplayReverse
+	// DisplayInvisible set invisible.  Not widely supported.
+	DisplayInvisible
+	// DisplayCrossedOut set characters legible, but marked for deletion. Not widely supported.
+	DisplayCrossedOut
+	// DisplayDefaultFont set primary(default) font
+	DisplayDefaultFont
+)
+
 // Color represents color on terminal.
 type Color int
 

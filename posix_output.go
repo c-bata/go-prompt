@@ -53,37 +53,37 @@ func (w *PosixWriter) Flush() error {
 
 // EraseScreen erases the screen with the background colour and moves the cursor to home.
 func (w *PosixWriter) EraseScreen() {
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x32, 0x4a})
+	w.WriteRaw([]byte{0x1b, '[', '2', 'J'})
 	return
 }
 
 // EraseUp erases the screen from the current line up to the top of the screen.
 func (w *PosixWriter) EraseUp() {
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x31, 0x4a})
+	w.WriteRaw([]byte{0x1b, '[', '2', 'J'})
 	return
 }
 
 // EraseDown erases the screen from the current line down to the bottom of the screen.
 func (w *PosixWriter) EraseDown() {
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x4a})
+	w.WriteRaw([]byte{0x1b, '[', 'J'})
 	return
 }
 
 // EraseStartOfLine erases from the current cursor position to the start of the current line.
 func (w *PosixWriter) EraseStartOfLine() {
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x31, 0x4b})
+	w.WriteRaw([]byte{0x1b, '[', '1', 'K'})
 	return
 }
 
 // EraseEndOfLine erases from the current cursor position to the end of the current line.
 func (w *PosixWriter) EraseEndOfLine() {
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x4b})
+	w.WriteRaw([]byte{0x1b, '[', 'K'})
 	return
 }
 
 // EraseLine erases the entire current line.
 func (w *PosixWriter) EraseLine() {
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x32, 0x4b})
+	w.WriteRaw([]byte{0x1b, '[', '2', 'K'})
 	return
 }
 
@@ -91,12 +91,12 @@ func (w *PosixWriter) EraseLine() {
 
 // ShowCursor stops blinking cursor and show.
 func (w *PosixWriter) ShowCursor() {
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x3f, 0x31, 0x32, 0x6c, 0x1b, 0x5b, 0x3f, 0x32, 0x35, 0x68})
+	w.WriteRaw([]byte{0x1b, '[', '?', '1', '2', 'l', 0x1b, '[', '?', '2', '5', 'h'})
 }
 
 // HideCursor hides cursor.
 func (w *PosixWriter) HideCursor() {
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x3f, 0x32, 0x35, 0x6c})
+	w.WriteRaw([]byte{0x1b, '[', '?', '2', '5', 'l'})
 	return
 }
 
@@ -104,16 +104,16 @@ func (w *PosixWriter) HideCursor() {
 func (w *PosixWriter) CursorGoTo(row, col int) {
 	if row == 0 && col == 0 {
 		// If no row/column parameters are provided (ie. <ESC>[H), the cursor will move to the home position.
-		w.WriteRaw([]byte{0x1b, 0x5b, 0x3b, 0x48})
+		w.WriteRaw([]byte{0x1b, '[', 'H'})
 		return
 	}
 	r := strconv.Itoa(row)
 	c := strconv.Itoa(col)
-	w.WriteRaw([]byte{0x1b, 0x5b})
+	w.WriteRaw([]byte{0x1b, '['})
 	w.WriteRaw([]byte(r))
-	w.WriteRaw([]byte{0x3b})
+	w.WriteRaw([]byte{';'})
 	w.WriteRaw([]byte(c))
-	w.WriteRaw([]byte{0x48})
+	w.WriteRaw([]byte{'H'})
 	return
 }
 
@@ -126,9 +126,9 @@ func (w *PosixWriter) CursorUp(n int) {
 		return
 	}
 	s := strconv.Itoa(n)
-	w.WriteRaw([]byte{0x1b, 0x5b})
+	w.WriteRaw([]byte{0x1b, '['})
 	w.WriteRaw([]byte(s))
-	w.WriteRaw([]byte{0x41})
+	w.WriteRaw([]byte{'A'})
 	return
 }
 
@@ -141,9 +141,9 @@ func (w *PosixWriter) CursorDown(n int) {
 		return
 	}
 	s := strconv.Itoa(n)
-	w.WriteRaw([]byte{0x1b, 0x5b})
+	w.WriteRaw([]byte{0x1b, '['})
 	w.WriteRaw([]byte(s))
-	w.WriteRaw([]byte{0x42})
+	w.WriteRaw([]byte{'B'})
 	return
 }
 
@@ -156,9 +156,9 @@ func (w *PosixWriter) CursorForward(n int) {
 		return
 	}
 	s := strconv.Itoa(n)
-	w.WriteRaw([]byte{0x1b, 0x5b})
+	w.WriteRaw([]byte{0x1b, '['})
 	w.WriteRaw([]byte(s))
-	w.WriteRaw([]byte{0x43})
+	w.WriteRaw([]byte{'C'})
 	return
 }
 
@@ -171,29 +171,29 @@ func (w *PosixWriter) CursorBackward(n int) {
 		return
 	}
 	s := strconv.Itoa(n)
-	w.WriteRaw([]byte{0x1b, 0x5b})
+	w.WriteRaw([]byte{0x1b, '['})
 	w.WriteRaw([]byte(s))
-	w.WriteRaw([]byte{0x44})
+	w.WriteRaw([]byte{'D'})
 	return
 }
 
 // AskForCPR asks for a cursor position report (CPR).
 func (w *PosixWriter) AskForCPR() {
 	// CPR: Cursor Position Request.
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x36, 0x6e})
+	w.WriteRaw([]byte{0x1b, '[', '6', 'n'})
 	w.Flush()
 	return
 }
 
 // SaveCursor saves current cursor position.
 func (w *PosixWriter) SaveCursor() {
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x73})
+	w.WriteRaw([]byte{0x1b, '[', 's'})
 	return
 }
 
 // UnSaveCursor restores cursor position after a Save Cursor.
 func (w *PosixWriter) UnSaveCursor() {
-	w.WriteRaw([]byte{0x1b, 0x5b, 0x75})
+	w.WriteRaw([]byte{0x1b, '[', 'u'})
 	return
 }
 
@@ -201,13 +201,13 @@ func (w *PosixWriter) UnSaveCursor() {
 
 // ScrollDown scrolls display down one line.
 func (w *PosixWriter) ScrollDown() {
-	w.WriteRaw([]byte{0x1b, 0x44})
+	w.WriteRaw([]byte{0x1b, 'D'})
 	return
 }
 
 // ScrollUp scroll display up one line.
 func (w *PosixWriter) ScrollUp() {
-	w.WriteRaw([]byte{0x1b, 0x4d})
+	w.WriteRaw([]byte{0x1b, 'M'})
 	return
 }
 
@@ -233,7 +233,7 @@ func (w *PosixWriter) SetTitle(title string) {
 		titleBytes = bytes.Replace(titleBytes, patterns[i].from, patterns[i].to, -1)
 	}
 
-	w.WriteRaw([]byte{0x1b, 0x5d, 0x32, 0x3b})
+	w.WriteRaw([]byte{0x1b, ']', '2', ';'})
 	w.WriteRaw(titleBytes)
 	w.WriteRaw([]byte{0x07})
 	return
@@ -241,82 +241,112 @@ func (w *PosixWriter) SetTitle(title string) {
 
 // ClearTitle clears a title of terminal window.
 func (w *PosixWriter) ClearTitle() {
-	w.WriteRaw([]byte{0x1b, 0x5d, 0x32, 0x3b, 0x07})
+	w.WriteRaw([]byte{0x1b, ']', '2', ';', 0x07})
 	return
 }
 
 /* Font */
 
 // SetColor sets text and background colors. and specify whether text is bold.
+// Deprecated. This interface is not cool, please use SetDisplayAttributes.
 func (w *PosixWriter) SetColor(fg, bg Color, bold bool) {
+	if bold {
+		w.SetDisplayAttributes(fg, bg, DisplayBold)
+	} else {
+		w.SetDisplayAttributes(fg, bg, DisplayDefaultFont)
+	}
+	return
+}
+
+// SetDisplayAttributes set display attributes (Set colors, blink, bold, italic and so on).
+func (w *PosixWriter) SetDisplayAttributes(fg, bg Color, attrs ...DisplayAttribute) {
+	w.WriteRaw([]byte{0x1b, '['}) // control sequence introducer
+	defer w.WriteRaw([]byte{'m'}) // final character
+
+	var separator byte = ';'
+	for i := range attrs {
+		p, ok := displayAttributeParameters[attrs[i]]
+		if !ok {
+			continue
+		}
+		w.WriteRaw(p)
+		w.WriteRaw([]byte{separator})
+	}
+
 	f, ok := foregroundANSIColors[fg]
 	if !ok {
 		f = foregroundANSIColors[DefaultColor]
 	}
+	w.WriteRaw(f)
+	w.WriteRaw([]byte{separator})
 	b, ok := backgroundANSIColors[bg]
 	if !ok {
 		b = backgroundANSIColors[DefaultColor]
 	}
-	w.WriteRaw([]byte{0x1b, 0x5b})
-	if !bold {
-		w.WriteRaw([]byte{0x30, 0x3b})
-	}
-	w.WriteRaw(f)
-	w.WriteRaw([]byte{0x3b})
 	w.WriteRaw(b)
-	if bold {
-		w.WriteRaw([]byte{0x3b, 0x31})
-	}
-	w.WriteRaw([]byte{0x6d})
 	return
 }
 
+var displayAttributeParameters = map[DisplayAttribute][]byte{
+	DisplayReset:        {'0'},
+	DisplayBold:         {'1'},
+	DisplayLowIntensity: {'2'},
+	DisplayItalic:       {'3'},
+	DisplayUnderline:    {'4'},
+	DisplayBlink:        {'5'},
+	DisplayRapidBlink:   {'6'},
+	DisplayReverse:      {'7'},
+	DisplayInvisible:    {'8'},
+	DisplayCrossedOut:   {'9'},
+	DisplayDefaultFont:  {'1', '0'},
+}
+
 var foregroundANSIColors = map[Color][]byte{
-	DefaultColor: {0x33, 0x39}, // 39
+	DefaultColor: {'3', '9'},
 
 	// Low intensity.
-	Black:     {0x33, 0x30}, // 30
-	DarkRed:   {0x33, 0x31}, // 31
-	DarkGreen: {0x33, 0x32}, // 32
-	Brown:     {0x33, 0x33}, // 33
-	DarkBlue:  {0x33, 0x34}, // 34
-	Purple:    {0x33, 0x35}, // 35
-	Cyan:      {0x33, 0x36}, //36
-	LightGray: {0x33, 0x37}, //37
+	Black:     {'3', '0'},
+	DarkRed:   {'3', '1'},
+	DarkGreen: {'3', '2'},
+	Brown:     {'3', '3'},
+	DarkBlue:  {'3', '4'},
+	Purple:    {'3', '5'},
+	Cyan:      {'3', '6'},
+	LightGray: {'3', '7'},
 
 	// High intensity.
-	DarkGray:  {0x39, 0x30}, // 90
-	Red:       {0x39, 0x31}, // 91
-	Green:     {0x39, 0x32}, // 92
-	Yellow:    {0x39, 0x33}, // 93
-	Blue:      {0x39, 0x34}, // 94
-	Fuchsia:   {0x39, 0x35}, // 95
-	Turquoise: {0x39, 0x36}, // 96
-	White:     {0x39, 0x37}, // 97
+	DarkGray:  {'9', '0'},
+	Red:       {'9', '1'},
+	Green:     {'9', '2'},
+	Yellow:    {'9', '3'},
+	Blue:      {'9', '4'},
+	Fuchsia:   {'9', '5'},
+	Turquoise: {'9', '6'},
+	White:     {'9', '7'},
 }
 
 var backgroundANSIColors = map[Color][]byte{
-	DefaultColor: {0x34, 0x39}, // 49
+	DefaultColor: {'4', '9'},
 
 	// Low intensity.
-	Black:     {0x34, 0x30}, // 40
-	DarkRed:   {0x34, 0x31}, // 41
-	DarkGreen: {0x34, 0x32}, // 42
-	Brown:     {0x34, 0x33}, // 43
-	DarkBlue:  {0x34, 0x34}, // 44
-	Purple:    {0x34, 0x35}, // 45
-	Cyan:      {0x34, 0x36}, // 46
-	LightGray: {0x34, 0x37}, // 47
+	Black:     {'4', '0'},
+	DarkRed:   {'4', '1'},
+	DarkGreen: {'4', '2'},
+	Brown:     {'4', '3'},
+	DarkBlue:  {'4', '4'},
+	Purple:    {'4', '5'},
+	Cyan:      {'4', '6'},
+	LightGray: {'4', '7'},
 
 	// High intensity
-	DarkGray:  {0x31, 0x30, 0x30}, // 100
-	Red:       {0x31, 0x30, 0x31}, // 101
-	Green:     {0x31, 0x30, 0x32}, // 102
-	Yellow:    {0x31, 0x30, 0x33}, // 103
-	Blue:      {0x31, 0x30, 0x34}, // 104
-	Fuchsia:   {0x31, 0x30, 0x35}, // 105
-	Turquoise: {0x31, 0x30, 0x36}, // 106
-	White:     {0x31, 0x30, 0x37}, // 107
+	DarkGray:  {'1', '0', '0'},
+	Red:       {'1', '0', '1'},
+	Green:     {'1', '0', '2'},
+	Yellow:    {'1', '0', '3'},
+	Blue:      {'1', '0', '4'},
+	Fuchsia:   {'1', '0', '5'},
+	Turquoise: {'1', '0', '6'},
+	White:     {'1', '0', '7'},
 }
 
 var _ ConsoleWriter = &PosixWriter{}
