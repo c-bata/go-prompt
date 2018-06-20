@@ -1,5 +1,3 @@
-// +build !windows
-
 package prompt
 
 import (
@@ -7,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestPosixWriterWrite(t *testing.T) {
+func TestVT100WriterWrite(t *testing.T) {
 	scenarioTable := []struct {
 		input    []byte
 		expected []byte
@@ -23,7 +21,7 @@ func TestPosixWriterWrite(t *testing.T) {
 	}
 
 	for _, s := range scenarioTable {
-		pw := &PosixWriter{}
+		pw := &VT100Writer{}
 		pw.Write(s.input)
 
 		if !bytes.Equal(pw.buffer, s.expected) {
@@ -32,7 +30,7 @@ func TestPosixWriterWrite(t *testing.T) {
 	}
 }
 
-func TestPosixWriterWriteStr(t *testing.T) {
+func TestVT100WriterWriteStr(t *testing.T) {
 	scenarioTable := []struct {
 		input    string
 		expected []byte
@@ -48,7 +46,7 @@ func TestPosixWriterWriteStr(t *testing.T) {
 	}
 
 	for _, s := range scenarioTable {
-		pw := &PosixWriter{}
+		pw := &VT100Writer{}
 		pw.WriteStr(s.input)
 
 		if !bytes.Equal(pw.buffer, s.expected) {
@@ -57,7 +55,7 @@ func TestPosixWriterWriteStr(t *testing.T) {
 	}
 }
 
-func TestPosixWriterWriteRawStr(t *testing.T) {
+func TestVT100WriterWriteRawStr(t *testing.T) {
 	scenarioTable := []struct {
 		input    string
 		expected []byte
@@ -73,7 +71,7 @@ func TestPosixWriterWriteRawStr(t *testing.T) {
 	}
 
 	for _, s := range scenarioTable {
-		pw := &PosixWriter{}
+		pw := &VT100Writer{}
 		pw.WriteRawStr(s.input)
 
 		if !bytes.Equal(pw.buffer, s.expected) {
