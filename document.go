@@ -4,20 +4,36 @@ import (
 	"sort"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/mattn/go-runewidth"
 )
 
 // Document has text displayed in terminal and cursor position.
 type Document struct {
-	Text           string
-	CursorPosition int
+	Text string
+	// This represents a index in a rune array of Document.Text.
+	// So if Document is "日本(cursor)語", cursorPosition is 2.
+	// But DisplayedCursorPosition returns 4 because '日' and '本' are double width characters.
+	cursorPosition int
 }
 
 // NewDocument return the new empty document.
 func NewDocument() *Document {
 	return &Document{
 		Text:           "",
-		CursorPosition: 0,
+		cursorPosition: 0,
 	}
+}
+
+// DisplayCursorPosition returns the cursor position on rendered text on terminal emulators.
+// So if Document is "日本(cursor)語", DisplayedCursorPosition returns 4 because '日' and '本' are double width characters.
+func (d *Document) DisplayCursorPosition() int {
+	var position int
+	runes := []rune(d.Text)[:d.cursorPosition]
+	for i := range runes {
+		position += runewidth.RuneWidth(runes[i])
+	}
+	return position
 }
 
 // GetCharRelativeToCursor return character relative to cursor position, or empty string
@@ -28,7 +44,7 @@ func (d *Document) GetCharRelativeToCursor(offset int) (r rune) {
 	for len(s) > 0 {
 		cnt++
 		r, size := utf8.DecodeRuneInString(s)
-		if cnt == d.CursorPosition+offset {
+		if cnt == d.cursorPosition+offset {
 			return r
 		}
 		s = s[size:]
@@ -39,13 +55,13 @@ func (d *Document) GetCharRelativeToCursor(offset int) (r rune) {
 // TextBeforeCursor returns the text before the cursor.
 func (d *Document) TextBeforeCursor() string {
 	r := []rune(d.Text)
-	return string(r[:d.CursorPosition])
+	return string(r[:d.cursorPosition])
 }
 
 // TextAfterCursor returns the text after the cursor.
 func (d *Document) TextAfterCursor() string {
 	r := []rune(d.Text)
-	return string(r[d.CursorPosition:])
+	return string(r[d.cursorPosition:])
 }
 
 // GetWordBeforeCursor returns the word before the cursor.
@@ -95,7 +111,7 @@ func (d *Document) FindEndOfCurrentWord() int {
 	if i := strings.IndexByte(x, ' '); i != -1 {
 		return i
 	} else {
-		return len(x)
+		return len([]rune(x))
 	}
 }
 
@@ -189,7 +205,7 @@ func (d *Document) findLineStartIndex(index int) (pos int, lineStartIndex int) {
 
 // CursorPositionRow returns the current row. (0-based.)
 func (d *Document) CursorPositionRow() (row int) {
-	row, _ = d.findLineStartIndex(d.CursorPosition)
+	row, _ = d.findLineStartIndex(d.cursorPosition)
 	return
 }
 
@@ -197,8 +213,8 @@ func (d *Document) CursorPositionRow() (row int) {
 func (d *Document) CursorPositionCol() (col int) {
 	// Don't use self.text_before_cursor to calculate this. Creating substrings
 	// and splitting is too expensive for getting the cursor position.
-	_, index := d.findLineStartIndex(d.CursorPosition)
-	col = d.CursorPosition - index
+	_, index := d.findLineStartIndex(d.cursorPosition)
+	col = d.cursorPosition - index
 	return
 }
 
@@ -238,7 +254,7 @@ func (d *Document) GetCursorUpPosition(count int, preferredColumn int) int {
 	if row < 0 {
 		row = 0
 	}
-	return d.TranslateRowColToIndex(row, col) - d.CursorPosition
+	return d.TranslateRowColToIndex(row, col) - d.cursorPosition
 }
 
 // GetCursorDownPosition return the relative cursor position (character index) where we would be if the
@@ -251,7 +267,7 @@ func (d *Document) GetCursorDownPosition(count int, preferredColumn int) int {
 		col = preferredColumn
 	}
 	row := d.CursorPositionRow() + count
-	return d.TranslateRowColToIndex(row, col) - d.CursorPosition
+	return d.TranslateRowColToIndex(row, col) - d.cursorPosition
 }
 
 // Lines returns the array of all the lines.

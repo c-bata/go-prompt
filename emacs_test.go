@@ -5,20 +5,20 @@ import "testing"
 func TestEmacsKeyBindings(t *testing.T) {
 	buf := NewBuffer()
 	buf.InsertText("abcde", false, true)
-	if buf.CursorPosition != len("abcde") {
-		t.Errorf("Want %d, but got %d", len("abcde"), buf.CursorPosition)
+	if buf.cursorPosition != len("abcde") {
+		t.Errorf("Want %d, but got %d", len("abcde"), buf.cursorPosition)
 	}
 
 	// Go to the beginning of the line
 	applyEmacsKeyBind(buf, ControlA)
-	if buf.CursorPosition != 0 {
-		t.Errorf("Want %d, but got %d", 0, buf.CursorPosition)
+	if buf.cursorPosition != 0 {
+		t.Errorf("Want %d, but got %d", 0, buf.cursorPosition)
 	}
 
 	// Go to the end of the line
 	applyEmacsKeyBind(buf, ControlE)
-	if buf.CursorPosition != len("abcde") {
-		t.Errorf("Want %d, but got %d", len("abcde"), buf.CursorPosition)
+	if buf.cursorPosition != len("abcde") {
+		t.Errorf("Want %d, but got %d", len("abcde"), buf.cursorPosition)
 	}
 }
 
