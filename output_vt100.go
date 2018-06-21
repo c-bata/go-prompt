@@ -44,7 +44,7 @@ func (w *VT100Writer) EraseScreen() {
 
 // EraseUp erases the screen from the current line up to the top of the screen.
 func (w *VT100Writer) EraseUp() {
-	w.WriteRaw([]byte{0x1b, '[', '2', 'J'})
+	w.WriteRaw([]byte{0x1b, '[', '1', 'J'})
 	return
 }
 
