@@ -3,16 +3,21 @@ package prompt
 import (
 	"log"
 	"strings"
+
+	"github.com/mattn/go-runewidth"
 )
 
 const (
-	shortenSuffix    = "..."
-	leftPrefix       = " "
-	leftSuffix       = " "
-	rightPrefix      = " "
-	rightSuffix      = " "
-	leftMargin       = len(leftPrefix + leftSuffix)
-	rightMargin      = len(rightPrefix + rightSuffix)
+	shortenSuffix = "..."
+	leftPrefix    = " "
+	leftSuffix    = " "
+	rightPrefix   = " "
+	rightSuffix   = " "
+)
+
+var (
+	leftMargin       = runewidth.StringWidth(leftPrefix + leftSuffix)
+	rightMargin      = runewidth.StringWidth(rightPrefix + rightSuffix)
 	completionMargin = leftMargin + rightMargin
 )
 
@@ -106,13 +111,14 @@ func formatTexts(o []string, max int, prefix, suffix string) (new []string, widt
 	l := len(o)
 	n := make([]string, l)
 
-	lenPrefix := len([]rune(prefix))
-	lenSuffix := len([]rune(suffix))
-	lenShorten := len(shortenSuffix)
+	lenPrefix := runewidth.StringWidth(prefix)
+	lenSuffix := runewidth.StringWidth(suffix)
+	lenShorten := runewidth.StringWidth(shortenSuffix)
 	min := lenPrefix + lenSuffix + lenShorten
 	for i := 0; i < l; i++ {
-		if width < len([]rune(o[i])) {
-			width = len([]rune(o[i]))
+		w := runewidth.StringWidth(o[i])
+		if width < w {
+			width = w
 		}
 	}
 
@@ -128,13 +134,12 @@ func formatTexts(o []string, max int, prefix, suffix string) (new []string, widt
 	}
 
 	for i := 0; i < l; i++ {
-		r := []rune(o[i])
-		x := len(r)
+		x := runewidth.StringWidth(o[i])
 		if x <= width {
 			spaces := strings.Repeat(" ", width-x)
 			n[i] = prefix + o[i] + spaces + suffix
 		} else if x > width {
-			n[i] = prefix + string(r[:width-lenShorten]) + shortenSuffix + suffix
+			n[i] = prefix + runewidth.Truncate(o[i], width, "...") + suffix
 		}
 	}
 	return n, lenPrefix + width + lenSuffix

@@ -6,27 +6,111 @@ import (
 	"unicode/utf8"
 )
 
-func TestDocument_GetCharRelativeToCursor(t *testing.T) {
-	d := &Document{
-		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len([]rune("line 1\n" + "lin")),
+func TestDocument_DisplayCursorPosition(t *testing.T) {
+	patterns := []struct {
+		document *Document
+		expected int
+	}{
+		{
+			document: &Document{
+				Text:           "hello",
+				cursorPosition: 2,
+			},
+			expected: 2,
+		},
+		{
+			document: &Document{
+				Text:           "こんにちは",
+				cursorPosition: 2,
+			},
+			expected: 4,
+		},
+		{
+			document: &Document{
+				Text:           "Добрый день",
+				cursorPosition: 3,
+			},
+			expected: 3,
+		},
 	}
-	ac := d.GetCharRelativeToCursor(1)
-	ex, _ := utf8.DecodeRuneInString("e")
-	if ac != ex {
-		t.Errorf("Should be %#v, got %#v", ex, ac)
+
+	for _, p := range patterns {
+		ac := p.document.DisplayCursorPosition()
+		if ac != p.expected {
+			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+		}
+	}
+}
+
+func TestDocument_GetCharRelativeToCursor(t *testing.T) {
+	patterns := []struct {
+		document *Document
+		expected string
+	}{
+		{
+			document: &Document{
+				Text:           "line 1\nline 2\nline 3\nline 4\n",
+				cursorPosition: len([]rune("line 1\n" + "lin")),
+			},
+			expected: "e",
+		},
+		{
+			document: &Document{
+				Text:           "あいうえお\nかきくけこ\nさしすせそ\nたちつてと\n",
+				cursorPosition: 8,
+			},
+			expected: "く",
+		},
+		{
+			document: &Document{
+				Text:           "Добрый\nдень\nДобрый день",
+				cursorPosition: 9,
+			},
+			expected: "н",
+		},
+	}
+
+	for i, p := range patterns {
+		ac := p.document.GetCharRelativeToCursor(1)
+		ex, _ := utf8.DecodeRuneInString(p.expected)
+		if ac != ex {
+			t.Errorf("[%d] Should be %s, got %s", i, string(ex), string(ac))
+		}
 	}
 }
 
 func TestDocument_TextBeforeCursor(t *testing.T) {
-	d := &Document{
-		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("line 1\n" + "lin"),
+	patterns := []struct {
+		document *Document
+		expected string
+	}{
+		{
+			document: &Document{
+				Text:           "line 1\nline 2\nline 3\nline 4\n",
+				cursorPosition: len("line 1\n" + "lin"),
+			},
+			expected: "line 1\nlin",
+		},
+		{
+			document: &Document{
+				Text:           "あいうえお\nかきくけこ\nさしすせそ\nたちつてと\n",
+				cursorPosition: 8,
+			},
+			expected: "あいうえお\nかき",
+		},
+		{
+			document: &Document{
+				Text:           "Добрый\nдень\nДобрый день",
+				cursorPosition: 9,
+			},
+			expected: "Добрый\nде",
+		},
 	}
-	ac := d.TextBeforeCursor()
-	ex := "line 1\nlin"
-	if ac != ex {
-		t.Errorf("Should be %#v, got %#v", ex, ac)
+	for i, p := range patterns {
+		ac := p.document.TextBeforeCursor()
+		if ac != p.expected {
+			t.Errorf("[%d] Should be %s, got %s", i, p.expected, ac)
+		}
 	}
 }
 
@@ -38,23 +122,37 @@ func TestDocument_TextAfterCursor(t *testing.T) {
 		{
 			document: &Document{
 				Text:           "line 1\nline 2\nline 3\nline 4\n",
-				CursorPosition: len("line 1\n" + "lin"),
+				cursorPosition: len("line 1\n" + "lin"),
 			},
 			expected: "e 2\nline 3\nline 4\n",
 		},
 		{
 			document: &Document{
 				Text:           "",
-				CursorPosition: 0,
+				cursorPosition: 0,
 			},
 			expected: "",
 		},
+		{
+			document: &Document{
+				Text:           "あいうえお\nかきくけこ\nさしすせそ\nたちつてと\n",
+				cursorPosition: 8,
+			},
+			expected: "くけこ\nさしすせそ\nたちつてと\n",
+		},
+		{
+			document: &Document{
+				Text:           "Добрый\nдень\nДобрый день",
+				cursorPosition: 9,
+			},
+			expected: "нь\nДобрый день",
+		},
 	}
 
-	for _, p := range pattern {
+	for i, p := range pattern {
 		ac := p.document.TextAfterCursor()
 		if ac != p.expected {
-			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+			t.Errorf("[%d] Should be %#v, got %#v", i, p.expected, ac)
 		}
 	}
 }
@@ -67,21 +165,164 @@ func TestDocument_GetWordBeforeCursor(t *testing.T) {
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple bana"),
+				cursorPosition: len("apple bana"),
 			},
 			expected: "bana",
 		},
 		{
 			document: &Document{
 				Text:           "apple ",
-				CursorPosition: len("apple "),
+				cursorPosition: len("apple "),
 			},
 			expected: "",
+		},
+		{
+			document: &Document{
+				Text:           "あいうえお かきくけこ さしすせそ",
+				cursorPosition: 8,
+			},
+			expected: "かき",
+		},
+		{
+			document: &Document{
+				Text:           "Добрый день Добрый день",
+				cursorPosition: 9,
+			},
+			expected: "де",
+		},
+	}
+
+	for i, p := range pattern {
+		ac := p.document.GetWordBeforeCursor()
+		if ac != p.expected {
+			t.Errorf("[%d] Should be %#v, got %#v", i, p.expected, ac)
+		}
+	}
+}
+
+func TestDocument_GetWordBeforeCursorWithSpace(t *testing.T) {
+	pattern := []struct {
+		document *Document
+		expected string
+	}{
+		{
+			document: &Document{
+				Text:           "apple bana ",
+				cursorPosition: len("apple bana "),
+			},
+			expected: "bana ",
+		},
+		{
+			document: &Document{
+				Text:           "apple ",
+				cursorPosition: len("apple "),
+			},
+			expected: "apple ",
+		},
+		{
+			document: &Document{
+				Text:           "あいうえお かきくけこ ",
+				cursorPosition: 12,
+			},
+			expected: "かきくけこ ",
+		},
+		{
+			document: &Document{
+				Text:           "Добрый день ",
+				cursorPosition: 12,
+			},
+			expected: "день ",
 		},
 	}
 
 	for _, p := range pattern {
-		ac := p.document.GetWordBeforeCursor()
+		ac := p.document.GetWordBeforeCursorWithSpace()
+		if ac != p.expected {
+			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+		}
+	}
+}
+
+func TestDocument_FindStartOfPreviousWord(t *testing.T) {
+	pattern := []struct {
+		document *Document
+		expected int
+	}{
+		{
+			document: &Document{
+				Text:           "apple bana",
+				cursorPosition: len("apple bana"),
+			},
+			expected: len("apple "),
+		},
+		{
+			document: &Document{
+				Text:           "apple ",
+				cursorPosition: len("apple "),
+			},
+			expected: len("apple "),
+		},
+		{
+			document: &Document{
+				Text:           "あいうえお かきくけこ さしすせそ",
+				cursorPosition: 8, // between 'き' and 'く'
+			},
+			expected: len("あいうえお "), // this function returns index byte in string
+		},
+		{
+			document: &Document{
+				Text:           "Добрый день Добрый день",
+				cursorPosition: 9,
+			},
+			expected: len("Добрый "), // this function returns index byte in string
+		},
+	}
+
+	for _, p := range pattern {
+		ac := p.document.FindStartOfPreviousWord()
+		if ac != p.expected {
+			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+		}
+	}
+}
+
+func TestDocument_FindStartOfPreviousWordWithSpace(t *testing.T) {
+	pattern := []struct {
+		document *Document
+		expected int
+	}{
+		{
+			document: &Document{
+				Text:           "apple bana ",
+				cursorPosition: len("apple bana "),
+			},
+			expected: len("apple "),
+		},
+		{
+			document: &Document{
+				Text:           "apple ",
+				cursorPosition: len("apple "),
+			},
+			expected: len(""),
+		},
+		{
+			document: &Document{
+				Text:           "あいうえお かきくけこ ",
+				cursorPosition: 12, // cursor points to last
+			},
+			expected: len("あいうえお "), // this function returns index byte in string
+		},
+		{
+			document: &Document{
+				Text:           "Добрый день ",
+				cursorPosition: 12,
+			},
+			expected: len("Добрый "), // this function returns index byte in string
+		},
+	}
+
+	for _, p := range pattern {
+		ac := p.document.FindStartOfPreviousWordWithSpace()
 		if ac != p.expected {
 			t.Errorf("Should be %#v, got %#v", p.expected, ac)
 		}
@@ -96,66 +337,51 @@ func TestDocument_GetWordAfterCursor(t *testing.T) {
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple bana"),
+				cursorPosition: len("apple bana"),
 			},
 			expected: "",
 		},
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple "),
+				cursorPosition: len("apple "),
 			},
 			expected: "bana",
 		},
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple"),
+				cursorPosition: len("apple"),
 			},
 			expected: "",
 		},
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("ap"),
+				cursorPosition: len("ap"),
 			},
 			expected: "ple",
+		},
+		{
+			document: &Document{
+				Text:           "あいうえお かきくけこ さしすせそ",
+				cursorPosition: 8,
+			},
+			expected: "くけこ",
+		},
+		{
+			document: &Document{
+				Text:           "Добрый день Добрый день",
+				cursorPosition: 9,
+			},
+			expected: "нь",
 		},
 	}
 
 	for k, p := range pattern {
 		ac := p.document.GetWordAfterCursor()
 		if ac != p.expected {
-			t.Errorf("[%d]Should be %#v, got %#v", k, p.expected, ac)
-		}
-	}
-}
-
-func TestDocument_GetWordBeforeCursorWithSpace(t *testing.T) {
-	pattern := []struct {
-		document *Document
-		expected string
-	}{
-		{
-			document: &Document{
-				Text:           "apple bana ",
-				CursorPosition: len("apple bana "),
-			},
-			expected: "bana ",
-		},
-		{
-			document: &Document{
-				Text:           "apple ",
-				CursorPosition: len("apple "),
-			},
-			expected: "apple ",
-		},
-	}
-
-	for _, p := range pattern {
-		ac := p.document.GetWordBeforeCursorWithSpace()
-		if ac != p.expected {
-			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+			t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
 		}
 	}
 }
@@ -168,30 +394,44 @@ func TestDocument_GetWordAfterCursorWithSpace(t *testing.T) {
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple bana"),
+				cursorPosition: len("apple bana"),
 			},
 			expected: "",
 		},
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple "),
+				cursorPosition: len("apple "),
 			},
 			expected: "bana",
 		},
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple"),
+				cursorPosition: len("apple"),
 			},
 			expected: " bana",
 		},
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("ap"),
+				cursorPosition: len("ap"),
 			},
 			expected: "ple",
+		},
+		{
+			document: &Document{
+				Text:           "あいうえお かきくけこ さしすせそ",
+				cursorPosition: 5,
+			},
+			expected: " かきくけこ",
+		},
+		{
+			document: &Document{
+				Text:           "Добрый день Добрый день",
+				cursorPosition: 6,
+			},
+			expected: " день",
 		},
 	}
 
@@ -199,35 +439,6 @@ func TestDocument_GetWordAfterCursorWithSpace(t *testing.T) {
 		ac := p.document.GetWordAfterCursorWithSpace()
 		if ac != p.expected {
 			t.Errorf("[%d]Should be %#v, got %#v", k, p.expected, ac)
-		}
-	}
-}
-
-func TestDocument_FindStartOfPreviousWord(t *testing.T) {
-	pattern := []struct {
-		document *Document
-		expected int
-	}{
-		{
-			document: &Document{
-				Text:           "apple bana",
-				CursorPosition: len("apple bana"),
-			},
-			expected: len("apple "),
-		},
-		{
-			document: &Document{
-				Text:           "apple ",
-				CursorPosition: len("apple "),
-			},
-			expected: len("apple "),
-		},
-	}
-
-	for _, p := range pattern {
-		ac := p.document.FindStartOfPreviousWord()
-		if ac != p.expected {
-			t.Errorf("Should be %#v, got %#v", p.expected, ac)
 		}
 	}
 }
@@ -240,66 +451,60 @@ func TestDocument_FindEndOfCurrentWord(t *testing.T) {
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple bana"),
+				cursorPosition: len("apple bana"),
 			},
 			expected: len(""),
 		},
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple "),
+				cursorPosition: len("apple "),
 			},
 			expected: len("bana"),
 		},
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple"),
+				cursorPosition: len("apple"),
 			},
 			expected: len(""),
 		},
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("ap"),
+				cursorPosition: len("ap"),
 			},
 			expected: len("ple"),
+		},
+		{
+			// りん(cursor)ご ばなな
+			document: &Document{
+				Text:           "りんご ばなな",
+				cursorPosition: 2,
+			},
+			expected: len("ご"),
+		},
+		{
+			document: &Document{
+				Text:           "りんご ばなな",
+				cursorPosition: 3,
+			},
+			expected: 0,
+		},
+		{
+			// Доб(cursor)рый день
+			document: &Document{
+				Text:           "Добрый день",
+				cursorPosition: 3,
+			},
+			expected: len("рый"),
 		},
 	}
 
 	for k, p := range pattern {
 		ac := p.document.FindEndOfCurrentWord()
 		if ac != p.expected {
-			t.Errorf("[%d]Should be %#v, got %#v", k, p.expected, ac)
-		}
-	}
-}
-
-func TestDocument_FindStartOfPreviousWordWithSpace(t *testing.T) {
-	pattern := []struct {
-		document *Document
-		expected int
-	}{
-		{
-			document: &Document{
-				Text:           "apple bana ",
-				CursorPosition: len("apple bana "),
-			},
-			expected: len("apple "),
-		},
-		{
-			document: &Document{
-				Text:           "apple ",
-				CursorPosition: len("apple "),
-			},
-			expected: len(""),
-		},
-	}
-
-	for _, p := range pattern {
-		ac := p.document.FindStartOfPreviousWordWithSpace()
-		if ac != p.expected {
-			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+			t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
 		}
 	}
 }
@@ -312,37 +517,58 @@ func TestDocument_FindEndOfCurrentWordWithSpace(t *testing.T) {
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple bana"),
+				cursorPosition: len("apple bana"),
 			},
 			expected: len(""),
 		},
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple "),
+				cursorPosition: len("apple "),
 			},
 			expected: len("bana"),
 		},
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("apple"),
+				cursorPosition: len("apple"),
 			},
 			expected: len(" bana"),
 		},
 		{
 			document: &Document{
 				Text:           "apple bana",
-				CursorPosition: len("ap"),
+				cursorPosition: len("ap"),
 			},
 			expected: len("ple"),
+		},
+		{
+			document: &Document{
+				Text:           "あいうえお かきくけこ",
+				cursorPosition: 6,
+			},
+			expected: len("かきくけこ"),
+		},
+		{
+			document: &Document{
+				Text:           "あいうえお かきくけこ",
+				cursorPosition: 5,
+			},
+			expected: len(" かきくけこ"),
+		},
+		{
+			document: &Document{
+				Text:           "Добрый день",
+				cursorPosition: 6,
+			},
+			expected: len(" день"),
 		},
 	}
 
 	for k, p := range pattern {
 		ac := p.document.FindEndOfCurrentWordWithSpace()
 		if ac != p.expected {
-			t.Errorf("[%d]Should be %#v, got %#v", k, p.expected, ac)
+			t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
 		}
 	}
 }
@@ -350,7 +576,7 @@ func TestDocument_FindEndOfCurrentWordWithSpace(t *testing.T) {
 func TestDocument_CurrentLineBeforeCursor(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("line 1\n" + "lin"),
+		cursorPosition: len("line 1\n" + "lin"),
 	}
 	ac := d.CurrentLineBeforeCursor()
 	ex := "lin"
@@ -362,7 +588,7 @@ func TestDocument_CurrentLineBeforeCursor(t *testing.T) {
 func TestDocument_CurrentLineAfterCursor(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("line 1\n" + "lin"),
+		cursorPosition: len("line 1\n" + "lin"),
 	}
 	ac := d.CurrentLineAfterCursor()
 	ex := "e 2"
@@ -374,7 +600,7 @@ func TestDocument_CurrentLineAfterCursor(t *testing.T) {
 func TestDocument_CurrentLine(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("line 1\n" + "lin"),
+		cursorPosition: len("line 1\n" + "lin"),
 	}
 	ac := d.CurrentLine()
 	ex := "line 2"
@@ -383,27 +609,23 @@ func TestDocument_CurrentLine(t *testing.T) {
 	}
 }
 
-// Table Driven Tests for CursorPositionRow and CursorPositionCol
-type cursorPositionTest struct {
-	document    *Document
-	expectedRow int
-	expectedCol int
-}
-
-var cursorPositionTests = []cursorPositionTest{
-	{
-		document:    &Document{Text: "line 1\nline 2\nline 3\n", CursorPosition: len("line 1\n" + "lin")},
-		expectedRow: 1,
-		expectedCol: 3,
-	},
-	{
-		document:    &Document{Text: "", CursorPosition: 0},
-		expectedRow: 0,
-		expectedCol: 0,
-	},
-}
-
 func TestDocument_CursorPositionRowAndCol(t *testing.T) {
+	var cursorPositionTests = []struct {
+		document    *Document
+		expectedRow int
+		expectedCol int
+	}{
+		{
+			document:    &Document{Text: "line 1\nline 2\nline 3\n", cursorPosition: len("line 1\n" + "lin")},
+			expectedRow: 1,
+			expectedCol: 3,
+		},
+		{
+			document:    &Document{Text: "", cursorPosition: 0},
+			expectedRow: 0,
+			expectedCol: 0,
+		},
+	}
 	for _, test := range cursorPositionTests {
 		ac := test.document.CursorPositionRow()
 		if ac != test.expectedRow {
@@ -419,7 +641,7 @@ func TestDocument_CursorPositionRowAndCol(t *testing.T) {
 func TestDocument_GetCursorLeftPosition(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("line 1\n" + "line 2\n" + "lin"),
+		cursorPosition: len("line 1\n" + "line 2\n" + "lin"),
 	}
 	ac := d.GetCursorLeftPosition(2)
 	ex := -2
@@ -436,7 +658,7 @@ func TestDocument_GetCursorLeftPosition(t *testing.T) {
 func TestDocument_GetCursorUpPosition(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("line 1\n" + "line 2\n" + "lin"),
+		cursorPosition: len("line 1\n" + "line 2\n" + "lin"),
 	}
 	ac := d.GetCursorUpPosition(2, -1)
 	ex := len("lin") - len("line 1\n"+"line 2\n"+"lin")
@@ -454,7 +676,7 @@ func TestDocument_GetCursorUpPosition(t *testing.T) {
 func TestDocument_GetCursorDownPosition(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("lin"),
+		cursorPosition: len("lin"),
 	}
 	ac := d.GetCursorDownPosition(2, -1)
 	ex := len("line 1\n"+"line 2\n"+"lin") - len("lin")
@@ -472,7 +694,7 @@ func TestDocument_GetCursorDownPosition(t *testing.T) {
 func TestDocument_GetCursorRightPosition(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("line 1\n" + "line 2\n" + "lin"),
+		cursorPosition: len("line 1\n" + "line 2\n" + "lin"),
 	}
 	ac := d.GetCursorRightPosition(2)
 	ex := 2
@@ -489,7 +711,7 @@ func TestDocument_GetCursorRightPosition(t *testing.T) {
 func TestDocument_Lines(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("line 1\n" + "lin"),
+		cursorPosition: len("line 1\n" + "lin"),
 	}
 	ac := d.Lines()
 	ex := []string{"line 1", "line 2", "line 3", "line 4", ""}
@@ -501,7 +723,7 @@ func TestDocument_Lines(t *testing.T) {
 func TestDocument_LineCount(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("line 1\n" + "lin"),
+		cursorPosition: len("line 1\n" + "lin"),
 	}
 	ac := d.LineCount()
 	ex := 5
@@ -513,7 +735,7 @@ func TestDocument_LineCount(t *testing.T) {
 func TestDocument_TranslateIndexToPosition(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("line 1\n" + "lin"),
+		cursorPosition: len("line 1\n" + "lin"),
 	}
 	row, col := d.TranslateIndexToPosition(len("line 1\nline 2\nlin"))
 	if row != 2 {
@@ -534,7 +756,7 @@ func TestDocument_TranslateIndexToPosition(t *testing.T) {
 func TestDocument_TranslateRowColToIndex(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3\nline 4\n",
-		CursorPosition: len("line 1\n" + "lin"),
+		cursorPosition: len("line 1\n" + "lin"),
 	}
 	ac := d.TranslateRowColToIndex(2, 3)
 	ex := len("line 1\nline 2\nlin")
@@ -551,13 +773,13 @@ func TestDocument_TranslateRowColToIndex(t *testing.T) {
 func TestDocument_OnLastLine(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3",
-		CursorPosition: len("line 1\nline"),
+		cursorPosition: len("line 1\nline"),
 	}
 	ac := d.OnLastLine()
 	if ac {
 		t.Errorf("Should be %#v, got %#v", false, ac)
 	}
-	d.CursorPosition = len("line 1\nline 2\nline")
+	d.cursorPosition = len("line 1\nline 2\nline")
 	ac = d.OnLastLine()
 	if !ac {
 		t.Errorf("Should be %#v, got %#v", true, ac)
@@ -567,7 +789,7 @@ func TestDocument_OnLastLine(t *testing.T) {
 func TestDocument_GetEndOfLinePosition(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3",
-		CursorPosition: len("line 1\nli"),
+		cursorPosition: len("line 1\nli"),
 	}
 	ac := d.GetEndOfLinePosition()
 	ex := len("ne 2")

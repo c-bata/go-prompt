@@ -2,6 +2,8 @@ package prompt
 
 import (
 	"runtime"
+
+	"github.com/mattn/go-runewidth"
 )
 
 // Render to render prompt information from state of Buffer.
@@ -97,7 +99,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	prefix := r.getCurrentPrefix()
 	formatted, width := formatSuggestions(
 		suggestions,
-		int(r.col)-len(prefix)-1, // -1 means a width of scrollbar
+		int(r.col)-runewidth.StringWidth(prefix)-1, // -1 means a width of scrollbar
 	)
 	// +1 means a width of scrollbar.
 	width++
@@ -109,7 +111,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
 	r.prepareArea(windowHeight)
 
-	cursor := len(prefix) + len(buf.Document().TextBeforeCursor())
+	cursor := runewidth.StringWidth(prefix) + runewidth.StringWidth(buf.Document().TextBeforeCursor())
 	x, _ := r.toPos(cursor)
 	if x+width >= int(r.col) {
 		cursor = r.backward(cursor, x+width-int(r.col))
@@ -178,7 +180,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
-	cursor := len(prefix) + len(line)
+	cursor := runewidth.StringWidth(prefix) + runewidth.StringWidth(line)
 
 	// prepare area
 	_, y := r.toPos(cursor)
@@ -201,23 +203,23 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 
 	r.out.EraseDown()
 
-	cursor = r.backward(cursor, len(line)-buffer.CursorPosition)
+	cursor = r.backward(cursor, runewidth.StringWidth(line)-buffer.DisplayCursorPosition())
 
 	r.renderCompletion(buffer, completion)
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
-		cursor = r.backward(cursor, len(buffer.Document().GetWordBeforeCursor()))
+		cursor = r.backward(cursor, runewidth.StringWidth(buffer.Document().GetWordBeforeCursor()))
 
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
 		r.out.WriteStr(suggest.Text)
 		r.out.SetColor(DefaultColor, DefaultColor, false)
-		cursor += len(suggest.Text)
+		cursor += runewidth.StringWidth(suggest.Text)
 
 		rest := buffer.Document().TextAfterCursor()
 		r.out.WriteStr(rest)
-		cursor += len(rest)
+		cursor += runewidth.StringWidth(rest)
 		r.lineWrap(cursor)
 
-		cursor = r.backward(cursor, len(rest))
+		cursor = r.backward(cursor, runewidth.StringWidth(rest))
 	}
 	r.previousCursor = cursor
 }
@@ -225,7 +227,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer) {
 	// Erasing and Render
-	cursor := len(buffer.Document().TextBeforeCursor()) + len(r.getCurrentPrefix())
+	cursor := runewidth.StringWidth(buffer.Document().TextBeforeCursor()) + runewidth.StringWidth(r.getCurrentPrefix())
 	r.clear(cursor)
 	r.renderPrefix()
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
