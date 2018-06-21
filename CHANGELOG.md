@@ -4,6 +4,7 @@
 
 ### What's new?
 
+* Support CJK(Chinese, Japanese and Korean) and Cyrillic characters.
 * Add option to customize ascii code key bindings.
 * Add GetWordAfterCursor method in Document.
 * Add SetDisplayAttributes in ConsoleWriter for flexible customizing display attributes.
