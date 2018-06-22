@@ -141,12 +141,8 @@ func formatTexts(o []string, max int, prefix, suffix string) (new []string, widt
 		} else if x > width {
 			x := runewidth.Truncate(o[i], width, shortenSuffix)
 			// When calling runewidth.Truncate("您好xxx您好xxx", 11, "...") returns "您好xxx..."
-			// But the length of this result is 10. So we need to insert a space.
-			if l := runewidth.StringWidth(x); l < width {
-				spaces := strings.Repeat(" ", width - l)
-				x += spaces
-			}
-			n[i] = prefix + x + suffix
+			// But the length of this result is 10. So we need fill right using runewidth.FillRight.
+			n[i] = prefix + runewidth.FillRight(x, width) + suffix
 		}
 	}
 	return n, lenPrefix + width + lenSuffix
