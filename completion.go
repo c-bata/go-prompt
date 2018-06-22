@@ -139,7 +139,14 @@ func formatTexts(o []string, max int, prefix, suffix string) (new []string, widt
 			spaces := strings.Repeat(" ", width-x)
 			n[i] = prefix + o[i] + spaces + suffix
 		} else if x > width {
-			n[i] = prefix + runewidth.Truncate(o[i], width, "...") + suffix
+			x := runewidth.Truncate(o[i], width, shortenSuffix)
+			// When calling runewidth.Truncate("您好xxx您好xxx", 11, "...") returns "您好xxx..."
+			// But the length of this result is 10. So we need to insert a space.
+			if l := runewidth.StringWidth(x); l < width {
+				spaces := strings.Repeat(" ", width - l)
+				x += spaces
+			}
+			n[i] = prefix + x + suffix
 		}
 	}
 	return n, lenPrefix + width + lenSuffix
