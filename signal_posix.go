@@ -10,8 +10,7 @@ import (
 	"syscall"
 )
 
-func (p *Prompt) handleSignals(ctx context.Context, cancel context.CancelFunc, winSizeCh chan *WinSize) {
-	in := p.in
+func handleSignals(ctx context.Context, cancel context.CancelFunc, sigwinchan chan struct{}) {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(
 		sigchan,
@@ -42,7 +41,7 @@ func (p *Prompt) handleSignals(ctx context.Context, cancel context.CancelFunc, w
 
 			case syscall.SIGWINCH:
 				log.Println("[SIGNAL] Catch SIGWINCH")
-				winSizeCh <- in.GetWinSize()
+				sigwinchan <- struct{}{}
 			}
 		}
 	}
