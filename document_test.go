@@ -161,6 +161,7 @@ func TestDocument_GetWordBeforeCursor(t *testing.T) {
 	pattern := []struct {
 		document *Document
 		expected string
+		sep      string
 	}{
 		{
 			document: &Document{
@@ -168,6 +169,29 @@ func TestDocument_GetWordBeforeCursor(t *testing.T) {
 				cursorPosition: len("apple bana"),
 			},
 			expected: "bana",
+		},
+		{
+			document: &Document{
+				Text:           "apply -f ./file/foo.json",
+				cursorPosition: len("apply -f ./file/foo.json"),
+			},
+			expected: "foo.json",
+			sep:      " /",
+		},
+		{
+			document: &Document{
+				Text:           "apple banana orange",
+				cursorPosition: len("apple ba"),
+			},
+			expected: "ba",
+		},
+		{
+			document: &Document{
+				Text:           "apply -f ./file/foo.json",
+				cursorPosition: len("apply -f ./fi"),
+			},
+			expected: "fi",
+			sep:      " /",
 		},
 		{
 			document: &Document{
@@ -193,9 +217,20 @@ func TestDocument_GetWordBeforeCursor(t *testing.T) {
 	}
 
 	for i, p := range pattern {
-		ac := p.document.GetWordBeforeCursor()
-		if ac != p.expected {
-			t.Errorf("[%d] Should be %#v, got %#v", i, p.expected, ac)
+		if p.sep == "" {
+			ac := p.document.GetWordBeforeCursor()
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", i, p.expected, ac)
+			}
+			ac = p.document.GetWordBeforeCursorUntilSeparator("")
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", i, p.expected, ac)
+			}
+		} else {
+			ac := p.document.GetWordBeforeCursorUntilSeparator(p.sep)
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", i, p.expected, ac)
+			}
 		}
 	}
 }
@@ -204,6 +239,7 @@ func TestDocument_GetWordBeforeCursorWithSpace(t *testing.T) {
 	pattern := []struct {
 		document *Document
 		expected string
+		sep      string
 	}{
 		{
 			document: &Document{
@@ -214,10 +250,26 @@ func TestDocument_GetWordBeforeCursorWithSpace(t *testing.T) {
 		},
 		{
 			document: &Document{
+				Text:           "apply -f /path/to/file/",
+				cursorPosition: len("apply -f /path/to/file/"),
+			},
+			expected: "file/",
+			sep:      " /",
+		},
+		{
+			document: &Document{
 				Text:           "apple ",
 				cursorPosition: len("apple "),
 			},
 			expected: "apple ",
+		},
+		{
+			document: &Document{
+				Text:           "path/",
+				cursorPosition: len("path/"),
+			},
+			expected: "path/",
+			sep:      " /",
 		},
 		{
 			document: &Document{
@@ -236,9 +288,20 @@ func TestDocument_GetWordBeforeCursorWithSpace(t *testing.T) {
 	}
 
 	for _, p := range pattern {
-		ac := p.document.GetWordBeforeCursorWithSpace()
-		if ac != p.expected {
-			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+		if p.sep == "" {
+			ac := p.document.GetWordBeforeCursorWithSpace()
+			if ac != p.expected {
+				t.Errorf("Should be %#v, got %#v", p.expected, ac)
+			}
+			ac = p.document.GetWordBeforeCursorUntilSeparatorIgnoreNextToCursor("")
+			if ac != p.expected {
+				t.Errorf("Should be %#v, got %#v", p.expected, ac)
+			}
+		} else {
+			ac := p.document.GetWordBeforeCursorUntilSeparatorIgnoreNextToCursor(p.sep)
+			if ac != p.expected {
+				t.Errorf("Should be %#v, got %#v", p.expected, ac)
+			}
 		}
 	}
 }
@@ -247,6 +310,7 @@ func TestDocument_FindStartOfPreviousWord(t *testing.T) {
 	pattern := []struct {
 		document *Document
 		expected int
+		sep      string
 	}{
 		{
 			document: &Document{
@@ -257,10 +321,26 @@ func TestDocument_FindStartOfPreviousWord(t *testing.T) {
 		},
 		{
 			document: &Document{
+				Text:           "apply -f ./file/foo.json",
+				cursorPosition: len("apply -f ./file/foo.json"),
+			},
+			expected: len("apply -f ./file/"),
+			sep:      " /",
+		},
+		{
+			document: &Document{
 				Text:           "apple ",
 				cursorPosition: len("apple "),
 			},
 			expected: len("apple "),
+		},
+		{
+			document: &Document{
+				Text:           "apply -f ./file/foo.json",
+				cursorPosition: len("apply -f ./"),
+			},
+			expected: len("apply -f ./"),
+			sep:      " /",
 		},
 		{
 			document: &Document{
@@ -279,9 +359,20 @@ func TestDocument_FindStartOfPreviousWord(t *testing.T) {
 	}
 
 	for _, p := range pattern {
-		ac := p.document.FindStartOfPreviousWord()
-		if ac != p.expected {
-			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+		if p.sep == "" {
+			ac := p.document.FindStartOfPreviousWord()
+			if ac != p.expected {
+				t.Errorf("Should be %#v, got %#v", p.expected, ac)
+			}
+			ac = p.document.FindStartOfPreviousWordUntilSeparator("")
+			if ac != p.expected {
+				t.Errorf("Should be %#v, got %#v", p.expected, ac)
+			}
+		} else {
+			ac := p.document.FindStartOfPreviousWordUntilSeparator(p.sep)
+			if ac != p.expected {
+				t.Errorf("Should be %#v, got %#v", p.expected, ac)
+			}
 		}
 	}
 }
@@ -290,6 +381,7 @@ func TestDocument_FindStartOfPreviousWordWithSpace(t *testing.T) {
 	pattern := []struct {
 		document *Document
 		expected int
+		sep      string
 	}{
 		{
 			document: &Document{
@@ -300,10 +392,26 @@ func TestDocument_FindStartOfPreviousWordWithSpace(t *testing.T) {
 		},
 		{
 			document: &Document{
+				Text:           "apply -f /file/foo/",
+				cursorPosition: len("apply -f /file/foo/"),
+			},
+			expected: len("apply -f /file/"),
+			sep:      " /",
+		},
+		{
+			document: &Document{
 				Text:           "apple ",
 				cursorPosition: len("apple "),
 			},
 			expected: len(""),
+		},
+		{
+			document: &Document{
+				Text:           "file/",
+				cursorPosition: len("file/"),
+			},
+			expected: len(""),
+			sep:      " /",
 		},
 		{
 			document: &Document{
@@ -322,9 +430,20 @@ func TestDocument_FindStartOfPreviousWordWithSpace(t *testing.T) {
 	}
 
 	for _, p := range pattern {
-		ac := p.document.FindStartOfPreviousWordWithSpace()
-		if ac != p.expected {
-			t.Errorf("Should be %#v, got %#v", p.expected, ac)
+		if p.sep == "" {
+			ac := p.document.FindStartOfPreviousWordWithSpace()
+			if ac != p.expected {
+				t.Errorf("Should be %#v, got %#v", p.expected, ac)
+			}
+			ac = p.document.FindStartOfPreviousWordUntilSeparatorIgnoreNextToCursor("")
+			if ac != p.expected {
+				t.Errorf("Should be %#v, got %#v", p.expected, ac)
+			}
+		} else {
+			ac := p.document.FindStartOfPreviousWordUntilSeparatorIgnoreNextToCursor(p.sep)
+			if ac != p.expected {
+				t.Errorf("Should be %#v, got %#v", p.expected, ac)
+			}
 		}
 	}
 }
@@ -333,6 +452,7 @@ func TestDocument_GetWordAfterCursor(t *testing.T) {
 	pattern := []struct {
 		document *Document
 		expected string
+		sep      string
 	}{
 		{
 			document: &Document{
@@ -340,6 +460,14 @@ func TestDocument_GetWordAfterCursor(t *testing.T) {
 				cursorPosition: len("apple bana"),
 			},
 			expected: "",
+		},
+		{
+			document: &Document{
+				Text:           "apply -f ./file/foo.json",
+				cursorPosition: len("apply -f ./fi"),
+			},
+			expected: "le",
+			sep:      " /",
 		},
 		{
 			document: &Document{
@@ -354,6 +482,14 @@ func TestDocument_GetWordAfterCursor(t *testing.T) {
 				cursorPosition: len("apple"),
 			},
 			expected: "",
+		},
+		{
+			document: &Document{
+				Text:           "apply -f ./file/foo.json",
+				cursorPosition: len("apply -f ."),
+			},
+			expected: "",
+			sep:      " /",
 		},
 		{
 			document: &Document{
@@ -379,9 +515,20 @@ func TestDocument_GetWordAfterCursor(t *testing.T) {
 	}
 
 	for k, p := range pattern {
-		ac := p.document.GetWordAfterCursor()
-		if ac != p.expected {
-			t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+		if p.sep == "" {
+			ac := p.document.GetWordAfterCursor()
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+			}
+			ac = p.document.GetWordAfterCursorUntilSeparator("")
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+			}
+		} else {
+			ac := p.document.GetWordAfterCursorUntilSeparator(p.sep)
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+			}
 		}
 	}
 }
@@ -390,6 +537,7 @@ func TestDocument_GetWordAfterCursorWithSpace(t *testing.T) {
 	pattern := []struct {
 		document *Document
 		expected string
+		sep      string
 	}{
 		{
 			document: &Document{
@@ -407,10 +555,34 @@ func TestDocument_GetWordAfterCursorWithSpace(t *testing.T) {
 		},
 		{
 			document: &Document{
+				Text:           "/path/to",
+				cursorPosition: len("/path/"),
+			},
+			expected: "to",
+			sep:      " /",
+		},
+		{
+			document: &Document{
+				Text:           "/path/to/file",
+				cursorPosition: len("/path/"),
+			},
+			expected: "to",
+			sep:      " /",
+		},
+		{
+			document: &Document{
 				Text:           "apple bana",
 				cursorPosition: len("apple"),
 			},
 			expected: " bana",
+		},
+		{
+			document: &Document{
+				Text:           "path/to",
+				cursorPosition: len("path"),
+			},
+			expected: "/to",
+			sep:      " /",
 		},
 		{
 			document: &Document{
@@ -436,9 +608,20 @@ func TestDocument_GetWordAfterCursorWithSpace(t *testing.T) {
 	}
 
 	for k, p := range pattern {
-		ac := p.document.GetWordAfterCursorWithSpace()
-		if ac != p.expected {
-			t.Errorf("[%d]Should be %#v, got %#v", k, p.expected, ac)
+		if p.sep == "" {
+			ac := p.document.GetWordAfterCursorWithSpace()
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+			}
+			ac = p.document.GetWordAfterCursorUntilSeparatorIgnoreNextToCursor("")
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+			}
+		} else {
+			ac := p.document.GetWordAfterCursorUntilSeparatorIgnoreNextToCursor(p.sep)
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+			}
 		}
 	}
 }
@@ -447,6 +630,7 @@ func TestDocument_FindEndOfCurrentWord(t *testing.T) {
 	pattern := []struct {
 		document *Document
 		expected int
+		sep      string
 	}{
 		{
 			document: &Document{
@@ -464,10 +648,26 @@ func TestDocument_FindEndOfCurrentWord(t *testing.T) {
 		},
 		{
 			document: &Document{
+				Text:           "apply -f ./file/foo.json",
+				cursorPosition: len("apply -f ./"),
+			},
+			expected: len("file"),
+			sep:      " /",
+		},
+		{
+			document: &Document{
 				Text:           "apple bana",
 				cursorPosition: len("apple"),
 			},
 			expected: len(""),
+		},
+		{
+			document: &Document{
+				Text:           "apply -f ./file/foo.json",
+				cursorPosition: len("apply -f ."),
+			},
+			expected: len(""),
+			sep:      " /",
 		},
 		{
 			document: &Document{
@@ -502,9 +702,20 @@ func TestDocument_FindEndOfCurrentWord(t *testing.T) {
 	}
 
 	for k, p := range pattern {
-		ac := p.document.FindEndOfCurrentWord()
-		if ac != p.expected {
-			t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+		if p.sep == "" {
+			ac := p.document.FindEndOfCurrentWord()
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+			}
+			ac = p.document.FindEndOfCurrentWordUntilSeparator("")
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+			}
+		} else {
+			ac := p.document.FindEndOfCurrentWordUntilSeparator(p.sep)
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+			}
 		}
 	}
 }
@@ -513,6 +724,7 @@ func TestDocument_FindEndOfCurrentWordWithSpace(t *testing.T) {
 	pattern := []struct {
 		document *Document
 		expected int
+		sep      string
 	}{
 		{
 			document: &Document{
@@ -530,10 +742,26 @@ func TestDocument_FindEndOfCurrentWordWithSpace(t *testing.T) {
 		},
 		{
 			document: &Document{
+				Text:           "apply -f /file/foo.json",
+				cursorPosition: len("apply -f /"),
+			},
+			expected: len("file"),
+			sep:      " /",
+		},
+		{
+			document: &Document{
 				Text:           "apple bana",
 				cursorPosition: len("apple"),
 			},
 			expected: len(" bana"),
+		},
+		{
+			document: &Document{
+				Text:           "apply -f /path/to",
+				cursorPosition: len("apply -f /path"),
+			},
+			expected: len("/to"),
+			sep:      " /",
 		},
 		{
 			document: &Document{
@@ -566,9 +794,20 @@ func TestDocument_FindEndOfCurrentWordWithSpace(t *testing.T) {
 	}
 
 	for k, p := range pattern {
-		ac := p.document.FindEndOfCurrentWordWithSpace()
-		if ac != p.expected {
-			t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+		if p.sep == "" {
+			ac := p.document.FindEndOfCurrentWordWithSpace()
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+			}
+			ac = p.document.FindEndOfCurrentWordUntilSeparatorIgnoreNextToCursor("")
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+			}
+		} else {
+			ac := p.document.FindEndOfCurrentWordUntilSeparatorIgnoreNextToCursor(p.sep)
+			if ac != p.expected {
+				t.Errorf("[%d] Should be %#v, got %#v", k, p.expected, ac)
+			}
 		}
 	}
 }

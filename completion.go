@@ -35,6 +35,7 @@ type CompletionManager struct {
 	completer Completer
 
 	verticalScroll int
+	wordSeparator  string
 }
 
 // GetSelectedSuggestion returns the selected item.
