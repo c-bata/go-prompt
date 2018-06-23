@@ -92,35 +92,48 @@ func (d *Document) GetWordAfterCursorWithSpace() string {
 	return x[:d.FindEndOfCurrentWordWithSpace()]
 }
 
-// FindStartOfPreviousWord returns an index relative to the cursor position
-// pointing to the start of the previous word. Return `None` if nothing was found.
-func (d *Document) FindStartOfPreviousWord() int {
-	// Reverse the text before the cursor, in order to do an efficient backwards search.
+// GetWordBeforeCursorUntilSeparator returns the text before the cursor until next separator.
+func (d *Document) GetWordBeforeCursorUntilSeparator(sep string) string {
 	x := d.TextBeforeCursor()
-	if i := strings.LastIndexByte(x, ' '); i != -1 {
+	return x[d.FindStartOfPreviousWordUntilSeparator(sep):]
+}
+
+// GetWordAfterCursorUntilSeparator returns the text after the cursor until next separator.
+func (d *Document) GetWordAfterCursorUntilSeparator(sep string) string {
+	x := d.TextAfterCursor()
+	return x[:d.FindEndOfCurrentWordUntilSeparator(sep)]
+}
+
+// GetWordBeforeCursorUntilSeparatorIgnoreNextToCursor returns the word before the cursor.
+// Unlike GetWordBeforeCursor, it returns string containing space
+func (d *Document) GetWordBeforeCursorUntilSeparatorIgnoreNextToCursor(sep string) string {
+	x := d.TextBeforeCursor()
+	return x[d.FindStartOfPreviousWordUntilSeparatorIgnoreNextToCursor(sep):]
+}
+
+// GetWordAfterCursorUntilSeparatorIgnoreNextToCursor returns the word after the cursor.
+// Unlike GetWordAfterCursor, it returns string containing space
+func (d *Document) GetWordAfterCursorUntilSeparatorIgnoreNextToCursor(sep string) string {
+	x := d.TextAfterCursor()
+	return x[:d.FindEndOfCurrentWordUntilSeparatorIgnoreNextToCursor(sep)]
+}
+
+// FindStartOfPreviousWord returns an index relative to the cursor position
+// pointing to the start of the previous word. Return 0 if nothing was found.
+func (d *Document) FindStartOfPreviousWord() int {
+	x := d.TextBeforeCursor()
+	i := strings.LastIndexByte(x, ' ')
+	if i != -1 {
 		return i + 1
 	} else {
 		return 0
 	}
 }
 
-// FindEndOfCurrentWord returns an index relative to the cursor position
-// pointing to the end of the current word. Return `None` if nothing was found.
-func (d *Document) FindEndOfCurrentWord() int {
-	x := d.TextAfterCursor()
-	if i := strings.IndexByte(x, ' '); i != -1 {
-		return i
-	} else {
-		return len([]rune(x))
-	}
-}
-
 // FindStartOfPreviousWordWithSpace is almost the same as FindStartOfPreviousWord.
 // The only difference is to ignore contiguous spaces.
 func (d *Document) FindStartOfPreviousWordWithSpace() int {
-	// Reverse the text before the cursor, in order to do an efficient backwards search.
 	x := d.TextBeforeCursor()
-
 	end := lastIndexByteNot(x, ' ')
 	if end == -1 {
 		return 0
@@ -131,6 +144,53 @@ func (d *Document) FindStartOfPreviousWordWithSpace() int {
 		return 0
 	}
 	return start + 1
+}
+
+// FindStartOfPreviousWordUntilSeparator is almost the same as FindStartOfPreviousWord.
+// But this can specify Separator. Return 0 if nothing was found.
+func (d *Document) FindStartOfPreviousWordUntilSeparator(sep string) int {
+	if sep == "" {
+		return d.FindStartOfPreviousWord()
+	}
+
+	x := d.TextBeforeCursor()
+	i := strings.LastIndexAny(x, sep)
+	if i != -1 {
+		return i + 1
+	} else {
+		return 0
+	}
+}
+
+// FindStartOfPreviousWordUntilSeparatorIgnoreNextToCursor is almost the same as FindStartOfPreviousWordWithSpace.
+// But this can specify Separator. Return 0 if nothing was found.
+func (d *Document) FindStartOfPreviousWordUntilSeparatorIgnoreNextToCursor(sep string) int {
+	if sep == "" {
+		return d.FindStartOfPreviousWordWithSpace()
+	}
+
+	x := d.TextBeforeCursor()
+	end := lastIndexAnyNot(x, sep)
+	if end == -1 {
+		return 0
+	}
+	start := strings.LastIndexAny(x[:end], sep)
+	if start == -1 {
+		return 0
+	}
+	return start + 1
+}
+
+// FindEndOfCurrentWord returns an index relative to the cursor position.
+// pointing to the end of the current word. Return 0 if nothing was found.
+func (d *Document) FindEndOfCurrentWord() int {
+	x := d.TextAfterCursor()
+	i := strings.IndexByte(x, ' ')
+	if i != -1 {
+		return i
+	} else {
+		return len(x)
+	}
 }
 
 // FindEndOfCurrentWordWithSpace is almost the same as FindEndOfCurrentWord.
@@ -144,6 +204,44 @@ func (d *Document) FindEndOfCurrentWordWithSpace() int {
 	}
 
 	end := strings.IndexByte(x[start:], ' ')
+	if end == -1 {
+		return len(x)
+	}
+
+	return start + end
+}
+
+// FindEndOfCurrentWordUntilSeparator is almost the same as FindEndOfCurrentWord.
+// But this can specify Separator. Return 0 if nothing was found.
+func (d *Document) FindEndOfCurrentWordUntilSeparator(sep string) int {
+	if sep == "" {
+		return d.FindEndOfCurrentWord()
+	}
+
+	x := d.TextAfterCursor()
+	i := strings.IndexAny(x, sep)
+	if i != -1 {
+		return i
+	} else {
+		return len(x)
+	}
+}
+
+// FindEndOfCurrentWordUntilSeparatorIgnoreNextToCursor is almost the same as FindEndOfCurrentWordWithSpace.
+// But this can specify Separator. Return 0 if nothing was found.
+func (d *Document) FindEndOfCurrentWordUntilSeparatorIgnoreNextToCursor(sep string) int {
+	if sep == "" {
+		return d.FindEndOfCurrentWordWithSpace()
+	}
+
+	x := d.TextAfterCursor()
+
+	start := indexAnyNot(x, sep)
+	if start == -1 {
+		return len(x)
+	}
+
+	end := strings.IndexAny(x[start:], sep)
 	if end == -1 {
 		return len(x)
 	}
@@ -365,6 +463,74 @@ func lastIndexByteNot(s string, c byte) int {
 	for i := len(s) - 1; i >= 0; i-- {
 		if s[i] != c {
 			return i
+		}
+	}
+	return -1
+}
+
+type asciiSet [8]uint32
+
+func (as *asciiSet) notContains(c byte) bool {
+	return (as[c>>5] & (1 << uint(c&31))) == 0
+}
+
+func makeASCIISet(chars string) (as asciiSet, ok bool) {
+	for i := 0; i < len(chars); i++ {
+		c := chars[i]
+		if c >= utf8.RuneSelf {
+			return as, false
+		}
+		as[c>>5] |= 1 << uint(c&31)
+	}
+	return as, true
+}
+
+func indexAnyNot(s, chars string) int {
+	if len(chars) > 0 {
+		if len(s) > 8 {
+			if as, isASCII := makeASCIISet(chars); isASCII {
+				for i := 0; i < len(s); i++ {
+					if as.notContains(s[i]) {
+						return i
+					}
+				}
+				return -1
+			}
+		}
+		for i := 0; i < len(s); {
+			// I don't know why strings.IndexAny doesn't add rune count here.
+			r, size := utf8.DecodeRuneInString(s[i:])
+			i += size
+			for _, c := range chars {
+				if r != c {
+					return i
+				}
+			}
+		}
+	}
+	return -1
+}
+
+func lastIndexAnyNot(s, chars string) int {
+	if len(chars) > 0 {
+		if len(s) > 8 {
+			if as, isASCII := makeASCIISet(chars); isASCII {
+				for i := len(s) - 1; i >= 0; i-- {
+					if as.notContains(s[i]) {
+						return i
+					}
+				}
+				return -1
+			}
+		}
+		for i := len(s); i > 0; {
+			r, size := utf8.DecodeLastRuneInString(s[:i])
+			i -= size
+			for _, c := range chars {
+				if r != c {
+					return i
+				}
+			}
 		}
 	}
 	return -1

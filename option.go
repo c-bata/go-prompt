@@ -36,6 +36,14 @@ func OptionPrefix(x string) Option {
 	}
 }
 
+// OptionCompletionWordSeparator to set word separators. Enable only ' ' if empty.
+func OptionCompletionWordSeparator(x string) Option {
+	return func(p *Prompt) error {
+		p.completion.wordSeparator = x
+		return nil
+	}
+}
+
 // OptionLivePrefix to change the prefix dynamically by callback function
 func OptionLivePrefix(f func() (prefix string, useLivePrefix bool)) Option {
 	return func(p *Prompt) error {
