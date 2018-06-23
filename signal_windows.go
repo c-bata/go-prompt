@@ -4,13 +4,12 @@ package prompt
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
-func (p *Prompt) handleSignals(tx context.Context, cancel context.CancelFunc, winSizeCh chan *WinSize) {
+func handleSignals(ctx context.Context, cancel context.CancelFunc, winsizechan chan struct{}) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(
 		sigCh,
@@ -29,7 +28,7 @@ func (p *Prompt) handleSignals(tx context.Context, cancel context.CancelFunc, wi
 				cancel()
 
 			case syscall.SIGTERM: // kill -SIGTERM XXXX
-				log.Println("[SIGNAL] Catch SIGTERM")
+				cancel()
 
 			case syscall.SIGQUIT: // kill -SIGQUIT XXXX
 				cancel()

@@ -22,6 +22,7 @@ type Completer func(Document) []Suggest
 // Prompt is core struct of go-prompt.
 type Prompt struct {
 	in                ConsoleParser
+	inputProcessor    *InputProcessor
 	buf               *Buffer
 	renderer          *Render
 	executor          Executor
@@ -57,11 +58,11 @@ func (p *Prompt) Run() {
 	p.renderer.Render(p.buf, p.completion)
 
 	bufchan := make(chan []byte, 128)
-	go p.readBuffer(p.ctx, bufchan)
+	go p.inputProcessor.Run(p.ctx, bufchan)
 
 	exitCh := make(chan int)
-	winchan := make(chan *WinSize)
-	go p.handleSignals(p.ctx, p.cancel, winchan)
+	winchan := make(chan struct{})
+	go handleSignals(p.ctx, p.cancel, winchan)
 
 	for {
 		select {
@@ -87,14 +88,15 @@ func (p *Prompt) Run() {
 				ctx, cancel := context.WithCancel(context.Background())
 				p.ctx = ctx
 				p.cancel = cancel
-				go p.readBuffer(p.ctx, bufchan)
-				go p.handleSignals(p.ctx, p.cancel, winchan)
+				go p.inputProcessor.Run(p.ctx, bufchan)
+				go handleSignals(p.ctx, p.cancel, winchan)
 			} else {
 				p.completion.Update(*p.buf.Document())
 				p.renderer.Render(p.buf, p.completion)
 			}
-		case w := <-winchan:
-			p.renderer.UpdateWinSize(w)
+		case <-winchan:
+			ws := p.in.GetWinSize()
+			p.renderer.UpdateWinSize(ws)
 			p.renderer.Render(p.buf, p.completion)
 		case code := <-exitCh:
 			p.renderer.BreakLine(p.buf)
@@ -236,7 +238,7 @@ func (p *Prompt) Input() string {
 
 	p.renderer.Render(p.buf, p.completion)
 	bufchan := make(chan []byte, 128)
-	go p.readBuffer(p.ctx, bufchan)
+	go p.inputProcessor.Run(p.ctx, bufchan)
 
 	for {
 		select {
@@ -257,26 +259,13 @@ func (p *Prompt) Input() string {
 	}
 }
 
-func (p *Prompt) readBuffer(ctx context.Context, bufCh chan []byte) {
-	log.Printf("[INFO] readBuffer start")
-	for {
-		select {
-		case <-ctx.Done():
-			log.Print("[INFO] stop readBuffer")
-			return
-		default:
-			if b, err := p.in.Read(); err == nil && !(len(b) == 1 && b[0] == 0) {
-				bufCh <- b
-			}
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-}
-
 func (p *Prompt) setUp() {
 	p.in.Setup()
 	p.renderer.Setup()
 	p.renderer.UpdateWinSize(p.in.GetWinSize())
+	p.inputProcessor = &InputProcessor{
+		in: p.in,
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	p.ctx = ctx
