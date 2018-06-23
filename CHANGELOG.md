@@ -5,6 +5,9 @@
 ### What's new?
 
 * Support CJK(Chinese, Japanese and Korean) and Cyrillic characters.
+* Add OptionCompletionWordSeparator(x string) to customize insertion points for completions.
+    * To support this, text query functions by arbitrary word separator are added in Document (please see [here](https://github.com/c-bata/go-prompt/pull/79) for more details).
+* Add FilePathCompleter to complete file path on your system.
 * Add option to customize ascii code key bindings.
 * Add GetWordAfterCursor method in Document.
 * Add SetDisplayAttributes in ConsoleWriter for flexible customizing display attributes.
