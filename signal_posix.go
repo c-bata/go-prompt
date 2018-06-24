@@ -10,7 +10,17 @@ import (
 	"syscall"
 )
 
-func handleSignals(ctx context.Context, cancel context.CancelFunc, sigwinchan chan struct{}) {
+type SignalHandler struct {
+	SigWinch chan struct{}
+}
+
+func NewSignalHandler() *SignalHandler {
+	return &SignalHandler{
+		SigWinch: make(chan struct{}),
+	}
+}
+
+func (sh *SignalHandler) Run(ctx context.Context, cancel context.CancelFunc) {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(
 		sigchan,
@@ -41,7 +51,7 @@ func handleSignals(ctx context.Context, cancel context.CancelFunc, sigwinchan ch
 
 			case syscall.SIGWINCH:
 				log.Println("[SIGNAL] Catch SIGWINCH")
-				sigwinchan <- struct{}{}
+				sh.SigWinch <- struct{}{}
 			}
 		}
 	}

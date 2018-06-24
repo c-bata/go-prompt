@@ -15,7 +15,7 @@ type ConsoleParser interface {
 	// GetKey returns Key correspond to input byte codes.
 	GetKey(b []byte) Key
 	// GetWinSize returns WinSize object to represent width and height of terminal.
-	GetWinSize() *WinSize
+	GetWinSize() WinSize // FIXME: We need to separate this to support the case that uses go-prompt via ssh.
 	// Read returns byte array.
 	Read() ([]byte, error)
 }

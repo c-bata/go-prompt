@@ -101,7 +101,7 @@ type ioctlWinsize struct {
 }
 
 // GetWinSize returns WinSize object to represent width and height of terminal.
-func (t *PosixParser) GetWinSize() *WinSize {
+func (t *PosixParser) GetWinSize() WinSize {
 	ws := &ioctlWinsize{}
 	retCode, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
@@ -112,7 +112,7 @@ func (t *PosixParser) GetWinSize() *WinSize {
 	if int(retCode) == -1 {
 		panic(errno)
 	}
-	return &WinSize{
+	return WinSize{
 		Row: ws.Row,
 		Col: ws.Col,
 	}

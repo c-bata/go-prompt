@@ -9,10 +9,18 @@ import (
 	"syscall"
 )
 
-func handleSignals(ctx context.Context, cancel context.CancelFunc, winsizechan chan struct{}) {
-	sigCh := make(chan os.Signal, 1)
+type SignalHandler struct {
+	SigWinch chan struct{}
+}
+
+func NewSignalHandler() *SignalHandler {
+	return &SignalHandler{}
+}
+
+func (sh *SignalHandler) Run(ctx context.Context, cancel context.CancelFunc) {
+	sigchan := make(chan os.Signal, 1)
 	signal.Notify(
-		sigCh,
+		sigchan,
 		syscall.SIGINT,
 		syscall.SIGTERM,
 		syscall.SIGQUIT,
@@ -22,7 +30,7 @@ func handleSignals(ctx context.Context, cancel context.CancelFunc, winsizechan c
 		select {
 		case <-ctx.Done():
 			return
-		case s := <-sigCh:
+		case s := <-sigchan:
 			switch s {
 			case syscall.SIGINT: // kill -SIGINT XXXX or Ctrl+c
 				cancel()
