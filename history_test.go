@@ -60,3 +60,29 @@ func TestHistoryOlder(t *testing.T) {
 		t.Errorf("Should be %#v, but got %#v", "echo 1", buf2.Text())
 	}
 }
+
+func TestHistoryGet(t *testing.T) {
+	h := NewHistory()
+	h.Add("echo 1")
+	h.Add("echo 2")
+	h.Add("echo 3")
+	expectedGet2 := []string{
+		"echo 2",
+		"echo 3",
+	}
+	returnGet := h.Get(2)
+	if !reflect.DeepEqual(expectedGet2, returnGet) {
+		t.Errorf("History.Get(2) return %s, expected %s", returnGet, expectedGet2)
+	}
+
+	expectedGet3 := []string{
+		"echo 1",
+		"echo 2",
+		"echo 3",
+	}
+	returnGet = h.Get(3)
+	if !reflect.DeepEqual(expectedGet3, returnGet) {
+		t.Errorf("History.Get(3) returned %s, expected %s", returnGet, expectedGet3)
+	}
+	
+}
