@@ -16,8 +16,10 @@ var (
 )
 
 // FilePathCompleter is a completer for your local file system.
+// Please caution that you need to set OptionCompletionWordSeparator(completer.FilePathCompletionSeparator)
+// when you use this completer.
 type FilePathCompleter struct {
-	Filter        func(fi os.FileInfo, filename string) bool
+	Filter        func(fi os.FileInfo) bool
 	IgnoreCase    bool
 	fileListCache map[string][]prompt.Suggest
 }

@@ -16,7 +16,7 @@ func executor(in string) {
 func main() {
 	c := completer.FilePathCompleter{
 		IgnoreCase: true,
-		Filter: func(fi os.FileInfo, filename string) bool {
+		Filter: func(fi os.FileInfo) bool {
 			return fi.IsDir() || strings.HasSuffix(fi.Name(), ".go")
 		},
 	}
