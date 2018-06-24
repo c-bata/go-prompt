@@ -53,9 +53,15 @@ func (p *Prompt) Run() {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
+	ctx := context.Background()
+
 	// Application context. If canceled, all worker goroutine stopped.
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
+	sh := NewSignalHandler()
+	go sh.Run(ctx, cancel)
 
 	// Run renderer process
 	wg.Add(1)
@@ -64,12 +70,12 @@ func (p *Prompt) Run() {
 		wg.Done()
 	}()
 
-	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
-	sh := NewSignalHandler()
-	go sh.Run(ctx, cancel)
-
 	// Run InputProcessor goroutine to read user input from Keyboard.
 	inputCtx, inputCancel := context.WithCancel(ctx)
+	defer func() {
+		inputCancel()
+	}()
+
 	ip := NewInputProcessor(p.in)
 
 	wg.Add(1)
@@ -246,8 +252,15 @@ func (p *Prompt) Input() string {
 
 	var wg sync.WaitGroup
 	defer wg.Wait()
-	ctx, cancel := context.WithCancel(context.Background())
+
+	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
+	sh := NewSignalHandler()
+	go sh.Run(ctx, cancel)
 
 	// Run renderer goroutine to render the buffer, suggests.
 	wg.Add(1)
@@ -255,10 +268,6 @@ func (p *Prompt) Input() string {
 		p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize())
 		wg.Done()
 	}()
-
-	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
-	sh := NewSignalHandler()
-	go sh.Run(ctx, cancel)
 
 	// Run InputProcessor goroutine to read user input from Keyboard.
 	ip := NewInputProcessor(p.in)
