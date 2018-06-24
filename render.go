@@ -2,11 +2,8 @@ package prompt
 
 import (
 	"context"
-	"runtime"
-
 	"log"
-
-	"sync"
+	"runtime"
 
 	"github.com/mattn/go-runewidth"
 )
@@ -46,9 +43,7 @@ type Render struct {
 	Render  chan RenderRequest
 }
 
-func (r *Render) Run(ctx context.Context, buf *Buffer, completion *CompletionManager, ws WinSize, wg *sync.WaitGroup) {
-	wg.Add(1)
-	defer wg.Done()
+func (r *Render) Run(ctx context.Context, buf *Buffer, completion *CompletionManager, ws WinSize) {
 	r.Setup()
 	defer r.TearDown()
 	r.col = ws.Col
