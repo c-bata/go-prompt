@@ -1,15 +1,11 @@
 package prompt
 
-import (
-	"strings"
-)
+import "strings"
 
 // Filter is the type to filter the prompt.Suggestion array.
-// Deprecated, move to github.com/c-bata/go-prompt/filter package.
 type Filter func([]Suggest, string, bool) []Suggest
 
 // FilterHasPrefix checks whether the string completions.Text begins with sub.
-// Deprecated, move to github.com/c-bata/go-prompt/filter package.
 func FilterHasPrefix(completions []Suggest, sub string, ignoreCase bool) []Suggest {
 	if sub == "" {
 		return completions
@@ -32,7 +28,6 @@ func FilterHasPrefix(completions []Suggest, sub string, ignoreCase bool) []Sugge
 }
 
 // FilterHasSuffix checks whether the completion.Text ends with sub.
-// Deprecated, move to github.com/c-bata/go-prompt/filter package.
 func FilterHasSuffix(completions []Suggest, sub string, ignoreCase bool) []Suggest {
 	if sub == "" {
 		return completions
@@ -55,7 +50,6 @@ func FilterHasSuffix(completions []Suggest, sub string, ignoreCase bool) []Sugge
 }
 
 // FilterContains checks whether the completion.Text contains sub.
-// Deprecated, move to github.com/c-bata/go-prompt/filter package.
 func FilterContains(completions []Suggest, sub string, ignoreCase bool) []Suggest {
 	if sub == "" {
 		return completions

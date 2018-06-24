@@ -20,7 +20,6 @@
 
 * SetColor method in ConsoleWriter is deprecated. Please use SetDisplayAttributes instead.
 * prompt.Choose shortcut function is deprecated.
-* FilterHasPrefix, FilterHasSuffix and FilterContains is deprecated. Move to "github.com/c-bata/go-prompt/filter" package.
 
 ## v0.2.1 (2018/02/14)
 
