@@ -54,6 +54,9 @@ func (h *History) Newer(buf *Buffer) (new *Buffer, changed bool) {
 
 // Get x lines back in the history as a string array
 func (h *History) Get(lines int) []string {
+    if lines > len(h.histories) {
+        lines = len(h.histories)
+    }
     return h.histories[h.selected - lines:h.selected]
 }
 

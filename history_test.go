@@ -84,5 +84,10 @@ func TestHistoryGet(t *testing.T) {
 	if !reflect.DeepEqual(expectedGet3, returnGet) {
 		t.Errorf("History.Get(3) returned %s, expected %s", returnGet, expectedGet3)
 	}
+
+	returnGet = h.Get(5)
+	if !reflect.DeepEqual(expectedGet3, returnGet) {
+		t.Errorf("History.Get(5) returned %s, expected %s", returnGet, expectedGet3)
+	}
 	
 }
