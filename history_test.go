@@ -85,6 +85,8 @@ func TestHistoryGet(t *testing.T) {
 		t.Errorf("History.Get(3) returned %s, expected %s", returnGet, expectedGet3)
 	}
 
+	// make sure requesting more lines than
+	// there are history entries does not fail
 	returnGet = h.Get(5)
 	if !reflect.DeepEqual(expectedGet3, returnGet) {
 		t.Errorf("History.Get(5) returned %s, expected %s", returnGet, expectedGet3)
