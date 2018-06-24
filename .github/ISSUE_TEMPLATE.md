@@ -1,20 +1,22 @@
 # Suggestions
 
-Please write your suggestion here and removed "Bug reports section".
+*Please write your suggestion here and remove "Bug reports" section.*
 
 
 ---
 
 # Bug reports
 
+*Please file a bug report here and remove "Suggestions" section.*
+
 ## Expected Behavior
 
-Please describe the behavior you are expecting
+*Please describe the behavior you are expecting*
 
 ## Current Behavior and Steps to Reproduce
 
-What is the current behavior? Please provide detailed steps for reproducing the issue.
-A picture or gif animation tells a thousand words
+*What is the current behavior? Please provide detailed steps for reproducing the issue.*
+*A picture or gif animation tells a thousand words*
 
 ## Context
 
