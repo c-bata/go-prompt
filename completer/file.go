@@ -79,7 +79,7 @@ func (c *FilePathCompleter) Complete(d prompt.Document) []prompt.Suggest {
 
 	suggests := make([]prompt.Suggest, 0, len(files))
 	for _, f := range files {
-		if c.Filter != nil && !c.Filter(f, f.Name()) {
+		if c.Filter != nil && !c.Filter(f) {
 			continue
 		}
 		suggests = append(suggests, prompt.Suggest{Text: f.Name()})
