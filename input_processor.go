@@ -3,23 +3,37 @@ package prompt
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 )
 
 type InputProcessor struct {
-	in ConsoleParser
+	UserInput chan []byte
+	in        ConsoleParser
 }
 
-func (ip *InputProcessor) Run(ctx context.Context, bufCh chan []byte) {
-	log.Printf("[INFO] Start running input processor")
+func NewInputProcessor(in ConsoleParser) *InputProcessor {
+	return &InputProcessor{
+		in:        in,
+		UserInput: make(chan []byte, 128),
+	}
+}
+
+func (ip *InputProcessor) Run(ctx context.Context, wg *sync.WaitGroup) {
+	log.Printf("[INFO] InputProcessor: Start running input processor")
+	wg.Add(1)
+	defer wg.Done()
+	defer log.Print("[INFO] InputProcessor: Stop input processor")
+
+	ip.in.Setup()
+	defer ip.in.TearDown()
 	for {
 		select {
 		case <-ctx.Done():
-			log.Print("[INFO] Stop input processor")
 			return
 		default:
 			if b, err := ip.in.Read(); err == nil && !(len(b) == 1 && b[0] == 0) {
-				bufCh <- b
+				ip.UserInput <- b
 			}
 		}
 		time.Sleep(10 * time.Millisecond)

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -22,7 +23,6 @@ type Completer func(Document) []Suggest
 // Prompt is core struct of go-prompt.
 type Prompt struct {
 	in                ConsoleParser
-	inputProcessor    *InputProcessor
 	buf               *Buffer
 	renderer          *Render
 	executor          Executor
@@ -31,8 +31,6 @@ type Prompt struct {
 	keyBindings       []KeyBind
 	ASCIICodeBindings []ASCIICodeBind
 	keyBindMode       KeyBindMode
-	ctx               context.Context
-	cancel            context.CancelFunc
 }
 
 // Exec is the struct contains user input context.
@@ -51,59 +49,57 @@ func (p *Prompt) Run() {
 		log.SetOutput(f)
 		log.Println("[INFO] Logging is enabled.")
 	}
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
 
-	p.setUp()
-	defer p.tearDown()
+	// Application context. If canceled, all worker goroutine stopped.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	p.renderer.Render(p.buf, p.completion)
+	// Run renderer process
+	go p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize(), wg)
 
-	bufchan := make(chan []byte, 128)
-	go p.inputProcessor.Run(p.ctx, bufchan)
+	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
+	sh := NewSignalHandler()
+	go sh.Run(ctx, cancel)
 
-	exitCh := make(chan int)
-	winchan := make(chan struct{})
-	go handleSignals(p.ctx, p.cancel, winchan)
+	// Run InputProcessor goroutine to read user input from Keyboard.
+	inputCtx, inputCancel := context.WithCancel(ctx)
+	ip := NewInputProcessor(p.in)
+	go ip.Run(inputCtx, wg)
 
 	for {
 		select {
-		case b := <-bufchan:
+		case b := <-ip.UserInput:
 			if shouldExit, e := p.feed(b); shouldExit {
-				p.renderer.BreakLine(p.buf)
-				p.cancel()
 				return
 			} else if e != nil {
-				// Stop goroutine to run readBuffer function
-				p.cancel()
+				// Stop goroutine to run readBuffer function to unset raw mode and non-blocking mode.
+				// Because returned EAGAIN when still set non-blocking mode.
+				inputCancel()
 
-				// Unset raw mode
-				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
-				p.in.TearDown()
 				p.executor(e.input)
 
 				p.completion.Update(*p.buf.Document())
-				p.renderer.Render(p.buf, p.completion)
+				p.renderer.Render <- RenderRequest{
+					buffer:     p.buf,
+					completion: p.completion,
+				}
 
 				// Set raw mode
-				p.in.Setup()
-				ctx, cancel := context.WithCancel(context.Background())
-				p.ctx = ctx
-				p.cancel = cancel
-				go p.inputProcessor.Run(p.ctx, bufchan)
-				go handleSignals(p.ctx, p.cancel, winchan)
+				inputCtx, inputCancel = context.WithCancel(ctx)
+				go ip.Run(inputCtx, wg)
 			} else {
 				p.completion.Update(*p.buf.Document())
-				p.renderer.Render(p.buf, p.completion)
+				p.renderer.Render <- RenderRequest{
+					buffer:     p.buf,
+					completion: p.completion,
+				}
 			}
-		case <-winchan:
-			ws := p.in.GetWinSize()
-			p.renderer.UpdateWinSize(ws)
-			p.renderer.Render(p.buf, p.completion)
-		case code := <-exitCh:
-			p.renderer.BreakLine(p.buf)
-			p.tearDown()
-			os.Exit(code)
-		default:
-			time.Sleep(10 * time.Millisecond)
+		case <-sh.SigWinch:
+			p.renderer.WinSize <- p.in.GetWinSize()
+		case <-ctx.Done():
+			return
 		}
 	}
 }
@@ -117,7 +113,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 
 	switch key {
 	case Enter, ControlJ, ControlM:
-		p.renderer.BreakLine(p.buf)
+		p.renderer.breakLine(p.buf)
 
 		exec = &Exec{input: p.buf.Text()}
 		log.Printf("[History] %s", p.buf.Text())
@@ -126,7 +122,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 			p.history.Add(exec.input)
 		}
 	case ControlC:
-		p.renderer.BreakLine(p.buf)
+		p.renderer.breakLine(p.buf)
 		p.buf = NewBuffer()
 		p.history.Clear()
 	case Up, ControlP:
@@ -233,47 +229,40 @@ func (p *Prompt) Input() string {
 		log.Println("[INFO] Logging is enabled.")
 	}
 
-	p.setUp()
-	defer p.tearDown()
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	p.renderer.Render(p.buf, p.completion)
-	bufchan := make(chan []byte, 128)
-	go p.inputProcessor.Run(p.ctx, bufchan)
+	// Run renderer goroutine to render the buffer, suggests.
+	go p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize(), wg)
+
+	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
+	sh := NewSignalHandler()
+	go sh.Run(ctx, cancel)
+
+	// Run InputProcessor goroutine to read user input from Keyboard.
+	ip := NewInputProcessor(p.in)
+	go ip.Run(ctx, wg)
 
 	for {
 		select {
-		case b := <-bufchan:
+		case b := <-ip.UserInput:
 			if shouldExit, e := p.feed(b); shouldExit {
-				p.renderer.BreakLine(p.buf)
-				p.cancel()
 				return ""
 			} else if e != nil {
 				return e.input
 			} else {
 				p.completion.Update(*p.buf.Document())
-				p.renderer.Render(p.buf, p.completion)
+				p.renderer.Render <- RenderRequest{
+					buffer:     p.buf,
+					completion: p.completion,
+				}
 			}
+		case <-sh.SigWinch:
+			p.renderer.WinSize <- p.in.GetWinSize()
 		default:
 			time.Sleep(10 * time.Millisecond)
 		}
 	}
-}
-
-func (p *Prompt) setUp() {
-	p.in.Setup()
-	p.renderer.Setup()
-	p.renderer.UpdateWinSize(p.in.GetWinSize())
-	p.inputProcessor = &InputProcessor{
-		in: p.in,
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	p.ctx = ctx
-	p.cancel = cancel
-}
-
-func (p *Prompt) tearDown() {
-	p.cancel()
-	p.in.TearDown()
-	p.renderer.TearDown()
 }

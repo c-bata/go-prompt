@@ -1,12 +1,17 @@
 package prompt
 
 import (
+	"context"
 	"runtime"
+
+	"log"
+
+	"sync"
 
 	"github.com/mattn/go-runewidth"
 )
 
-// Render to render prompt information from state of Buffer.
+// render to render prompt information from state of Buffer.
 type Render struct {
 	out                ConsoleWriter
 	prefix             string
@@ -34,6 +39,52 @@ type Render struct {
 	selectedDescriptionBGColor   Color
 	scrollbarThumbColor          Color
 	scrollbarBGColor             Color
+
+	// Channels
+	Clear   chan struct{}
+	WinSize chan WinSize
+	Render  chan RenderRequest
+}
+
+func (r *Render) Run(ctx context.Context, buf *Buffer, completion *CompletionManager, ws WinSize, wg *sync.WaitGroup) {
+	wg.Add(1)
+	defer wg.Done()
+	r.Setup()
+	defer r.TearDown()
+	r.col = ws.Col
+	r.row = ws.Row
+	r.render(buf, completion)
+	log.Printf("initial render %#v", buf)
+
+	var previousRequest = RenderRequest{
+		buffer:     buf,
+		completion: completion,
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			r.breakLine(previousRequest.buffer)
+			return
+		case <-r.Clear:
+			log.Print("renderer: catch erase request")
+			r.out.EraseScreen()
+			r.out.CursorGoTo(0, 0)
+			r.out.Flush()
+		case req := <-r.Render:
+			r.render(req.buffer, req.completion)
+			previousRequest = req
+		case ws := <-r.WinSize:
+			r.col = ws.Col
+			r.row = ws.Row
+			r.render(previousRequest.buffer, previousRequest.completion)
+		}
+	}
+}
+
+type RenderRequest struct {
+	//prefix     string
+	buffer     *Buffer
+	completion *CompletionManager
 }
 
 // Setup to initialize console output.
@@ -42,6 +93,9 @@ func (r *Render) Setup() {
 		r.out.SetTitle(r.title)
 		r.out.Flush()
 	}
+	r.Clear = make(chan struct{})
+	r.WinSize = make(chan WinSize)
+	r.Render = make(chan RenderRequest)
 }
 
 // getCurrentPrefix to get current prefix.
@@ -64,6 +118,10 @@ func (r *Render) TearDown() {
 	r.out.ClearTitle()
 	r.out.EraseDown()
 	r.out.Flush()
+
+	close(r.Clear)
+	close(r.WinSize)
+	close(r.Render)
 }
 
 func (r *Render) prepareArea(lines int) {
@@ -73,13 +131,6 @@ func (r *Render) prepareArea(lines int) {
 	for i := 0; i < lines; i++ {
 		r.out.ScrollUp()
 	}
-	return
-}
-
-// UpdateWinSize called when window size is changed.
-func (r *Render) UpdateWinSize(ws *WinSize) {
-	r.row = ws.Row
-	r.col = ws.Col
 	return
 }
 
@@ -168,8 +219,8 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	return
 }
 
-// Render renders to the console.
-func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
+// render renders to the console.
+func (r *Render) render(buffer *Buffer, completion *CompletionManager) {
 	// In situations where a pseudo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col == 0 {
@@ -224,9 +275,9 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	r.previousCursor = cursor
 }
 
-// BreakLine to break line.
-func (r *Render) BreakLine(buffer *Buffer) {
-	// Erasing and Render
+// breakLine to break line.
+func (r *Render) breakLine(buffer *Buffer) {
+	// Erasing and render
 	cursor := runewidth.StringWidth(buffer.Document().TextBeforeCursor()) + runewidth.StringWidth(r.getCurrentPrefix())
 	r.clear(cursor)
 	r.renderPrefix()

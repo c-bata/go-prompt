@@ -1,10 +1,8 @@
 package prompt
 
-func dummyExecutor(in string) { return }
-
 // Input get the input data from the user and return it.
 func Input(prefix string, completer Completer, opts ...Option) string {
-	pt := New(dummyExecutor, completer)
+	pt := New(nil, completer)
 	pt.renderer.prefixTextColor = DefaultColor
 	pt.renderer.prefix = prefix
 
@@ -20,7 +18,7 @@ func Input(prefix string, completer Completer, opts ...Option) string {
 // Deprecated: Maybe anyone want to use this.
 func Choose(prefix string, choices []string, opts ...Option) string {
 	completer := newChoiceCompleter(choices, FilterHasPrefix)
-	pt := New(dummyExecutor, completer)
+	pt := New(nil, completer)
 	pt.renderer.prefixTextColor = DefaultColor
 	pt.renderer.prefix = prefix
 
