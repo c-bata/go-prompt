@@ -108,6 +108,12 @@ func (c *CompletionManager) update() {
 	}
 }
 
+func deleteBreakLineCharacters(s string) string {
+	s = strings.Replace(s, "\n", "", -1)
+	s = strings.Replace(s, "\r", "", -1)
+	return s
+}
+
 func formatTexts(o []string, max int, prefix, suffix string) (new []string, width int) {
 	l := len(o)
 	n := make([]string, l)
@@ -117,6 +123,8 @@ func formatTexts(o []string, max int, prefix, suffix string) (new []string, widt
 	lenShorten := runewidth.StringWidth(shortenSuffix)
 	min := lenPrefix + lenSuffix + lenShorten
 	for i := 0; i < l; i++ {
+		o[i] = deleteBreakLineCharacters(o[i])
+
 		w := runewidth.StringWidth(o[i])
 		if width < w {
 			width = w
