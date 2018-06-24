@@ -6,6 +6,8 @@ import (
 
 	"log"
 
+	"sync"
+
 	"github.com/mattn/go-runewidth"
 )
 
@@ -44,7 +46,9 @@ type Render struct {
 	Render  chan RenderRequest
 }
 
-func (r *Render) Run(ctx context.Context, buf *Buffer, completion *CompletionManager, ws WinSize) {
+func (r *Render) Run(ctx context.Context, buf *Buffer, completion *CompletionManager, ws WinSize, wg *sync.WaitGroup) {
+	wg.Add(1)
+	defer wg.Done()
 	r.Setup()
 	defer r.TearDown()
 	r.col = ws.Col

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -48,13 +49,15 @@ func (p *Prompt) Run() {
 		log.SetOutput(f)
 		log.Println("[INFO] Logging is enabled.")
 	}
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
 
 	// Application context. If canceled, all worker goroutine stopped.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Run renderer process
-	go p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize())
+	go p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize(), wg)
 
 	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
 	sh := NewSignalHandler()
@@ -62,9 +65,8 @@ func (p *Prompt) Run() {
 
 	// Run InputProcessor goroutine to read user input from Keyboard.
 	inputCtx, inputCancel := context.WithCancel(ctx)
-	defer inputCancel()
 	ip := NewInputProcessor(p.in)
-	go ip.Run(inputCtx)
+	go ip.Run(inputCtx, wg)
 
 	for {
 		select {
@@ -86,7 +88,7 @@ func (p *Prompt) Run() {
 
 				// Set raw mode
 				inputCtx, inputCancel = context.WithCancel(ctx)
-				go ip.Run(inputCtx)
+				go ip.Run(inputCtx, wg)
 			} else {
 				p.completion.Update(*p.buf.Document())
 				p.renderer.Render <- RenderRequest{
@@ -227,18 +229,21 @@ func (p *Prompt) Input() string {
 		log.Println("[INFO] Logging is enabled.")
 	}
 
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Run InputProcessor goroutine to read user input from Keyboard.
-	ip := &InputProcessor{
-		in:        p.in,
-		UserInput: make(chan []byte, 128),
-	}
-	go ip.Run(ctx)
-
 	// Run renderer goroutine to render the buffer, suggests.
-	go p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize())
+	go p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize(), wg)
+
+	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
+	sh := NewSignalHandler()
+	go sh.Run(ctx, cancel)
+
+	// Run InputProcessor goroutine to read user input from Keyboard.
+	ip := NewInputProcessor(p.in)
+	go ip.Run(ctx, wg)
 
 	for {
 		select {
@@ -254,6 +259,8 @@ func (p *Prompt) Input() string {
 					completion: p.completion,
 				}
 			}
+		case <-sh.SigWinch:
+			p.renderer.WinSize <- p.in.GetWinSize()
 		default:
 			time.Sleep(10 * time.Millisecond)
 		}

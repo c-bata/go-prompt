@@ -164,7 +164,7 @@ func (w *VT100Writer) CursorBackward(n int) {
 
 // AskForCPR asks for a cursor position report (CPR).
 func (w *VT100Writer) AskForCPR() {
-	// CPR: Cursor Position Render.
+	// CPR: Cursor Position Request.
 	w.WriteRaw([]byte{0x1b, '[', '6', 'n'})
 	return
 }
