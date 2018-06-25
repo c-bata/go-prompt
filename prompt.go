@@ -49,24 +49,40 @@ func (p *Prompt) Run() {
 		log.SetOutput(f)
 		log.Println("[INFO] Logging is enabled.")
 	}
-	wg := &sync.WaitGroup{}
+
+	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	// Application context. If canceled, all worker goroutine stopped.
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
-	// Run renderer process
-	go p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize(), wg)
+	// Application context. If canceled, all worker goroutine stopped.
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
 	sh := NewSignalHandler()
 	go sh.Run(ctx, cancel)
 
+	// Run renderer process
+	wg.Add(1)
+	go func() {
+		p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize())
+		wg.Done()
+	}()
+
 	// Run InputProcessor goroutine to read user input from Keyboard.
 	inputCtx, inputCancel := context.WithCancel(ctx)
+	defer func() {
+		inputCancel()
+	}()
+
 	ip := NewInputProcessor(p.in)
-	go ip.Run(inputCtx, wg)
+
+	wg.Add(1)
+	go func() {
+		ip.Run(inputCtx)
+		wg.Done()
+	}()
 
 	for {
 		select {
@@ -88,7 +104,12 @@ func (p *Prompt) Run() {
 
 				// Set raw mode
 				inputCtx, inputCancel = context.WithCancel(ctx)
-				go ip.Run(inputCtx, wg)
+
+				wg.Add(1)
+				go func() {
+					ip.Run(inputCtx)
+					wg.Done()
+				}()
 			} else {
 				p.completion.Update(*p.buf.Document())
 				p.renderer.Render <- RenderRequest{
@@ -229,21 +250,33 @@ func (p *Prompt) Input() string {
 		log.Println("[INFO] Logging is enabled.")
 	}
 
-	wg := &sync.WaitGroup{}
+	var wg sync.WaitGroup
 	defer wg.Wait()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
-	// Run renderer goroutine to render the buffer, suggests.
-	go p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize(), wg)
+	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
 	sh := NewSignalHandler()
 	go sh.Run(ctx, cancel)
 
+	// Run renderer goroutine to render the buffer, suggests.
+	wg.Add(1)
+	go func() {
+		p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize())
+		wg.Done()
+	}()
+
 	// Run InputProcessor goroutine to read user input from Keyboard.
 	ip := NewInputProcessor(p.in)
-	go ip.Run(ctx, wg)
+
+	wg.Add(1)
+	go func() {
+		ip.Run(ctx)
+		wg.Done()
+	}()
 
 	for {
 		select {

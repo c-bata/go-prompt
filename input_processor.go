@@ -3,7 +3,6 @@ package prompt
 import (
 	"context"
 	"log"
-	"sync"
 	"time"
 )
 
@@ -19,10 +18,8 @@ func NewInputProcessor(in ConsoleParser) *InputProcessor {
 	}
 }
 
-func (ip *InputProcessor) Run(ctx context.Context, wg *sync.WaitGroup) {
+func (ip *InputProcessor) Run(ctx context.Context) {
 	log.Printf("[INFO] InputProcessor: Start running input processor")
-	wg.Add(1)
-	defer wg.Done()
 	defer log.Print("[INFO] InputProcessor: Stop input processor")
 
 	ip.in.Setup()
