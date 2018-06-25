@@ -53,10 +53,8 @@ func (p *Prompt) Run() {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	ctx := context.Background()
-
 	// Application context. If canceled, all worker goroutine stopped.
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
@@ -71,16 +69,10 @@ func (p *Prompt) Run() {
 	}()
 
 	// Run InputProcessor goroutine to read user input from Keyboard.
-	inputCtx, inputCancel := context.WithCancel(ctx)
-	defer func() {
-		inputCancel()
-	}()
-
 	ip := NewInputProcessor(p.in)
-
 	wg.Add(1)
 	go func() {
-		ip.Run(inputCtx)
+		ip.Run(ctx)
 		wg.Done()
 	}()
 
@@ -92,8 +84,7 @@ func (p *Prompt) Run() {
 			} else if e != nil {
 				// Stop goroutine to run readBuffer function to unset raw mode and non-blocking mode.
 				// Because returned EAGAIN when still set non-blocking mode.
-				inputCancel()
-
+				ip.Pause <- true
 				p.executor(e.input)
 
 				p.completion.Update(*p.buf.Document())
@@ -101,15 +92,7 @@ func (p *Prompt) Run() {
 					buffer:     p.buf,
 					completion: p.completion,
 				}
-
-				// Set raw mode
-				inputCtx, inputCancel = context.WithCancel(ctx)
-
-				wg.Add(1)
-				go func() {
-					ip.Run(inputCtx)
-					wg.Done()
-				}()
+				ip.Pause <- false
 			} else {
 				p.completion.Update(*p.buf.Document())
 				p.renderer.Render <- RenderRequest{
