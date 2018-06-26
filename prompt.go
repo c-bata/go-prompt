@@ -24,7 +24,7 @@ type Completer func(Document) []Suggest
 type Prompt struct {
 	in                ConsoleParser
 	buf               *Buffer
-	renderer          *Render
+	rendererOptions   []RendererOption
 	executor          Executor
 	history           *History
 	completion        *CompletionManager
@@ -62,9 +62,12 @@ func (p *Prompt) Run() {
 	go sh.Run(ctx, cancel)
 
 	// Run renderer process
+	renderer := NewRenderer(consoleWriter,
+		RenderRequest{buffer: p.buf, completion: p.completion},
+		p.in.GetWinSize(), p.rendererOptions...)
 	wg.Add(1)
 	go func() {
-		p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize())
+		renderer.Run(ctx)
 		wg.Done()
 	}()
 
@@ -79,7 +82,7 @@ func (p *Prompt) Run() {
 	for {
 		select {
 		case b := <-ip.UserInput:
-			if shouldExit, e := p.feed(b); shouldExit {
+			if shouldExit, e := p.feed(renderer, b); shouldExit {
 				return
 			} else if e != nil {
 				// Stop goroutine to run readBuffer function to unset raw mode and non-blocking mode.
@@ -88,27 +91,27 @@ func (p *Prompt) Run() {
 				p.executor(e.input)
 
 				p.completion.Update(*p.buf.Document())
-				p.renderer.Render <- RenderRequest{
+				renderer.Render <- RenderRequest{
 					buffer:     p.buf,
 					completion: p.completion,
 				}
 				ip.Pause <- false
 			} else {
 				p.completion.Update(*p.buf.Document())
-				p.renderer.Render <- RenderRequest{
+				renderer.Render <- RenderRequest{
 					buffer:     p.buf,
 					completion: p.completion,
 				}
 			}
 		case <-sh.SigWinch:
-			p.renderer.WinSize <- p.in.GetWinSize()
+			renderer.WinSize <- p.in.GetWinSize()
 		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
+func (p *Prompt) feed(renderer *Render, b []byte) (shouldExit bool, exec *Exec) {
 	key := p.in.GetKey(b)
 
 	// completion
@@ -117,7 +120,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 
 	switch key {
 	case Enter, ControlJ, ControlM:
-		p.renderer.breakLine(p.buf)
+		renderer.breakLine(p.buf)
 
 		exec = &Exec{input: p.buf.Text()}
 		log.Printf("[History] %s", p.buf.Text())
@@ -126,7 +129,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 			p.history.Add(exec.input)
 		}
 	case ControlC:
-		p.renderer.breakLine(p.buf)
+		renderer.breakLine(p.buf)
 		p.buf = NewBuffer()
 		p.history.Clear()
 	case Up, ControlP:
@@ -245,10 +248,14 @@ func (p *Prompt) Input() string {
 	sh := NewSignalHandler()
 	go sh.Run(ctx, cancel)
 
-	// Run renderer goroutine to render the buffer, suggests.
+	// Run renderer process
+	renderer := NewRenderer(consoleWriter,
+		RenderRequest{buffer: p.buf, completion: p.completion},
+		p.in.GetWinSize(), p.rendererOptions...)
 	wg.Add(1)
 	go func() {
-		p.renderer.Run(ctx, p.buf, p.completion, p.in.GetWinSize())
+		renderer.WinSize <- p.in.GetWinSize()
+		renderer.Run(ctx)
 		wg.Done()
 	}()
 
@@ -264,19 +271,19 @@ func (p *Prompt) Input() string {
 	for {
 		select {
 		case b := <-ip.UserInput:
-			if shouldExit, e := p.feed(b); shouldExit {
+			if shouldExit, e := p.feed(renderer, b); shouldExit {
 				return ""
 			} else if e != nil {
 				return e.input
 			} else {
 				p.completion.Update(*p.buf.Document())
-				p.renderer.Render <- RenderRequest{
+				renderer.Render <- RenderRequest{
 					buffer:     p.buf,
 					completion: p.completion,
 				}
 			}
 		case <-sh.SigWinch:
-			p.renderer.WinSize <- p.in.GetWinSize()
+			renderer.WinSize <- p.in.GetWinSize()
 		default:
 			time.Sleep(10 * time.Millisecond)
 		}

@@ -2,15 +2,10 @@ package prompt
 
 // Input get the input data from the user and return it.
 func Input(prefix string, completer Completer, opts ...Option) string {
-	pt := New(nil, completer)
-	pt.renderer.prefixTextColor = DefaultColor
-	pt.renderer.prefix = prefix
-
-	for _, opt := range opts {
-		if err := opt(pt); err != nil {
-			panic(err)
-		}
-	}
+	pt := New(nil, completer, opts...)
+	pt.rendererOptions = append(pt.rendererOptions, func(r *Render) {
+		r.prefix = prefix
+	})
 	return pt.Input()
 }
 
@@ -18,15 +13,10 @@ func Input(prefix string, completer Completer, opts ...Option) string {
 // Deprecated: Maybe anyone want to use this.
 func Choose(prefix string, choices []string, opts ...Option) string {
 	completer := newChoiceCompleter(choices, FilterHasPrefix)
-	pt := New(nil, completer)
-	pt.renderer.prefixTextColor = DefaultColor
-	pt.renderer.prefix = prefix
-
-	for _, opt := range opts {
-		if err := opt(pt); err != nil {
-			panic(err)
-		}
-	}
+	pt := New(nil, completer, opts...)
+	pt.rendererOptions = append(pt.rendererOptions, func(r *Render) {
+		r.prefix = prefix
+	})
 	return pt.Input()
 }
 

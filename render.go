@@ -8,6 +8,43 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
+// NewRenderer returns Render object.
+func NewRenderer(out ConsoleWriter, initialRequest RenderRequest, ws WinSize, opts ...RendererOption) *Render {
+	renderer := &Render{
+		out:                          out,
+		prefix:                       "> ",
+		col:                          ws.Col,
+		row:                          ws.Row,
+		livePrefixCallback:           func() (string, bool) { return "", false },
+		previousRequest:              initialRequest,
+		prefixTextColor:              Blue,
+		prefixBGColor:                DefaultColor,
+		inputTextColor:               DefaultColor,
+		inputBGColor:                 DefaultColor,
+		previewSuggestionTextColor:   Green,
+		previewSuggestionBGColor:     DefaultColor,
+		suggestionTextColor:          White,
+		suggestionBGColor:            Cyan,
+		selectedSuggestionTextColor:  Black,
+		selectedSuggestionBGColor:    Turquoise,
+		descriptionTextColor:         Black,
+		descriptionBGColor:           Turquoise,
+		selectedDescriptionTextColor: White,
+		selectedDescriptionBGColor:   Cyan,
+		scrollbarThumbColor:          DarkGray,
+		scrollbarBGColor:             Cyan,
+	}
+
+	for _, o := range opts {
+		o(renderer)
+	}
+	return renderer
+}
+
+// RendererOption is the type to replace default renderer parameters.
+// NewRenderer accepts any number of options (this is functional option pattern).
+type RendererOption func(render *Render)
+
 // Render to render prompt information from the state of Buffer.
 type Render struct {
 	out                ConsoleWriter
@@ -17,9 +54,10 @@ type Render struct {
 	row                uint16
 	col                uint16
 
-	previousCursor int
+	previousCursor  int
+	previousRequest RenderRequest
 
-	// colors,
+	// colors
 	prefixTextColor              Color
 	prefixBGColor                Color
 	inputTextColor               Color
@@ -43,22 +81,15 @@ type Render struct {
 	Render  chan RenderRequest
 }
 
-func (r *Render) Run(ctx context.Context, buf *Buffer, completion *CompletionManager, ws WinSize) {
+func (r *Render) Run(ctx context.Context) {
 	r.Setup()
 	defer r.TearDown()
-	r.col = ws.Col
-	r.row = ws.Row
-	r.render(buf, completion)
-	log.Printf("initial render %#v", buf)
+	r.render(r.previousRequest.buffer, r.previousRequest.completion)
 
-	var previousRequest = RenderRequest{
-		buffer:     buf,
-		completion: completion,
-	}
 	for {
 		select {
 		case <-ctx.Done():
-			r.breakLine(previousRequest.buffer)
+			r.breakLine(r.previousRequest.buffer)
 			return
 		case <-r.Clear:
 			log.Print("renderer: catch erase request")
@@ -67,11 +98,11 @@ func (r *Render) Run(ctx context.Context, buf *Buffer, completion *CompletionMan
 			r.out.Flush()
 		case req := <-r.Render:
 			r.render(req.buffer, req.completion)
-			previousRequest = req
+			r.previousRequest = req
 		case ws := <-r.WinSize:
 			r.col = ws.Col
 			r.row = ws.Row
-			r.render(previousRequest.buffer, previousRequest.completion)
+			r.render(r.previousRequest.buffer, r.previousRequest.completion)
 		}
 	}
 }

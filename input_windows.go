@@ -77,18 +77,18 @@ func (p *WindowsParser) Read() ([]byte, error) {
 }
 
 // GetWinSize returns WinSize object to represent width and height of terminal.
-func (p *WindowsParser) GetWinSize() *WinSize {
+func (p *WindowsParser) GetWinSize() WinSize {
 	w, h, err := p.tty.Size()
 	if err != nil {
 		panic(err)
 	}
-	return &WinSize{
+	return WinSize{
 		Row: uint16(h),
 		Col: uint16(w),
 	}
 }
 
 // NewStandardInputParser returns ConsoleParser object to read from stdin.
-func NewStandardInputParser() *WindowsParser {
+func NewStandardInputParser() ConsoleParser {
 	return &WindowsParser{}
 }
