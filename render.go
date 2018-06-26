@@ -8,7 +8,7 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-// render to render prompt information from state of Buffer.
+// Render to render prompt information from the state of Buffer.
 type Render struct {
 	out                ConsoleWriter
 	prefix             string

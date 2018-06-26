@@ -3,7 +3,9 @@ package prompt
 import (
 	"context"
 	"log"
-	"time"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 type InputProcessor struct {
@@ -21,9 +23,11 @@ func NewInputProcessor(in ConsoleParser) *InputProcessor {
 	}
 }
 
-func (ip *InputProcessor) Run(ctx context.Context) {
+func (ip *InputProcessor) Run(ctx context.Context) (err error) {
 	log.Printf("[INFO] InputProcessor: Start running input processor")
 	defer log.Print("[INFO] InputProcessor: Stop input processor")
+	sigio := make(chan os.Signal, 1)
+	signal.Notify(sigio, syscall.SIGIO)
 
 	ip.in.Setup()
 	defer ip.in.TearDown()
@@ -32,8 +36,8 @@ func (ip *InputProcessor) Run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case p := <-ip.Pause:
-			if p == ip.pause {
-				continue
+			if ip.pause == p {
+				return // distinct until changed
 			}
 			ip.pause = p
 
@@ -42,13 +46,17 @@ func (ip *InputProcessor) Run(ctx context.Context) {
 			} else {
 				ip.in.Setup()
 			}
-		default:
-			if !ip.pause {
-				if b, err := ip.in.Read(); err == nil && !(len(b) == 1 && b[0] == 0) {
-					ip.UserInput <- b
-				}
+		case <-sigio:
+			b, err := ip.in.Read()
+			if err == syscall.EAGAIN || err == syscall.EWOULDBLOCK {
+				continue
+			} else if err != nil {
+				log.Printf("[ERROR] cannot read %s", err)
+				return err
+			}
+			if !(len(b) == 1 && b[0] == 0) {
+				ip.UserInput <- b
 			}
 		}
-		time.Sleep(10 * time.Millisecond)
 	}
 }

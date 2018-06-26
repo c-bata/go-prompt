@@ -27,8 +27,9 @@ func (sh *SignalHandler) Run(ctx context.Context, cancel context.CancelFunc) {
 		syscall.SIGINT,
 		syscall.SIGTERM,
 		syscall.SIGQUIT,
-		syscall.SIGWINCH,
 	)
+	sigwinch := make(chan os.Signal, 1)
+	signal.Notify(sigwinch, syscall.SIGWINCH)
 
 	for {
 		select {
@@ -36,19 +37,10 @@ func (sh *SignalHandler) Run(ctx context.Context, cancel context.CancelFunc) {
 			log.Print("[INFO] SignalHandler: stop by context")
 			return
 		case s := <-sigchan:
-			switch s {
-			case syscall.SIGINT: // kill -SIGINT XXXX or Ctrl+c
-				cancel()
-
-			case syscall.SIGTERM: // kill -SIGTERM XXXX
-				cancel()
-
-			case syscall.SIGQUIT: // kill -SIGQUIT XXXX
-				cancel()
-
-			case syscall.SIGWINCH:
-				sh.SigWinch <- struct{}{}
-			}
+			log.Printf("[INFO] SignalHandler: stop by %v", s.String())
+			cancel()
+		case <-sigwinch:
+			sh.SigWinch <- struct{}{}
 		}
 	}
 }

@@ -5,6 +5,8 @@ package prompt
 import (
 	"bytes"
 	"log"
+	"runtime"
+	"sync"
 	"syscall"
 	"unsafe"
 
@@ -17,17 +19,27 @@ const maxReadBytes = 1024
 type PosixParser struct {
 	fd          int
 	origTermios syscall.Termios
+	initTermios sync.Once
 }
 
 // Setup should be called before starting input
 func (t *PosixParser) Setup() error {
-	// Set NonBlocking mode because if syscall.Read block this goroutine, it cannot receive data from stopCh.
-	if err := syscall.SetNonblock(t.fd, true); err != nil {
-		log.Println("[ERROR] Cannot set non blocking mode.")
-		return err
+	_, _, e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(t.fd), uintptr(syscall.F_SETFL),
+		uintptr(syscall.O_ASYNC|syscall.O_NONBLOCK))
+	if e != 0 {
+		log.Printf("[ERROR] Cannot set non-blocking mode: %d\n", e)
+		return e
 	}
+
+	_, _, e = syscall.Syscall(syscall.SYS_FCNTL, uintptr(t.fd), uintptr(syscall.F_SETOWN),
+		uintptr(syscall.Getpid()))
+	if runtime.GOOS != "darwin" && e != 0 {
+		log.Printf("[ERROR] Cannot set F_SETOWN: %d\n", e)
+		return e
+	}
+
 	if err := t.setRawMode(); err != nil {
-		log.Println("[ERROR] Cannot set raw mode.")
+		log.Printf("[ERROR] Cannot set raw mode: %s", err)
 		return err
 	}
 	return nil
@@ -39,7 +51,7 @@ func (t *PosixParser) TearDown() error {
 		log.Println("[ERROR] Cannot set blocking mode.")
 		return err
 	}
-	if err := t.resetRawMode(); err != nil {
+	if err := t.restoreTermios(); err != nil {
 		log.Println("[ERROR] Cannot reset from raw mode.")
 		return err
 	}
@@ -57,28 +69,27 @@ func (t *PosixParser) Read() ([]byte, error) {
 }
 
 func (t *PosixParser) setRawMode() error {
-	x := t.origTermios.Lflag
-	if x &^= syscall.ICANON; x != 0 && x == t.origTermios.Lflag {
-		// fd is already raw mode
-		return nil
-	}
-	var n syscall.Termios
-	if err := termios.Tcgetattr(uintptr(t.fd), &t.origTermios); err != nil {
+	var err error
+	t.initTermios.Do(func() {
+		log.Println("termios is initialized")
+		err = termios.Tcgetattr(uintptr(t.fd), &t.origTermios)
+	})
+	if err != nil {
 		return err
 	}
-	n = t.origTermios
-	// "&^=" used like: https://play.golang.org/p/8eJw3JxS4O
-	n.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG
+
+	n := t.origTermios
+	n.Iflag &^= syscall.IGNBRK | syscall.BRKINT | syscall.PARMRK |
+		syscall.ISTRIP | syscall.INLCR | syscall.IGNCR |
+		syscall.ICRNL | syscall.IXON
+	n.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG | syscall.ECHONL
+	n.Cflag &^= syscall.CSIZE | syscall.PARENB
 	n.Cc[syscall.VMIN] = 1
 	n.Cc[syscall.VTIME] = 0
-	termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &n)
-	return nil
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &n)
 }
 
-func (t *PosixParser) resetRawMode() error {
-	if t.origTermios.Lflag == 0 {
-		return nil
-	}
+func (t *PosixParser) restoreTermios() error {
 	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.origTermios)
 }
 
