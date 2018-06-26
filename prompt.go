@@ -111,7 +111,7 @@ func (p *Prompt) Run() {
 	}
 }
 
-func (p *Prompt) feed(renderer *Render, b []byte) (shouldExit bool, exec *Exec) {
+func (p *Prompt) feed(renderer *Renderer, b []byte) (shouldExit bool, exec *Exec) {
 	key := p.in.GetKey(b)
 
 	// completion

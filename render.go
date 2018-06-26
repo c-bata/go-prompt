@@ -8,15 +8,18 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-// NewRenderer returns Render object.
-func NewRenderer(out ConsoleWriter, initialRequest RenderRequest, ws WinSize, opts ...RendererOption) *Render {
-	renderer := &Render{
-		out:                          out,
-		prefix:                       "> ",
-		col:                          ws.Col,
-		row:                          ws.Row,
-		livePrefixCallback:           func() (string, bool) { return "", false },
-		previousRequest:              initialRequest,
+// NewRenderer returns Renderer object.
+func NewRenderer(out ConsoleWriter, initialRequest RenderRequest, ws WinSize, opts ...RendererOption) *Renderer {
+	renderer := &Renderer{
+		out:             out,
+		col:             ws.Col,
+		row:             ws.Row,
+		previousRequest: initialRequest,
+
+		// Prefix
+		prefix: "> ",
+
+		// Colors
 		prefixTextColor:              Blue,
 		prefixBGColor:                DefaultColor,
 		inputTextColor:               DefaultColor,
@@ -33,6 +36,11 @@ func NewRenderer(out ConsoleWriter, initialRequest RenderRequest, ws WinSize, op
 		selectedDescriptionBGColor:   Cyan,
 		scrollbarThumbColor:          DarkGray,
 		scrollbarBGColor:             Cyan,
+
+		// Channels
+		Clear:   make(chan struct{}),
+		WinSize: make(chan WinSize),
+		Render:  make(chan RenderRequest),
 	}
 
 	for _, o := range opts {
@@ -42,22 +50,24 @@ func NewRenderer(out ConsoleWriter, initialRequest RenderRequest, ws WinSize, op
 }
 
 // RendererOption is the type to replace default renderer parameters.
-// NewRenderer accepts any number of options (this is functional option pattern).
-type RendererOption func(render *Render)
+// NewRenderer accepts any number of options.
+type RendererOption func(render *Renderer)
 
-// Render to render prompt information from the state of Buffer.
-type Render struct {
-	out                ConsoleWriter
-	prefix             string
-	livePrefixCallback func() (prefix string, useLivePrefix bool)
-	title              string
-	row                uint16
-	col                uint16
+// Renderer to render prompt information from the state of Buffer.
+type Renderer struct {
+	out   ConsoleWriter
+	title string
+	row   uint16
+	col   uint16
 
 	previousCursor  int
 	previousRequest RenderRequest
 
-	// colors
+	// Prefix
+	prefix             string
+	livePrefixCallback func() (prefix string, useLivePrefix bool)
+
+	// Colors
 	prefixTextColor              Color
 	prefixBGColor                Color
 	inputTextColor               Color
@@ -81,10 +91,10 @@ type Render struct {
 	Render  chan RenderRequest
 }
 
-func (r *Render) Run(ctx context.Context) {
+func (r *Renderer) Run(ctx context.Context) {
 	r.Setup()
 	defer r.TearDown()
-	r.render(r.previousRequest.buffer, r.previousRequest.completion)
+	r.render(r.previousRequest)
 
 	for {
 		select {
@@ -97,50 +107,49 @@ func (r *Render) Run(ctx context.Context) {
 			r.out.CursorGoTo(0, 0)
 			r.out.Flush()
 		case req := <-r.Render:
-			r.render(req.buffer, req.completion)
-			r.previousRequest = req
+			r.render(req)
 		case ws := <-r.WinSize:
 			r.col = ws.Col
 			r.row = ws.Row
-			r.render(r.previousRequest.buffer, r.previousRequest.completion)
+			r.render(r.previousRequest)
 		}
 	}
 }
 
 type RenderRequest struct {
-	//prefix     string
 	buffer     *Buffer
 	completion *CompletionManager
 }
 
 // Setup to initialize console output.
-func (r *Render) Setup() {
+func (r *Renderer) Setup() {
 	if r.title != "" {
 		r.out.SetTitle(r.title)
 		r.out.Flush()
 	}
-	r.Clear = make(chan struct{})
-	r.WinSize = make(chan WinSize)
-	r.Render = make(chan RenderRequest)
 }
 
 // getCurrentPrefix to get current prefix.
 // If live-prefix is enabled, return live-prefix.
-func (r *Render) getCurrentPrefix() string {
-	if prefix, ok := r.livePrefixCallback(); ok {
+func (r *Renderer) getCurrentPrefix() string {
+	if r.livePrefixCallback == nil {
+		return r.prefix
+	}
+	prefix, ok := r.livePrefixCallback()
+	if ok {
 		return prefix
 	}
 	return r.prefix
 }
 
-func (r *Render) renderPrefix() {
+func (r *Renderer) renderPrefix() {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
 	r.out.WriteStr(r.getCurrentPrefix())
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
 // TearDown to clear title and erasing.
-func (r *Render) TearDown() {
+func (r *Renderer) TearDown() {
 	r.out.ClearTitle()
 	r.out.EraseDown()
 	r.out.Flush()
@@ -150,7 +159,7 @@ func (r *Render) TearDown() {
 	close(r.Render)
 }
 
-func (r *Render) prepareArea(lines int) {
+func (r *Renderer) prepareArea(lines int) {
 	for i := 0; i < lines; i++ {
 		r.out.ScrollDown()
 	}
@@ -160,7 +169,7 @@ func (r *Render) prepareArea(lines int) {
 	return
 }
 
-func (r *Render) renderWindowTooSmall() {
+func (r *Renderer) renderWindowTooSmall() {
 	r.out.CursorGoTo(0, 0)
 	r.out.EraseScreen()
 	r.out.SetColor(DarkRed, White, false)
@@ -168,7 +177,7 @@ func (r *Render) renderWindowTooSmall() {
 	return
 }
 
-func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
+func (r *Renderer) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	suggestions := completions.GetSuggestions()
 	if len(completions.GetSuggestions()) == 0 {
 		return
@@ -246,7 +255,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 }
 
 // render renders to the console.
-func (r *Render) render(buffer *Buffer, completion *CompletionManager) {
+func (r *Renderer) render(req RenderRequest) {
 	// In situations where a pseudo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col == 0 {
@@ -255,14 +264,14 @@ func (r *Render) render(buffer *Buffer, completion *CompletionManager) {
 	defer r.out.Flush()
 	r.move(r.previousCursor, 0)
 
-	line := buffer.Text()
+	line := req.buffer.Text()
 	prefix := r.getCurrentPrefix()
 	cursor := runewidth.StringWidth(prefix) + runewidth.StringWidth(line)
 
 	// prepare area
 	_, y := r.toPos(cursor)
 
-	h := y + 1 + int(completion.max)
+	h := y + 1 + int(req.completion.max)
 	if h > int(r.row) || completionMargin > int(r.col) {
 		r.renderWindowTooSmall()
 		return
@@ -280,18 +289,18 @@ func (r *Render) render(buffer *Buffer, completion *CompletionManager) {
 
 	r.out.EraseDown()
 
-	cursor = r.backward(cursor, runewidth.StringWidth(line)-buffer.DisplayCursorPosition())
+	cursor = r.backward(cursor, runewidth.StringWidth(line)-req.buffer.DisplayCursorPosition())
 
-	r.renderCompletion(buffer, completion)
-	if suggest, ok := completion.GetSelectedSuggestion(); ok {
-		cursor = r.backward(cursor, runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
+	r.renderCompletion(req.buffer, req.completion)
+	if suggest, ok := req.completion.GetSelectedSuggestion(); ok {
+		cursor = r.backward(cursor, runewidth.StringWidth(req.buffer.Document().GetWordBeforeCursorUntilSeparator(req.completion.wordSeparator)))
 
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
 		r.out.WriteStr(suggest.Text)
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 		cursor += runewidth.StringWidth(suggest.Text)
 
-		rest := buffer.Document().TextAfterCursor()
+		rest := req.buffer.Document().TextAfterCursor()
 		r.out.WriteStr(rest)
 		cursor += runewidth.StringWidth(rest)
 		r.lineWrap(cursor)
@@ -299,10 +308,11 @@ func (r *Render) render(buffer *Buffer, completion *CompletionManager) {
 		cursor = r.backward(cursor, runewidth.StringWidth(rest))
 	}
 	r.previousCursor = cursor
+	r.previousRequest = req
 }
 
 // breakLine to break line.
-func (r *Render) breakLine(buffer *Buffer) {
+func (r *Renderer) breakLine(buffer *Buffer) {
 	// Erasing and render
 	cursor := runewidth.StringWidth(buffer.Document().TextBeforeCursor()) + runewidth.StringWidth(r.getCurrentPrefix())
 	r.clear(cursor)
@@ -311,26 +321,25 @@ func (r *Render) breakLine(buffer *Buffer) {
 	r.out.WriteStr(buffer.Document().Text + "\n")
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 	r.out.Flush()
-
-	r.previousCursor = 0
+	r.previousRequest.buffer = buffer
 }
 
 // clear erases the screen from a beginning of input
 // even if there is line break which means input length exceeds a window's width.
-func (r *Render) clear(cursor int) {
+func (r *Renderer) clear(cursor int) {
 	r.move(cursor, 0)
 	r.out.EraseDown()
 }
 
 // backward moves cursor to backward from a current cursor position
 // regardless there is a line break.
-func (r *Render) backward(from, n int) int {
+func (r *Renderer) backward(from, n int) int {
 	return r.move(from, from-n)
 }
 
 // move moves cursor to specified position from the beginning of input
 // even if there is a line break.
-func (r *Render) move(from, to int) int {
+func (r *Renderer) move(from, to int) int {
 	fromX, fromY := r.toPos(from)
 	toX, toY := r.toPos(to)
 
@@ -340,12 +349,12 @@ func (r *Render) move(from, to int) int {
 }
 
 // toPos returns the relative position from the beginning of the string.
-func (r *Render) toPos(cursor int) (x, y int) {
+func (r *Renderer) toPos(cursor int) (x, y int) {
 	col := int(r.col)
 	return cursor % col, cursor / col
 }
 
-func (r *Render) lineWrap(cursor int) {
+func (r *Renderer) lineWrap(cursor int) {
 	if runtime.GOOS != "windows" && cursor > 0 && cursor%int(r.col) == 0 {
 		r.out.WriteRaw([]byte{'\n'})
 	}

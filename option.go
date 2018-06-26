@@ -16,7 +16,7 @@ func OptionParser(x ConsoleParser) Option {
 func OptionWriter(x ConsoleWriter) Option {
 	return func(p *Prompt) error {
 		registerConsoleWriter(x)
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.out = x
 		})
 		return nil
@@ -26,7 +26,7 @@ func OptionWriter(x ConsoleWriter) Option {
 // OptionTitle to set title displayed at the header bar of terminal.
 func OptionTitle(x string) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.title = x
 		})
 		return nil
@@ -36,7 +36,7 @@ func OptionTitle(x string) Option {
 // OptionPrefix to set prefix string.
 func OptionPrefix(x string) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.prefix = x
 		})
 		return nil
@@ -54,7 +54,7 @@ func OptionCompletionWordSeparator(x string) Option {
 // OptionLivePrefix to change the prefix dynamically by callback function
 func OptionLivePrefix(f func() (prefix string, useLivePrefix bool)) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.livePrefixCallback = f
 		})
 		return nil
@@ -64,7 +64,7 @@ func OptionLivePrefix(f func() (prefix string, useLivePrefix bool)) Option {
 // OptionPrefixTextColor change a text color of prefix string
 func OptionPrefixTextColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.prefixTextColor = x
 		})
 		return nil
@@ -74,7 +74,7 @@ func OptionPrefixTextColor(x Color) Option {
 // OptionPrefixBackgroundColor to change a background color of prefix string
 func OptionPrefixBackgroundColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.prefixBGColor = x
 		})
 		return nil
@@ -84,7 +84,7 @@ func OptionPrefixBackgroundColor(x Color) Option {
 // OptionInputTextColor to change a color of text which is input by user
 func OptionInputTextColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.inputTextColor = x
 		})
 		return nil
@@ -94,7 +94,7 @@ func OptionInputTextColor(x Color) Option {
 // OptionInputBGColor to change a color of background which is input by user
 func OptionInputBGColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.inputBGColor = x
 		})
 		return nil
@@ -104,7 +104,7 @@ func OptionInputBGColor(x Color) Option {
 // OptionPreviewSuggestionTextColor to change a text color which is completed
 func OptionPreviewSuggestionTextColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.previewSuggestionTextColor = x
 		})
 		return nil
@@ -114,7 +114,7 @@ func OptionPreviewSuggestionTextColor(x Color) Option {
 // OptionPreviewSuggestionBGColor to change a background color which is completed
 func OptionPreviewSuggestionBGColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.previewSuggestionBGColor = x
 		})
 		return nil
@@ -124,7 +124,7 @@ func OptionPreviewSuggestionBGColor(x Color) Option {
 // OptionSuggestionTextColor to change a text color in drop down suggestions.
 func OptionSuggestionTextColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.suggestionTextColor = x
 		})
 		return nil
@@ -134,7 +134,7 @@ func OptionSuggestionTextColor(x Color) Option {
 // OptionSuggestionBGColor change a background color in drop down suggestions.
 func OptionSuggestionBGColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.suggestionBGColor = x
 		})
 		return nil
@@ -144,7 +144,7 @@ func OptionSuggestionBGColor(x Color) Option {
 // OptionSelectedSuggestionTextColor to change a text color for completed text which is selected inside suggestions drop down box.
 func OptionSelectedSuggestionTextColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.selectedSuggestionTextColor = x
 		})
 		return nil
@@ -154,7 +154,7 @@ func OptionSelectedSuggestionTextColor(x Color) Option {
 // OptionSelectedSuggestionBGColor to change a background color for completed text which is selected inside suggestions drop down box.
 func OptionSelectedSuggestionBGColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.selectedSuggestionBGColor = x
 		})
 		return nil
@@ -164,7 +164,7 @@ func OptionSelectedSuggestionBGColor(x Color) Option {
 // OptionDescriptionTextColor to change a background color of description text in drop down suggestions.
 func OptionDescriptionTextColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.selectedDescriptionTextColor = x
 		})
 		return nil
@@ -174,7 +174,7 @@ func OptionDescriptionTextColor(x Color) Option {
 // OptionDescriptionBGColor to change a background color of description text in drop down suggestions.
 func OptionDescriptionBGColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.selectedDescriptionBGColor = x
 		})
 		return nil
@@ -184,7 +184,7 @@ func OptionDescriptionBGColor(x Color) Option {
 // OptionSelectedDescriptionTextColor to change a text color of description which is selected inside suggestions drop down box.
 func OptionSelectedDescriptionTextColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.selectedDescriptionTextColor = x
 		})
 		return nil
@@ -194,7 +194,7 @@ func OptionSelectedDescriptionTextColor(x Color) Option {
 // OptionSelectedDescriptionBGColor to change a background color of description which is selected inside suggestions drop down box.
 func OptionSelectedDescriptionBGColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.selectedDescriptionBGColor = x
 		})
 		return nil
@@ -204,7 +204,7 @@ func OptionSelectedDescriptionBGColor(x Color) Option {
 // OptionScrollbarThumbColor to change a thumb color on scrollbar.
 func OptionScrollbarThumbColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.scrollbarThumbColor = x
 		})
 		return nil
@@ -214,7 +214,7 @@ func OptionScrollbarThumbColor(x Color) Option {
 // OptionScrollbarBGColor to change a background color of scrollbar.
 func OptionScrollbarBGColor(x Color) Option {
 	return func(p *Prompt) error {
-		p.rendererOptions = append(p.rendererOptions, func(r *Render) {
+		p.rendererOptions = append(p.rendererOptions, func(r *Renderer) {
 			r.scrollbarBGColor = x
 		})
 		return nil
