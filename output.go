@@ -16,7 +16,7 @@ const (
 	DisplayUnderline
 	// DisplayBlink set blink (less than 150 per minute).
 	DisplayBlink
-	// DisplayBlink set blink (more than 150 per minute). Not widely supported.
+	// DisplayRapidBlink set blink (more than 150 per minute). Not widely supported.
 	DisplayRapidBlink
 	// DisplayReverse swap foreground and background colors.
 	DisplayReverse
@@ -144,8 +144,5 @@ type ConsoleWriter interface {
 	/* Font */
 
 	// SetColor sets text and background colors. and specify whether text is bold.
-	// Deprecated. This interface is not cool, please use SetDisplayAttributes.
 	SetColor(fg, bg Color, bold bool)
-	// SetDisplayAttributes set display attributes (Set colors, blink, bold, italic and so on).
-	SetDisplayAttributes(fg, bg Color, attrs ...DisplayAttribute)
 }

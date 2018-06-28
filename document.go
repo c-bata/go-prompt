@@ -125,9 +125,8 @@ func (d *Document) FindStartOfPreviousWord() int {
 	i := strings.LastIndexByte(x, ' ')
 	if i != -1 {
 		return i + 1
-	} else {
-		return 0
 	}
+	return 0
 }
 
 // FindStartOfPreviousWordWithSpace is almost the same as FindStartOfPreviousWord.
@@ -157,9 +156,8 @@ func (d *Document) FindStartOfPreviousWordUntilSeparator(sep string) int {
 	i := strings.LastIndexAny(x, sep)
 	if i != -1 {
 		return i + 1
-	} else {
-		return 0
 	}
+	return 0
 }
 
 // FindStartOfPreviousWordUntilSeparatorIgnoreNextToCursor is almost the same as FindStartOfPreviousWordWithSpace.
@@ -188,9 +186,8 @@ func (d *Document) FindEndOfCurrentWord() int {
 	i := strings.IndexByte(x, ' ')
 	if i != -1 {
 		return i
-	} else {
-		return len(x)
 	}
+	return len(x)
 }
 
 // FindEndOfCurrentWordWithSpace is almost the same as FindEndOfCurrentWord.
@@ -222,9 +219,8 @@ func (d *Document) FindEndOfCurrentWordUntilSeparator(sep string) int {
 	i := strings.IndexAny(x, sep)
 	if i != -1 {
 		return i
-	} else {
-		return len(x)
 	}
+	return len(x)
 }
 
 // FindEndOfCurrentWordUntilSeparatorIgnoreNextToCursor is almost the same as FindEndOfCurrentWordWithSpace.
