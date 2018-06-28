@@ -2,7 +2,25 @@
 
 ## v0.3.0 (2018/??/??)
 
-next release.
+The architecture of go-prompt are refactored in this release. See [here](https://github.com/c-bata/go-prompt/pull/83) for more details.
+Much better in many regards. Please don't hesitate to test this release and file any bug reports.
+
+### Breaking changes.
+
+Please caution this release includes breaking changes for who customize ConsoleParser or ConsoleWriter.
+
+* Remove `GetWinSize` method from `ConsoleParser`. Please use `ConsoleWriter.GetWinSize` instead.
+* Remove `GetKey` method from `ConsoleParser`. Please use `GetKey` function instead.
+* Add `GetWinSize` and `SIGWINCH` on `ConsoleWriter`.
+
+### What's new?
+
+* Correspond window size change events on Windows.
+
+### Removed or Deprecated
+
+* Removed Choose shortcut function.
+* Removed SwitchKeyBindMode option. please use OptionSwitchKeyBindMode instead.
 
 ## v0.2.2 (2018/06/28)
 

@@ -248,10 +248,6 @@ func OptionSwitchKeyBindMode(m KeyBindMode) Option {
 	}
 }
 
-// SwitchKeyBindMode to set a key bind mode.
-// Deprecated: Please use OptionSwitchKeyBindMode.
-var SwitchKeyBindMode = OptionSwitchKeyBindMode
-
 // OptionAddKeyBind to set a custom key bind.
 func OptionAddKeyBind(b ...KeyBind) Option {
 	return func(p *Prompt) error {
