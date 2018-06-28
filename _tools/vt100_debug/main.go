@@ -70,7 +70,6 @@ func main() {
 	sigquit := make(chan os.Signal, 1)
 	signal.Notify(sigquit, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	buf := make([]byte, 128)
-	parser := prompt.NewStandardInputParser()
 	for {
 		fmt.Print("> ")
 		select {
@@ -83,7 +82,7 @@ func main() {
 				break
 			}
 			b := buf[:n]
-			if key := parser.GetKey(b); key == prompt.NotDefined {
+			if key := prompt.GetKey(b); key == prompt.NotDefined {
 				fmt.Printf("Key '%s' data:'%#v'\n", string(b), b)
 			} else {
 				fmt.Printf("Key '%s' data:'%#v'\n", key, b)

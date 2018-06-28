@@ -9,7 +9,8 @@ import (
 )
 
 // NewRenderer returns Renderer object.
-func NewRenderer(out ConsoleWriter, initialRequest RenderRequest, ws WinSize, opts ...RendererOption) *Renderer {
+func NewRenderer(out ConsoleWriter, initialRequest RenderRequest, opts ...RendererOption) *Renderer {
+	ws := out.GetWinSize()
 	renderer := &Renderer{
 		out:             out,
 		col:             ws.Col,
@@ -38,9 +39,8 @@ func NewRenderer(out ConsoleWriter, initialRequest RenderRequest, ws WinSize, op
 		scrollbarBGColor:             Cyan,
 
 		// Channels
-		Clear:   make(chan struct{}),
-		WinSize: make(chan WinSize),
-		Render:  make(chan RenderRequest),
+		Clear:  make(chan struct{}),
+		Render: make(chan RenderRequest),
 	}
 
 	for _, o := range opts {
@@ -86,15 +86,15 @@ type Renderer struct {
 	scrollbarBGColor             Color
 
 	// Channels
-	Clear   chan struct{}
-	WinSize chan WinSize
-	Render  chan RenderRequest
+	Clear  chan struct{}
+	Render chan RenderRequest
 }
 
 func (r *Renderer) Run(ctx context.Context) {
-	r.Setup()
+	r.SetUp()
 	defer r.TearDown()
 	r.render(r.previousRequest)
+	sigwinch := r.out.SIGWINCH(ctx)
 
 	for {
 		select {
@@ -108,7 +108,7 @@ func (r *Renderer) Run(ctx context.Context) {
 			r.out.Flush()
 		case req := <-r.Render:
 			r.render(req)
-		case ws := <-r.WinSize:
+		case ws := <-sigwinch:
 			r.col = ws.Col
 			r.row = ws.Row
 			r.render(r.previousRequest)
@@ -121,8 +121,8 @@ type RenderRequest struct {
 	completion *CompletionManager
 }
 
-// Setup to initialize console output.
-func (r *Renderer) Setup() {
+// SetUp to initialize console output.
+func (r *Renderer) SetUp() {
 	if r.title != "" {
 		r.out.SetTitle(r.title)
 		r.out.Flush()
@@ -155,7 +155,6 @@ func (r *Renderer) TearDown() {
 	r.out.Flush()
 
 	close(r.Clear)
-	close(r.WinSize)
 	close(r.Render)
 }
 

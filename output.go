@@ -1,6 +1,9 @@
 package prompt
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
 var (
 	consoleWriterMu sync.Mutex
@@ -87,6 +90,12 @@ const (
 	White
 )
 
+// WinSize represents the width and height of terminal.
+type WinSize struct {
+	Row uint16
+	Col uint16
+}
+
 // ConsoleWriter is an interface to abstract output layer.
 type ConsoleWriter interface {
 	/* Write */
@@ -158,4 +167,12 @@ type ConsoleWriter interface {
 
 	// SetColor sets text and background colors. and specify whether text is bold.
 	SetColor(fg, bg Color, bold bool)
+
+	/* Window Size */
+
+	// GetWinSize returns WinSize object to represent width and height of terminal.
+	GetWinSize() WinSize
+
+	// SIGWINCH returns a channel to notify window size is changed.
+	SIGWINCH(context.Context) chan WinSize
 }

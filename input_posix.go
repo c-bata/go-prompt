@@ -3,12 +3,13 @@
 package prompt
 
 import (
-	"bytes"
+	"context"
 	"log"
+	"os"
+	"os/signal"
 	"runtime"
 	"sync"
 	"syscall"
-	"unsafe"
 
 	"github.com/pkg/term/termios"
 )
@@ -22,8 +23,8 @@ type PosixParser struct {
 	initTermios sync.Once
 }
 
-// Setup should be called before starting input
-func (t *PosixParser) Setup() error {
+// SetUp should be called before starting input
+func (t *PosixParser) SetUp() error {
 	_, _, e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(t.fd), uintptr(syscall.F_SETFL),
 		uintptr(syscall.O_ASYNC|syscall.O_NONBLOCK))
 	if e != 0 {
@@ -93,46 +94,8 @@ func (t *PosixParser) restoreTermios() error {
 	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.origTermios)
 }
 
-// GetKey returns Key correspond to input byte codes.
-func (t *PosixParser) GetKey(b []byte) Key {
-	for _, k := range asciiSequences {
-		if bytes.Equal(k.ASCIICode, b) {
-			return k.Key
-		}
-	}
-	return NotDefined
-}
-
-// winsize is winsize struct got from the ioctl(2) system call.
-type ioctlWinsize struct {
-	Row uint16
-	Col uint16
-	X   uint16 // pixel value
-	Y   uint16 // pixel value
-}
-
-// GetWinSize returns WinSize object to represent width and height of terminal.
-func (t *PosixParser) GetWinSize() WinSize {
-	ws := &ioctlWinsize{}
-	retCode, _, errno := syscall.Syscall(
-		syscall.SYS_IOCTL,
-		uintptr(t.fd),
-		uintptr(syscall.TIOCGWINSZ),
-		uintptr(unsafe.Pointer(ws)))
-
-	if int(retCode) == -1 {
-		panic(errno)
-	}
-	return WinSize{
-		Row: ws.Row,
-		Col: ws.Col,
-	}
-}
-
-var _ ConsoleParser = &PosixParser{}
-
 // NewStandardInputParser returns ConsoleParser object to read from stdin.
-func NewStandardInputParser() *PosixParser {
+func NewStandardInputParser() ConsoleParser {
 	in, err := syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
 	if err != nil {
 		panic(err)
@@ -140,5 +103,44 @@ func NewStandardInputParser() *PosixParser {
 
 	return &PosixParser{
 		fd: in,
+	}
+}
+
+// Run start to worker goroutine.
+func (ip *InputProcessor) Run(ctx context.Context) (err error) {
+	log.Printf("[INFO] InputProcessor: Start running input processor")
+	defer log.Print("[INFO] InputProcessor: Stop input processor")
+	sigio := make(chan os.Signal, 1)
+	signal.Notify(sigio, syscall.SIGIO)
+
+	ip.in.SetUp()
+	defer ip.in.TearDown()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case p := <-ip.Pause:
+			if ip.pause == p {
+				return // distinct until changed
+			}
+			ip.pause = p
+
+			if ip.pause {
+				ip.in.TearDown()
+			} else {
+				ip.in.SetUp()
+			}
+		case <-sigio:
+			b, err := ip.in.Read()
+			if err == syscall.EAGAIN || err == syscall.EWOULDBLOCK {
+				continue
+			} else if err != nil {
+				log.Printf("[ERROR] cannot read %s", err)
+				return err
+			}
+			if !(len(b) == 1 && b[0] == 0) {
+				ip.UserInput <- b
+			}
+		}
 	}
 }

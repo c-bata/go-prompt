@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"unsafe"
 )
@@ -32,49 +33,26 @@ func GetWinSize(fd int) *Winsize {
 }
 
 func main() {
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(
-		signalChan,
-		syscall.SIGHUP,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT,
-		syscall.SIGWINCH,
-	)
-	ws := GetWinSize(syscall.Stdin)
+	var fd = syscall.Stdout
+	sigwinch := make(chan os.Signal, 1)
+	signal.Notify(sigwinch, syscall.SIGWINCH)
+
+	var wg sync.WaitGroup
+	defer func() {
+		wg.Wait()
+	}()
+	wg.Add(1)
+	ws := GetWinSize(fd)
 	fmt.Printf("Row %d : Col %d\n", ws.Row, ws.Col)
 
-	exitChan := make(chan int)
 	go func() {
 		for {
-			s := <-signalChan
-			switch s {
-			// kill -SIGHUP XXXX
-			case syscall.SIGHUP:
-				exitChan <- 0
-
-			// kill -SIGINT XXXX or Ctrl+c
-			case syscall.SIGINT:
-				exitChan <- 0
-
-			// kill -SIGTERM XXXX
-			case syscall.SIGTERM:
-				exitChan <- 0
-
-			// kill -SIGQUIT XXXX
-			case syscall.SIGQUIT:
-				exitChan <- 0
-
-			case syscall.SIGWINCH:
-				ws := GetWinSize(syscall.Stdin)
+			select {
+			case <-sigwinch:
+				ws := GetWinSize(fd)
 				fmt.Printf("Row %d : Col %d\n", ws.Row, ws.Col)
-
-			default:
-				exitChan <- 1
 			}
 		}
+		wg.Done()
 	}()
-
-	code := <-exitChan
-	os.Exit(code)
 }

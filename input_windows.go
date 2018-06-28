@@ -3,9 +3,11 @@
 package prompt
 
 import (
-	"bytes"
+	"context"
 	"errors"
+	"log"
 	"syscall"
+	"time"
 	"unicode/utf8"
 	"unsafe"
 
@@ -23,8 +25,8 @@ type WindowsParser struct {
 	tty *tty.TTY
 }
 
-// Setup should be called before starting input
-func (p *WindowsParser) Setup() error {
+// SetUp should be called before starting input
+func (p *WindowsParser) SetUp() error {
 	t, err := tty.Open()
 	if err != nil {
 		return err
@@ -36,16 +38,6 @@ func (p *WindowsParser) Setup() error {
 // TearDown should be called after stopping input
 func (p *WindowsParser) TearDown() error {
 	return p.tty.Close()
-}
-
-// GetKey returns Key correspond to input byte codes.
-func (p *WindowsParser) GetKey(b []byte) Key {
-	for _, k := range asciiSequences {
-		if bytes.Compare(k.ASCIICode, b) == 0 {
-			return k.Key
-		}
-	}
-	return NotDefined
 }
 
 // Read returns byte array.
@@ -76,19 +68,33 @@ func (p *WindowsParser) Read() ([]byte, error) {
 	return buf[:n], nil
 }
 
-// GetWinSize returns WinSize object to represent width and height of terminal.
-func (p *WindowsParser) GetWinSize() WinSize {
-	w, h, err := p.tty.Size()
-	if err != nil {
-		panic(err)
-	}
-	return WinSize{
-		Row: uint16(h),
-		Col: uint16(w),
-	}
-}
-
 // NewStandardInputParser returns ConsoleParser object to read from stdin.
 func NewStandardInputParser() ConsoleParser {
 	return &WindowsParser{}
+}
+
+// Run start to worker goroutine.
+func (ip *InputProcessor) Run(ctx context.Context) (err error) {
+	log.Printf("[INFO] InputProcessor: Start running input processor")
+	defer log.Print("[INFO] InputProcessor: Stop input processor")
+
+	ip.in.SetUp()
+	defer ip.in.TearDown()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			b, err := ip.in.Read()
+			if err != nil {
+				log.Printf("[ERROR] cannot read %s", err)
+				return err
+			}
+			if !(len(b) == 1 && b[0] == 0) {
+				ip.UserInput <- b
+			}
+			continue
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 }

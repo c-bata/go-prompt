@@ -1,13 +1,10 @@
-// +build !windows
-
 package prompt
 
 import (
 	"testing"
 )
 
-func TestPosixParserGetKey(t *testing.T) {
-	pp := &PosixParser{}
+func TestGetKey(t *testing.T) {
 	scenarioTable := []struct {
 		input    []byte
 		expected Key
@@ -23,7 +20,7 @@ func TestPosixParserGetKey(t *testing.T) {
 	}
 
 	for _, s := range scenarioTable {
-		key := pp.GetKey(s.input)
+		key := GetKey(s.input)
 		if key != s.expected {
 			t.Errorf("Should be %s, but got %s", key, s.expected)
 		}

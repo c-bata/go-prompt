@@ -5,19 +5,25 @@ package prompt
 import (
 	"io"
 
+	"context"
+
 	"github.com/mattn/go-colorable"
+	"github.com/mattn/go-tty"
 )
 
 // WindowsWriter is a ConsoleWriter implementation for Win32 console.
 // Output is converted from VT100 escape sequences by mattn/go-colorable.
 type WindowsWriter struct {
 	VT100Writer
-	out io.Writer
+	tty      *tty.TTY
+	writer   io.Writer
+	sigwinch chan WinSize
 }
 
 // Flush to flush buffer
 func (w *WindowsWriter) Flush() error {
-	_, err := w.out.Write(w.buffer)
+	t := w.tty.Output()
+	_, err := t.Write(w.buffer)
 	if err != nil {
 		return err
 	}
@@ -25,12 +31,43 @@ func (w *WindowsWriter) Flush() error {
 	return nil
 }
 
+// GetWinSize returns WinSize object to represent width and height of terminal.
+func (w *WindowsWriter) GetWinSize() WinSize {
+	row, col, err := w.tty.Size()
+	if err != nil {
+		panic(err)
+	}
+	return WinSize{
+		Row: uint16(row),
+		Col: uint16(col),
+	}
+}
+
+// SIGWINCH returns WinSize channel which send WinSize when window size is changed.
+func (w *WindowsWriter) SIGWINCH(ctx context.Context) chan WinSize {
+	sigwinch := make(chan WinSize, 1)
+	go func() {
+		select {
+		case <-ctx.Done():
+			return
+		case ws := <-w.tty.SIGWINCH():
+			sigwinch <- WinSize{Row: uint16(ws.H), Col: uint16(ws.W)}
+		}
+	}()
+	return sigwinch
+}
+
 var _ ConsoleWriter = &WindowsWriter{}
 
 // NewStandardOutputWriter returns ConsoleWriter object to write to stdout.
 // This generates win32 control sequences.
-func NewStandardOutputWriter() ConsoleWriter {
-	return &WindowsWriter{
-		out: colorable.NewColorableStdout(),
+func NewStandardOutputWriter() (ConsoleWriter, error) {
+	w := &WindowsWriter{}
+	t, err := tty.Open()
+	if err != nil {
+		return nil, err
 	}
+	w.tty = t
+	w.writer = colorable.NewColorable(t.Output())
+	return w, nil
 }

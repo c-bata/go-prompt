@@ -6,7 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -57,14 +59,22 @@ func (p *Prompt) Run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
-	sh := NewSignalHandler()
-	go sh.Run(ctx, cancel)
+	// Run signal handler goroutine to receive OS signals for quitting process.
+	sigquit := make(chan os.Signal, 1)
+	signal.Notify(sigquit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-sigquit:
+				cancel()
+			}
+		}
+	}()
 
 	// Run renderer process
-	renderer := NewRenderer(consoleWriter,
-		RenderRequest{buffer: p.buf, completion: p.completion},
-		p.in.GetWinSize(), p.rendererOptions...)
+	renderer := NewRenderer(consoleWriter, RenderRequest{buffer: p.buf, completion: p.completion}, p.rendererOptions...)
 	wg.Add(1)
 	go func() {
 		renderer.Run(ctx)
@@ -103,8 +113,6 @@ func (p *Prompt) Run() {
 					completion: p.completion,
 				}
 			}
-		case <-sh.SigWinch:
-			renderer.WinSize <- p.in.GetWinSize()
 		case <-ctx.Done():
 			return
 		}
@@ -112,7 +120,7 @@ func (p *Prompt) Run() {
 }
 
 func (p *Prompt) feed(renderer *Renderer, b []byte) (shouldExit bool, exec *Exec) {
-	key := p.in.GetKey(b)
+	key := GetKey(b)
 
 	// completion
 	completing := p.completion.Completing()
@@ -244,17 +252,24 @@ func (p *Prompt) Input() string {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// Run SignalHandler goroutine to receive OS signals that window size is changed and kill this process.
-	sh := NewSignalHandler()
-	go sh.Run(ctx, cancel)
+	// Run signal handler goroutine to receive OS signals for quitting process.
+	sigquit := make(chan os.Signal, 1)
+	signal.Notify(sigquit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-sigquit:
+				cancel()
+			}
+		}
+	}()
 
 	// Run renderer process
-	renderer := NewRenderer(consoleWriter,
-		RenderRequest{buffer: p.buf, completion: p.completion},
-		p.in.GetWinSize(), p.rendererOptions...)
+	renderer := NewRenderer(consoleWriter, RenderRequest{buffer: p.buf, completion: p.completion}, p.rendererOptions...)
 	wg.Add(1)
 	go func() {
-		renderer.WinSize <- p.in.GetWinSize()
 		renderer.Run(ctx)
 		wg.Done()
 	}()
@@ -282,8 +297,6 @@ func (p *Prompt) Input() string {
 					completion: p.completion,
 				}
 			}
-		case <-sh.SigWinch:
-			renderer.WinSize <- p.in.GetWinSize()
 		default:
 			time.Sleep(10 * time.Millisecond)
 		}
