@@ -1,6 +1,6 @@
 package prompt
 
-// CursorLineEnd Go to the End of the line
+// GoLineEnd Go to the End of the line
 func GoLineEnd(buf *Buffer) {
 	x := []rune(buf.Document().TextAfterCursor())
 	buf.CursorRight(len(x))

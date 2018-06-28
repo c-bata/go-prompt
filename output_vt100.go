@@ -232,7 +232,6 @@ func (w *VT100Writer) ClearTitle() {
 /* Font */
 
 // SetColor sets text and background colors. and specify whether text is bold.
-// Deprecated. This interface is not cool, please use SetDisplayAttributes.
 func (w *VT100Writer) SetColor(fg, bg Color, bold bool) {
 	if bold {
 		w.SetDisplayAttributes(fg, bg, DisplayBold)
@@ -242,7 +241,7 @@ func (w *VT100Writer) SetColor(fg, bg Color, bold bool) {
 	return
 }
 
-// SetDisplayAttributes set display attributes (Set colors, blink, bold, italic and so on).
+// SetDisplayAttributes to set VT100 display attributes.
 func (w *VT100Writer) SetDisplayAttributes(fg, bg Color, attrs ...DisplayAttribute) {
 	w.WriteRaw([]byte{0x1b, '['}) // control sequence introducer
 	defer w.WriteRaw([]byte{'m'}) // final character

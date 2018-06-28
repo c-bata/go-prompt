@@ -217,7 +217,7 @@ func OptionAddKeyBind(b ...KeyBind) Option {
 	}
 }
 
-// OptionAddKeyBind to set a custom key bind.
+// OptionAddASCIICodeBind to set a custom key bind.
 func OptionAddASCIICodeBind(b ...ASCIICodeBind) Option {
 	return func(p *Prompt) error {
 		p.ASCIICodeBindings = append(p.ASCIICodeBindings, b...)

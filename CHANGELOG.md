@@ -1,6 +1,10 @@
 # Change Log
 
-## v0.2.2 (2018/??/??)
+## v0.3.0 (2018/??/??)
+
+next release.
+
+## v0.2.2 (2018/06/28)
 
 ### What's new?
 
@@ -10,11 +14,6 @@
 * Add FilePathCompleter to complete file path on your system.
 * Add option to customize ascii code key bindings.
 * Add GetWordAfterCursor method in Document.
-* Add SetDisplayAttributes in ConsoleWriter for flexible customizing display attributes.
-
-### Fixed
-
-* Fix a bug in docker container [issue #39](https://github.com/c-bata/go-prompt/issues/39)
 
 ### Removed or Deprecated
 
