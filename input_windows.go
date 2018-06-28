@@ -84,13 +84,11 @@ func (ip *InputProcessor) Run(ctx context.Context) (err error) {
 		select {
 		case <-ctx.Done():
 			return
+		case <-ip.Pause:
+			// Ignore on windows.
 		default:
 			b, err := ip.in.Read()
-			if err != nil {
-				log.Printf("[ERROR] cannot read %s", err)
-				return err
-			}
-			if !(len(b) == 1 && b[0] == 0) {
+			if err == nil && !(len(b) == 1 && b[0] == 0) {
 				ip.UserInput <- b
 			}
 			continue

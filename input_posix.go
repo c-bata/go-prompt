@@ -138,9 +138,7 @@ func (ip *InputProcessor) Run(ctx context.Context) (err error) {
 				log.Printf("[ERROR] cannot read %s", err)
 				return err
 			}
-			if !(len(b) == 1 && b[0] == 0) {
-				ip.UserInput <- b
-			}
+			ip.UserInput <- b
 		}
 	}
 }

@@ -3,9 +3,8 @@
 package prompt
 
 import (
-	"io"
-
 	"context"
+	"io"
 
 	"github.com/mattn/go-colorable"
 	"github.com/mattn/go-tty"
@@ -21,8 +20,7 @@ type WindowsWriter struct {
 
 // Flush to flush buffer
 func (w *WindowsWriter) Flush() error {
-	t := w.tty.Output()
-	_, err := t.Write(w.buffer)
+	_, err := w.writer.Write(w.buffer)
 	if err != nil {
 		return err
 	}
@@ -32,7 +30,7 @@ func (w *WindowsWriter) Flush() error {
 
 // GetWinSize returns WinSize object to represent width and height of terminal.
 func (w *WindowsWriter) GetWinSize() WinSize {
-	row, col, err := w.tty.Size()
+	col, row, err := w.tty.Size()
 	if err != nil {
 		panic(err)
 	}
@@ -61,12 +59,13 @@ var _ ConsoleWriter = &WindowsWriter{}
 // NewStandardOutputWriter returns ConsoleWriter object to write to stdout.
 // This generates win32 control sequences.
 func NewStandardOutputWriter() (ConsoleWriter, error) {
-	w := &WindowsWriter{}
 	t, err := tty.Open()
 	if err != nil {
 		return nil, err
 	}
-	w.tty = t
-	w.writer = colorable.NewColorable(t.Output())
+	w := &WindowsWriter{
+		tty:    t,
+		writer: colorable.NewColorable(t.Output()),
+	}
 	return w, nil
 }

@@ -322,6 +322,7 @@ func (r *Renderer) breakLine(buffer *Buffer) {
 	r.out.WriteStr(buffer.Document().Text + "\n")
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 	r.out.Flush()
+	r.previousCursor = 0
 	r.previousRequest.buffer = buffer
 }
 
