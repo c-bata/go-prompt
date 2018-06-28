@@ -15,9 +15,8 @@ import (
 // Output is converted from VT100 escape sequences by mattn/go-colorable.
 type WindowsWriter struct {
 	VT100Writer
-	tty      *tty.TTY
-	writer   io.Writer
-	sigwinch chan WinSize
+	tty    *tty.TTY
+	writer io.Writer
 }
 
 // Flush to flush buffer

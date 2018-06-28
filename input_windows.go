@@ -95,6 +95,6 @@ func (ip *InputProcessor) Run(ctx context.Context) (err error) {
 			}
 			continue
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond) // FIXME: I wanna remove this
 	}
 }

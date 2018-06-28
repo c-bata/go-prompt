@@ -261,6 +261,8 @@ func (p *Prompt) Input() string {
 			case <-ctx.Done():
 				return
 			case <-sigquit:
+				close(sigquit)
+				signal.Stop(sigquit)
 				cancel()
 			}
 		}

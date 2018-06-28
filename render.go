@@ -90,6 +90,7 @@ type Renderer struct {
 	Render chan RenderRequest
 }
 
+// Run to start worker goroutine for rendering.
 func (r *Renderer) Run(ctx context.Context) {
 	r.SetUp()
 	defer r.TearDown()
@@ -116,6 +117,7 @@ func (r *Renderer) Run(ctx context.Context) {
 	}
 }
 
+// RenderRequest is used when requesting render
 type RenderRequest struct {
 	buffer     *Buffer
 	completion *CompletionManager
