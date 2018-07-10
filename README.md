@@ -103,7 +103,13 @@ Masashi Shibata
 
 * Twitter: [@c\_bata\_](https://twitter.com/c_bata_/)
 * Github: [@c-bata](https://github.com/c-bata/)
-* Facebook: [Masashi Shibata](https://www.facebook.com/masashi.cbata)
+
+## Supporting go-prompt
+
+Started getting support by opencollective. 
+
+[![Become a backer](https://opencollective.com/go-prompt/tiers/backer.svg?avatarHeight=64)](https://opencollective.com/go-prompt#backers)
+[![Become a sponsor](https://opencollective.com/go-prompt/tiers/sponsor.svg?avatarHeight=64)](https://opencollective.com/go-prompt#sponsor)
 
 ## License
 
