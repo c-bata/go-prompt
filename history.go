@@ -1,9 +1,5 @@
 package prompt
 
-import (
-	"math"
-)
-
 // History stores the texts that are entered.
 type History struct {
 	histories []string
@@ -61,7 +57,11 @@ func (h *History) GetLines(lines int) []string {
         lines = len(h.histories)
     }
     
-    begin := int(math.Abs(float64(lines - h.selected)))
+    // begin := int(math.Abs(float64(lines - h.selected)))
+    begin := lines - h.selected
+    if lines - h.selected < 0 {
+    	begin = -begin
+    }
     if begin > h.selected - 1 {
     	begin = 0
     }
