@@ -66,17 +66,16 @@ func (h *History) GetLines(lines int) []string {
     	begin = 0
     }
 	return h.histories[begin:h.selected]
-    
-}
-
-// Get the most rest entry in history
-func (h *History) GetLast() string {
-    return h.histories[len(h.histories) - 1]
 }
 
 // Get the specific line in the history by index
 func (h *History) GetLine(idx int) string {
     return h.histories[idx]
+}
+
+// Get the most rest entry in history
+func (h *History) GetLast() string {
+    return h.GetLine(len(h.histories) - 1)
 }
 
 // NewHistory returns new history object.
