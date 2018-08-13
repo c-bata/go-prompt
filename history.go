@@ -1,5 +1,9 @@
 package prompt
 
+import (
+	"math"
+)
+
 // History stores the texts that are entered.
 type History struct {
 	histories []string
@@ -53,10 +57,16 @@ func (h *History) Newer(buf *Buffer) (new *Buffer, changed bool) {
 
 // Get x lines back in the history as a string array
 func (h *History) GetLines(lines int) []string {
-    if lines > len(h.histories)  {
+	if lines > len(h.histories) {
         lines = len(h.histories)
     }
-    return h.histories[h.selected - lines:h.selected]
+    
+    begin := int(math.Abs(float64(lines - h.selected)))
+    if begin > h.selected - 1 {
+    	begin = 0
+    }
+	return h.histories[begin:h.selected]
+    
 }
 
 // Get the most rest entry in history

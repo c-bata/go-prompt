@@ -92,12 +92,11 @@ func TestHistoryGetLines(t *testing.T) {
 		t.Errorf("History.GetLines(5) returned %s, expected %s", returnGet, expectedGetLines3)
 	}
 
-	expectedGetLines4 := []string{"history1", "history2", "history3", "history4"}
-	h = NewHistory()
-	h.Add("history1")
-	h.Add("history2")
-	h.Add("history3")
-	h.Add("history4")
+	expectedGetLines4 := []string{"history1"}
+	h = &History{    
+	    histories: []string{"history1", "history2", "history3", "history4"},
+	    selected: 1,
+	}
 	returnGet = h.GetLines(4)
 	if !reflect.DeepEqual(expectedGetLines4, returnGet) {
 		t.Errorf("History.GetLines(4) returned %s, expected %s", returnGet, expectedGetLines4)
