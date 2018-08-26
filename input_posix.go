@@ -49,7 +49,7 @@ func (t *PosixParser) TearDown() error {
 // Read returns byte array.
 func (t *PosixParser) Read() ([]byte, error) {
 	buf := make([]byte, maxReadBytes)
-	n, err := syscall.Read(syscall.Stdin, buf)
+	n, err := syscall.Read(t.fd, buf)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -122,7 +122,12 @@ var _ ConsoleParser = &PosixParser{}
 
 // NewStandardInputParser returns ConsoleParser object to read from stdin.
 func NewStandardInputParser() *PosixParser {
+	in, err := syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
+	if err != nil {
+		panic(err)
+	}
+
 	return &PosixParser{
-		fd: syscall.Stdin,
+		fd: in,
 	}
 }
