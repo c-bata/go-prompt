@@ -107,25 +107,17 @@ Masashi Shibata
 
 ## Supporting go-prompt
 
-Started getting support by opencollective. 
-
 ### Contributors
 
 This project exists thanks to all the people who contribute. 
+
 <a href="graphs/contributors"><img src="https://opencollective.com/go-prompt/contributors.svg?width=890&button=false" /></a>
 
+### Backers and Sponsors (OpenCollective)
 
-### Backers
+Started getting support via opencollective. If you support this project by becoming a sponsor, your logo will show up here with a link to your website.
 
-Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/go-prompt#backer)]
-
-<a href="https://opencollective.com/go-prompt#backers" target="_blank"><img src="https://opencollective.com/go-prompt/backers.svg?width=890"></a>
-
-
-### Sponsors
-
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/go-prompt#sponsor)]
-
+[![Become a backer](https://opencollective.com/go-prompt/tiers/backer.svg?avatarHeight=64)](https://opencollective.com/go-prompt#backers)
 <a href="https://opencollective.com/go-prompt/sponsor/0/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/0/avatar.svg"></a>
 <a href="https://opencollective.com/go-prompt/sponsor/1/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/1/avatar.svg"></a>
 <a href="https://opencollective.com/go-prompt/sponsor/2/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/2/avatar.svg"></a>
@@ -137,8 +129,7 @@ Support this project by becoming a sponsor. Your logo will show up here with a l
 <a href="https://opencollective.com/go-prompt/sponsor/8/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/8/avatar.svg"></a>
 <a href="https://opencollective.com/go-prompt/sponsor/9/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/9/avatar.svg"></a>
 
-
-
 ## License
 
 This software is licensed under the MIT license, see [LICENSE](./LICENSE) for more information.
+
