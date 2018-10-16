@@ -15,9 +15,17 @@ type PosixWriter struct {
 
 // Flush to flush buffer
 func (w *PosixWriter) Flush() error {
-	_, err := syscall.Write(w.fd, w.buffer)
-	if err != nil {
-		return err
+	l := len(w.buffer)
+	offset := 0
+	for {
+		n, err := syscall.Write(w.fd, w.buffer[offset:])
+		if err != nil {
+			return err
+		}
+		offset += n
+		if offset == l {
+			break
+		}
 	}
 	w.buffer = []byte{}
 	return nil
