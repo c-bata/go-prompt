@@ -40,6 +40,11 @@ func (w *PosixWriter) Flush() error {
 	return nil
 }
 
+// UseStderr to set stderr as output
+func (w *PosixWriter) UseStderr() {
+	w.fd = syscall.Stderr
+}
+
 var _ ConsoleWriter = &PosixWriter{}
 
 // NewStandardOutputWriter returns ConsoleWriter object to write to stdout.

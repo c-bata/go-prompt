@@ -25,6 +25,11 @@ func (w *WindowsWriter) Flush() error {
 	return nil
 }
 
+// UseStderr to set stderr as output
+func (w *WindowsWriter) UseStderr() {
+	w.out = colorable.NewColorableStderr()
+}
+
 var _ ConsoleWriter = &WindowsWriter{}
 
 // NewStandardOutputWriter returns ConsoleWriter object to write to stdout.

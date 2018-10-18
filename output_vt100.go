@@ -270,6 +270,11 @@ func (w *VT100Writer) SetDisplayAttributes(fg, bg Color, attrs ...DisplayAttribu
 	return
 }
 
+// UseStderr to set stderr as output
+func (w *VT100Writer) UseStderr() {
+	// Do nothing
+}
+
 var displayAttributeParameters = map[DisplayAttribute][]byte{
 	DisplayReset:        {'0'},
 	DisplayBold:         {'1'},

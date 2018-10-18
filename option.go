@@ -225,6 +225,14 @@ func OptionAddASCIICodeBind(b ...ASCIICodeBind) Option {
 	}
 }
 
+// OptionUseStderr to set stderr as output
+func OptionUseStderr() Option {
+	return func(p *Prompt) error {
+		p.renderer.out.UseStderr()
+		return nil
+	}
+}
+
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 	pt := &Prompt{
