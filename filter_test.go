@@ -139,7 +139,7 @@ func TestFilter(t *testing.T) {
 	}
 }
 
-func TestFuzzy(t *testing.T) {
+func TestFuzzyMatch(t *testing.T) {
 	tests := []struct {
 		s     string
 		sub   string
