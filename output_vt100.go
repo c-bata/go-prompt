@@ -236,7 +236,7 @@ func (w *VT100Writer) SetColor(fg, bg Color, bold bool) {
 	if bold {
 		w.SetDisplayAttributes(fg, bg, DisplayBold)
 	} else {
-		w.SetDisplayAttributes(fg, bg, DisplayDefaultFont)
+		w.SetDisplayAttributes(fg, bg, DisplayDefaultFont, DisplayReset)
 	}
 	return
 }
