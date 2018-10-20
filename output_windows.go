@@ -27,10 +27,23 @@ func (w *WindowsWriter) Flush() error {
 
 var _ ConsoleWriter = &WindowsWriter{}
 
-// NewStandardOutputWriter returns ConsoleWriter object to write to stdout.
+var (
+	// Deprecated: Please use NewStdoutWriter
+	NewStandardOutputWriter = NewStdoutWriter
+)
+
+// NewStdoutWriter returns ConsoleWriter object to write to stdout.
 // This generates win32 control sequences.
-func NewStandardOutputWriter() ConsoleWriter {
+func NewStdoutWriter() ConsoleWriter {
 	return &WindowsWriter{
 		out: colorable.NewColorableStdout(),
+	}
+}
+
+// NewStderrWriter returns ConsoleWriter object to write to stderr.
+// This generates win32 control sequences.
+func NewStderrWriter() ConsoleWriter {
+	return &WindowsWriter{
+		out: colorable.NewColorableStderr(),
 	}
 }
