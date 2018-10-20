@@ -7,7 +7,7 @@ var (
 	consoleWriter   ConsoleWriter
 )
 
-func RegisterConsoleWriter(f ConsoleWriter) {
+func registerConsoleWriter(f ConsoleWriter) {
 	consoleWriterMu.Lock()
 	defer consoleWriterMu.Unlock()
 	consoleWriter = f
