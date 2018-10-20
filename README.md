@@ -4,6 +4,7 @@
 ![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)
 [![Backers on Open Collective](https://opencollective.com/go-prompt/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/go-prompt/sponsors/badge.svg)](#sponsors)
 [![GoDoc](https://godoc.org/github.com/c-bata/go-prompt?status.svg)](https://godoc.org/github.com/c-bata/go-prompt) 
+[![Build Status](https://travis-ci.org/c-bata/go-prompt.svg?branch=master)](https://travis-ci.org/c-bata/go-prompt)
 
 A library for building powerful interactive prompts inspired by [python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit),
 making it easier to build cross-platform command line tools using Go.
