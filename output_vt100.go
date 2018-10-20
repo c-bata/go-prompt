@@ -236,7 +236,9 @@ func (w *VT100Writer) SetColor(fg, bg Color, bold bool) {
 	if bold {
 		w.SetDisplayAttributes(fg, bg, DisplayBold)
 	} else {
-		w.SetDisplayAttributes(fg, bg, DisplayDefaultFont)
+		// If using `DisplayDefualt`, it will be broken in some environment.
+		// Details are https://github.com/c-bata/go-prompt/pull/85
+		w.SetDisplayAttributes(fg, bg, DisplayReset)
 	}
 	return
 }
