@@ -25,6 +25,9 @@ A simple [http-prompt](https://github.com/eliangcs/http-prompt) implementation u
 
 ![live-prefix](https://github.com/c-bata/assets/raw/master/go-prompt/examples/live-prefix.gif)
 
+A example application which changes a prefix string dynamically.
+This feature is used like [ktr0731/evans](https://github.com/ktr0731/evans) which is interactive gRPC client using go-prompt.
+
 ## exec-command
 
 Run another CLI tool via `os/exec` package.
