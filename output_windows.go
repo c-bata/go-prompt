@@ -29,7 +29,7 @@ var _ ConsoleWriter = &WindowsWriter{}
 
 // NewStandardOutputWriter returns ConsoleWriter object to write to stdout.
 // This generates win32 control sequences.
-func NewStandardOutputWriter() *WindowsWriter {
+func NewStandardOutputWriter() ConsoleWriter {
 	return &WindowsWriter{
 		out: colorable.NewColorableStdout(),
 	}

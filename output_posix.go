@@ -45,7 +45,7 @@ var _ ConsoleWriter = &PosixWriter{}
 // NewStandardOutputWriter returns ConsoleWriter object to write to stdout.
 // This generates VT100 escape sequences because almost terminal emulators
 // in POSIX OS built on top of a VT100 specification.
-func NewStandardOutputWriter() *PosixWriter {
+func NewStandardOutputWriter() ConsoleWriter {
 	return &PosixWriter{
 		fd: syscall.Stdout,
 	}

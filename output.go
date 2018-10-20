@@ -1,5 +1,18 @@
 package prompt
 
+import "sync"
+
+var (
+	consoleWriterMu sync.Mutex
+	consoleWriter   ConsoleWriter
+)
+
+func RegisterConsoleWriter(f ConsoleWriter) {
+	consoleWriterMu.Lock()
+	defer consoleWriterMu.Unlock()
+	consoleWriter = f
+}
+
 // DisplayAttribute represents display  attributes like Blinking, Bold, Italic and so on.
 type DisplayAttribute int
 
