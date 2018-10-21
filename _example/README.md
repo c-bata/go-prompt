@@ -3,17 +3,11 @@
 This directory includes some examples using go-prompt.
 These examples are useful to know the usage of go-prompt and check behavior for development.
 
-## simple-input
+## simple-echo
 
 ![simple-input](https://github.com/c-bata/assets/raw/master/go-prompt/examples/input.gif)
 
-A simple input example using `prompt.Input`.
-
-## simple-echo
-
-![simple-echo](https://github.com/c-bata/assets/raw/master/go-prompt/examples/input.gif)
-
-A simple echo application using `prompt.Run`.
+A simple echo example using `prompt.Input`.
 
 ## http-prompt
 
