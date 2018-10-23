@@ -26,6 +26,10 @@ func TestDocument_DisplayCursorPosition(t *testing.T) {
 			expected: 4,
 		},
 		{
+			// If you're facing test failure on this test case and your terminal is iTerm2,
+			// please check 'Profile -> Text' configuration. 'Use Unicode version 9 widths'
+			// must be checked.
+			// https://github.com/c-bata/go-prompt/pull/99
 			document: &Document{
 				Text:           "Добрый день",
 				cursorPosition: 3,
