@@ -228,7 +228,7 @@ func OptionAddASCIICodeBind(b ...ASCIICodeBind) Option {
 
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
-	defaultWriter := NewStandardOutputWriter()
+	defaultWriter := NewStdoutWriter()
 	registerConsoleWriter(defaultWriter)
 
 	pt := &Prompt{

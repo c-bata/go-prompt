@@ -42,11 +42,25 @@ func (w *PosixWriter) Flush() error {
 
 var _ ConsoleWriter = &PosixWriter{}
 
-// NewStandardOutputWriter returns ConsoleWriter object to write to stdout.
+var (
+	// Deprecated: Please use NewStdoutWriter
+	NewStandardOutputWriter = NewStdoutWriter
+)
+
+// NewStdoutWriter returns ConsoleWriter object to write to stdout.
 // This generates VT100 escape sequences because almost terminal emulators
 // in POSIX OS built on top of a VT100 specification.
-func NewStandardOutputWriter() ConsoleWriter {
+func NewStdoutWriter() ConsoleWriter {
 	return &PosixWriter{
 		fd: syscall.Stdout,
+	}
+}
+
+// NewStderrWriter returns ConsoleWriter object to write to stderr.
+// This generates VT100 escape sequences because almost terminal emulators
+// in POSIX OS built on top of a VT100 specification.
+func NewStderrWriter() ConsoleWriter {
+	return &PosixWriter{
+		fd: syscall.Stderr,
 	}
 }
