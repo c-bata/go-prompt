@@ -226,6 +226,14 @@ func OptionAddASCIICodeBind(b ...ASCIICodeBind) Option {
 	}
 }
 
+// OptionShowCompletionAtStart to set completion window is open at start.
+func OptionShowCompletionAtStart() Option {
+	return func(p *Prompt) error {
+		p.completion.showAtStart = true
+		return nil
+	}
+}
+
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 	defaultWriter := NewStdoutWriter()

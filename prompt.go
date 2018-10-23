@@ -51,6 +51,10 @@ func (p *Prompt) Run() {
 	p.setUp()
 	defer p.tearDown()
 
+	if p.completion.showAtStart {
+		p.completion.Update(*p.buf.Document())
+	}
+
 	p.renderer.Render(p.buf, p.completion)
 
 	bufCh := make(chan []byte, 128)
@@ -231,6 +235,10 @@ func (p *Prompt) Input() string {
 
 	p.setUp()
 	defer p.tearDown()
+
+	if p.completion.showAtStart {
+		p.completion.Update(*p.buf.Document())
+	}
 
 	p.renderer.Render(p.buf, p.completion)
 	bufCh := make(chan []byte, 128)
