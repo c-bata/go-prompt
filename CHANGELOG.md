@@ -4,6 +4,24 @@
 
 next release.
 
+## v0.2.3 (2018/10/25)
+
+### What's new?
+
+* Add `prompt.FuzzyFilter` for fuzzy matching at [#92](https://github.com/c-bata/go-prompt/pull/92).
+* Add `OptionShowCompletionAtStart` to show completion at start at [#100](https://github.com/c-bata/go-prompt/pull/100).
+* Add `prompt.NewStderrWriter` at [#102](https://github.com/c-bata/go-prompt/pull/102).
+
+### Fixed
+
+* Fix resetting display attributes (please see [pull #104](https://github.com/c-bata/go-prompt/pull/104) for more details).
+* Fix error handling of Flush function in ConsoleWriter (please see [pull #97](https://github.com/c-bata/go-prompt/pull/97) for more details).
+* Fix panic problem when reading from stdin before starting the prompt (please see [issue #88](https://github.com/c-bata/go-prompt/issues/88) for more details).
+
+### Removed or Deprecated
+
+* `prompt.NewStandardOutputWriter` is deprecated. Please use `prompt.NewStdoutWriter`.
+
 ## v0.2.2 (2018/06/28)
 
 ### What's new?
