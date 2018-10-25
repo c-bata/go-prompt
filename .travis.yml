@@ -28,3 +28,4 @@ script:
 
 allow_failures:
   - go: tip
+  - os: windows
