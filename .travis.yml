@@ -22,7 +22,7 @@ jobs:
       go: "1.11.x"
       os: osx
 
-scripts:
+script:
   - make test
   - make build
 
