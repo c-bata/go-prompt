@@ -26,6 +26,7 @@ script:
   - make test
   - make build
 
-allow_failures:
-  - go: tip
-  - os: windows
+matrix:
+  allow_failures:
+    - go: tip
+    - os: windows
