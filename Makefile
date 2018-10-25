@@ -10,7 +10,7 @@ setup:  ## Setup for required tools.
 
 .PHONY: fmt
 fmt: ## Formatting source codes.
-	@goimports -w .
+	@goimports -w $(find . -type f -name '*.go' -not -path "./vendor/*")
 
 .PHONY: lint
 lint: ## Run golint and go vet.
