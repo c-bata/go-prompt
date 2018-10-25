@@ -15,6 +15,7 @@ fmt: ## Formatting source codes.
 .PHONY: lint
 lint: ## Run golint and go vet.
 	@golint .
+	@golint -set_exit_status=1
 	@go vet .
 
 .PHONY: test

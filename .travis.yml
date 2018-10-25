@@ -10,11 +10,16 @@ go:
   - "1.11.x"
   - master
 
+matrix:
+  allow_failures:
+    - go: master
+
 install:
   - make setup
 
 script:
   - go build ./_example/simple-echo/main.go
+  - diff <(goimports -d .) <(echo -n "")
   - make lint
   - make test
   - make race-test
