@@ -1,6 +1,15 @@
 sudo: false
 language: go
 
+go:
+  - "1.11.x"
+  - tip
+
+os:
+  - linux
+  - osx
+  - windows
+
 install:
   - make setup
 
@@ -19,20 +28,12 @@ jobs:
       go:
         - "1.11.x"
         - tip
-      os:
-        - linux
-        - osx
-        - windows
     - stage: Unit Test
       script:
         - make test
       go:
         - "1.11.x"
         - tip
-      os:
-        - linux
-        - osx
-        - windows
   allow_failures:
     - go: tip
 
