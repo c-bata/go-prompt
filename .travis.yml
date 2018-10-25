@@ -21,11 +21,10 @@ jobs:
         - make lint
       go: "1.11.x"
       os: osx
-    - stage: Build
-      script:
-        - make build
-    - stage: Unit Test
-      script:
-        - make test
-  allow_failures:
-    - go: tip
+
+scripts:
+  - make test
+  - make build
+
+allow_failures:
+  - go: tip
