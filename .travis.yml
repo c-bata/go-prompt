@@ -22,4 +22,3 @@ script:
   - diff <(goimports -d .) <(echo -n "")
   - make lint
   - make test
-  - make race-test

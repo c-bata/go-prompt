@@ -19,17 +19,13 @@ lint: ## Run golint and go vet.
 	@go vet .
 
 .PHONY: test
-test:  ## Run the tests.
-	@go test .
+test:  ## Run the tests with race condition checking.
+	@go test -race .
 
 .PHONY: coverage
 cover:  ## Run the tests.
 	@go test -coverprofile=coverage.o
 	@go tool cover -func=coverage.o
-
-.PHONY: race-test
-race-test:  ## Checking the race condition.
-	@go test -race .
 
 .PHONY: help
 help: ## Show help text
