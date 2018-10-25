@@ -27,6 +27,14 @@ cover:  ## Run the tests.
 	@go test -coverprofile=coverage.o
 	@go tool cover -func=coverage.o
 
+.PHONY: build
+build: ## Build example command lines.
+	go build -o bin/exec-command ./_example/exec-command/main.go
+	go build -o bin/http-prompt ./_example/http-prompt/main.go
+	go build -o bin/live-prefix ./_example/live-prefix/main.go
+	go build -o bin/simple-echo ./_example/simple-echo/main.go
+	go build -o bin/simple-echo-cjk-cyrillic ./_example/simple-echo/cjk-cyrillic/main.go
+
 .PHONY: help
 help: ## Show help text
 	@echo "Commands:"
