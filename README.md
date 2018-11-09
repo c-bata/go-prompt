@@ -113,7 +113,7 @@ Masashi Shibata
 
 This project exists thanks to all the people who contribute. 
 
-<a href="graphs/contributors"><img src="https://opencollective.com/go-prompt/contributors.svg?width=890&button=false" /></a>
+<a href="https://github.com/c-bata/go-prompt/graphs/contributors"><img src="https://opencollective.com/go-prompt/contributors.svg?width=890&button=false" /></a>
 
 ### Backers and Sponsors (OpenCollective)
 
