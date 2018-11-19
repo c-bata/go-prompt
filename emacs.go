@@ -106,6 +106,12 @@ var emacsKeyBindings = []KeyBind{
 			buf.DeleteBeforeCursor(len([]rune(buf.Document().GetWordBeforeCursorWithSpace())))
 		},
 	},
+	{
+		Key: AltBackspace,
+		Fn: func(buf *Buffer) {
+			buf.DeleteBeforeCursor(len([]rune(buf.Document().GetWordBeforeCursorWithSpace())))
+		},
+	},
 	// Clear the Screen, similar to the clear command
 	{
 		Key: ControlL,

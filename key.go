@@ -72,6 +72,7 @@ const (
 	BackTab
 	Insert
 	Backspace
+	AltBackspace
 
 	// Aliases.
 	Tab

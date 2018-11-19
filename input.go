@@ -56,6 +56,7 @@ var asciiSequences = []*ASCIICode{
 	{Key: ControlCircumflex, ASCIICode: []byte{0x1e}},
 	{Key: ControlUnderscore, ASCIICode: []byte{0x1f}},
 	{Key: Backspace, ASCIICode: []byte{0x7f}},
+	{Key: AltBackspace, ASCIICode: []byte{0x1b, 0x7f}},
 
 	{Key: Up, ASCIICode: []byte{0x1b, 0x5b, 0x41}},
 	{Key: Down, ASCIICode: []byte{0x1b, 0x5b, 0x42}},
