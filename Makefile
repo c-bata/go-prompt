@@ -1,5 +1,7 @@
 .DEFAULT_GOAL := help
 
+SOURCES := $(shell find . -path ./vendor -prune -o -name "*.go" -not -name '*_test.go' -print)
+
 .PHONY: setup
 setup:  ## Setup for required tools.
 	go get -u golang.org/x/lint/golint
@@ -9,8 +11,8 @@ setup:  ## Setup for required tools.
 	dep ensure
 
 .PHONY: fmt
-fmt: ## Formatting source codes.
-	@goimports -w $(find . -type f -name '*.go' -not -path "./vendor/*")
+fmt: $(SOURCES) ## Formatting source codes.
+	@goimports -w $^
 
 .PHONY: lint
 lint: ## Run golint and go vet.
@@ -29,11 +31,7 @@ cover:  ## Run the tests.
 
 .PHONY: build
 build: ## Build example command lines.
-	go build -o bin/exec-command ./_example/exec-command/main.go
-	go build -o bin/http-prompt ./_example/http-prompt/main.go
-	go build -o bin/live-prefix ./_example/live-prefix/main.go
-	go build -o bin/simple-echo ./_example/simple-echo/main.go
-	go build -o bin/simple-echo-cjk-cyrillic ./_example/simple-echo/cjk-cyrillic/main.go
+	./_example/build.sh
 
 .PHONY: help
 help: ## Show help text

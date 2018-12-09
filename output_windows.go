@@ -5,7 +5,7 @@ package prompt
 import (
 	"io"
 
-	"github.com/mattn/go-colorable"
+	colorable "github.com/mattn/go-colorable"
 )
 
 // WindowsWriter is a ConsoleWriter implementation for Win32 console.

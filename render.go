@@ -3,7 +3,7 @@ package prompt
 import (
 	"runtime"
 
-	"github.com/mattn/go-runewidth"
+	runewidth "github.com/mattn/go-runewidth"
 )
 
 // Render to render prompt information from state of Buffer.
