@@ -11,9 +11,13 @@ os:
   - windows
 
 install:
-  - make setup
+  - go get -u golang.org/x/lint/golint
+  - go get -u golang.org/x/tools/cmd/goimports
+  - go get -u github.com/golang/dep/cmd/dep
+  - dep ensure
 
 jobs:
+  fast_finish: true
   include:
     - stage: Lint
       script:
@@ -23,8 +27,8 @@ jobs:
       os: osx
 
 script:
-  - make test
-  - make build
+  - go test -race ./...
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make build; fi
 
 matrix:
   allow_failures:
