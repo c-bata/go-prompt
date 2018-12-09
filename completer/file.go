@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	// FilePathCompletionSeparator holds separate characters.
 	FilePathCompletionSeparator = string([]byte{' ', os.PathSeparator})
 )
 

@@ -2,9 +2,7 @@ package strings
 
 import "unicode/utf8"
 
-// IndexNotByte is similar with strings.IndexByte but returns
-// the index of the first instance of character except c in s.
-// or -1 if s only contains c.
+// IndexNotByte is similar with strings.IndexByte but showing the opposite behavior.
 func IndexNotByte(s string, c byte) int {
 	n := len(s)
 	for i := 0; i < n; i++ {
@@ -15,9 +13,7 @@ func IndexNotByte(s string, c byte) int {
 	return -1
 }
 
-// LastIndexByte is similar with strings.IndexByte but returns
-// the index of the last instance of character except c in s,
-// or -1 if s only contains c.
+// LastIndexNotByte is similar with strings.LastIndexByte but showing the opposite behavior.
 func LastIndexNotByte(s string, c byte) int {
 	for i := len(s) - 1; i >= 0; i-- {
 		if s[i] != c {
@@ -44,9 +40,7 @@ func makeASCIISet(chars string) (as asciiSet, ok bool) {
 	return as, true
 }
 
-// IndexNotAny is similar with strings.IndexAny but returns
-// the index of the first instance of any Unicode code point from chars in s,
-// or -1 if no Unicode code point from chars is present in s.
+// IndexNotAny is similar with strings.IndexAny but showing the opposite behavior.
 func IndexNotAny(s, chars string) int {
 	if len(chars) > 0 {
 		if len(s) > 8 {
@@ -76,9 +70,7 @@ func IndexNotAny(s, chars string) int {
 	return -1
 }
 
-// LastIndexAny returns the index of the last instance of any Unicode code
-// point from chars in s, or -1 if no Unicode code point from chars is
-// present in s.
+// LastIndexNotAny is similar with strings.LastIndexAny but showing the opposite behavior.
 func LastIndexNotAny(s, chars string) int {
 	if len(chars) > 0 {
 		if len(s) > 8 {
