@@ -1,5 +1,6 @@
 .DEFAULT_GOAL := help
 
+PKGS := $(shell go list ./...)
 SOURCES := $(shell find . -path ./vendor -prune -o -name "*.go" -not -name '*_test.go' -print)
 
 .PHONY: setup
@@ -16,9 +17,8 @@ fmt: $(SOURCES) ## Formatting source codes.
 
 .PHONY: lint
 lint: ## Run golint and go vet.
-	@golint .
-	@golint -set_exit_status=1
-	@go vet .
+	@golint -set_exit_status=1 $(PKGS)
+	@go vet $(PKGS)
 
 .PHONY: test
 test:  ## Run tests with race condition checking.
