@@ -25,10 +25,14 @@ jobs:
         - make lint
       go: "1.11.x"
       os: osx
+    - stage: Examples
+      script:
+        - ./_example/build.sh
+      go: "1.11.x"
+      os: osx
 
 script:
   - go test -race ./...
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make build; fi
 
 matrix:
   allow_failures:
