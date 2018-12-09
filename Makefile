@@ -1,5 +1,7 @@
 .DEFAULT_GOAL := help
 
+SOURCES := $(shell find . -path ./vendor -prune -o -name "*.go" -not -name '*_test.go' -print)
+
 .PHONY: setup
 setup:  ## Setup for required tools.
 	go get -u golang.org/x/lint/golint
@@ -9,8 +11,8 @@ setup:  ## Setup for required tools.
 	dep ensure
 
 .PHONY: fmt
-fmt: ## Formatting source codes.
-	@goimports -w $(find . -type f -name '*.go' -not -path "./vendor/*")
+fmt: $(SOURCES) ## Formatting source codes.
+	@goimports -w $^
 
 .PHONY: lint
 lint: ## Run golint and go vet.

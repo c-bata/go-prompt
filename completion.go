@@ -4,7 +4,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/mattn/go-runewidth"
+	runewidth "github.com/mattn/go-runewidth"
 )
 
 const (
