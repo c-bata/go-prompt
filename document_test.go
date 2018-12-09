@@ -1040,18 +1040,3 @@ func TestDocument_GetEndOfLinePosition(t *testing.T) {
 		t.Errorf("Should be %#v, got %#v", ex, ac)
 	}
 }
-
-func TestBisectRight(t *testing.T) {
-	// Thanks!! https://play.golang.org/p/y9NRj_XVIW
-	in := []int{1, 2, 3, 3, 3, 6, 7}
-
-	r := bisectRight(in, 0)
-	if r != 0 {
-		t.Errorf("number 0 should inserted at 0 position, but got %d", r)
-	}
-
-	r = bisectRight(in, 4)
-	if r != 5 {
-		t.Errorf("number 4 should inserted at 5 position, but got %d", r)
-	}
-}

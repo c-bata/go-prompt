@@ -1,10 +1,10 @@
 package prompt
 
 import (
-	"sort"
 	"strings"
 	"unicode/utf8"
 
+	"github.com/c-bata/go-prompt/internal/bisect"
 	runewidth "github.com/mattn/go-runewidth"
 )
 
@@ -292,7 +292,7 @@ func (d *Document) lineStartIndexes() []int {
 // the first character on that line.
 func (d *Document) findLineStartIndex(index int) (pos int, lineStartIndex int) {
 	indexes := d.lineStartIndexes()
-	pos = bisectRight(indexes, index) - 1
+	pos = bisect.Right(indexes, index) - 1
 	lineStartIndex = indexes[pos]
 	return
 }
@@ -431,18 +431,6 @@ func (d *Document) leadingWhitespaceInCurrentLine() (margin string) {
 	trimmed := strings.TrimSpace(d.CurrentLine())
 	margin = d.CurrentLine()[:len(d.CurrentLine())-len(trimmed)]
 	return
-}
-
-// bisectRight to Locate the insertion point for v in a to maintain sorted order.
-func bisectRight(a []int, v int) int {
-	return bisectRightRange(a, v, 0, len(a))
-}
-
-func bisectRightRange(a []int, v int, lo, hi int) int {
-	s := a[lo:hi]
-	return sort.Search(len(s), func(i int) bool {
-		return s[i] > v
-	})
 }
 
 func indexByteNot(s string, c byte) int {
