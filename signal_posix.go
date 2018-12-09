@@ -3,10 +3,11 @@
 package prompt
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/c-bata/go-prompt/internal/debug"
 )
 
 func (p *Prompt) handleSignals(exitCh chan int, winSizeCh chan *WinSize, stop chan struct{}) {
@@ -23,24 +24,24 @@ func (p *Prompt) handleSignals(exitCh chan int, winSizeCh chan *WinSize, stop ch
 	for {
 		select {
 		case <-stop:
-			log.Println("[INFO] stop handleSignals")
+			debug.Log("stop handleSignals")
 			return
 		case s := <-sigCh:
 			switch s {
 			case syscall.SIGINT: // kill -SIGINT XXXX or Ctrl+c
-				log.Println("[SIGNAL] Catch SIGINT")
+				debug.Log("Catch SIGINT")
 				exitCh <- 0
 
 			case syscall.SIGTERM: // kill -SIGTERM XXXX
-				log.Println("[SIGNAL] Catch SIGTERM")
+				debug.Log("Catch SIGTERM")
 				exitCh <- 1
 
 			case syscall.SIGQUIT: // kill -SIGQUIT XXXX
-				log.Println("[SIGNAL] Catch SIGQUIT")
+				debug.Log("Catch SIGQUIT")
 				exitCh <- 0
 
 			case syscall.SIGWINCH:
-				log.Println("[SIGNAL] Catch SIGWINCH")
+				debug.Log("Catch SIGWINCH")
 				winSizeCh <- in.GetWinSize()
 			}
 		}

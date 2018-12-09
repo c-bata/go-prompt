@@ -2,14 +2,10 @@ package prompt
 
 import (
 	"bytes"
-	"io/ioutil"
-	"log"
 	"os"
 	"time"
-)
 
-const (
-	envDebugLogPath = "GO_PROMPT_LOG_PATH"
+	"github.com/c-bata/go-prompt/internal/debug"
 )
 
 // Executor is called when user input something text.
@@ -38,16 +34,8 @@ type Exec struct {
 
 // Run starts prompt.
 func (p *Prompt) Run() {
-	if l := os.Getenv(envDebugLogPath); l == "" {
-		log.SetOutput(ioutil.Discard)
-	} else if f, err := os.OpenFile(l, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
-		log.SetOutput(ioutil.Discard)
-	} else {
-		defer f.Close()
-		log.SetOutput(f)
-		log.Println("[INFO] Logging is enabled.")
-	}
-
+	defer debug.Teardown()
+	debug.Log("start prompt")
 	p.setUp()
 	defer p.tearDown()
 
@@ -81,14 +69,16 @@ func (p *Prompt) Run() {
 
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
-				p.in.TearDown()
+				err := p.in.TearDown()
+				debug.Assert(err == nil, err)
 				p.executor(e.input)
 
 				p.completion.Update(*p.buf.Document())
 				p.renderer.Render(p.buf, p.completion)
 
 				// Set raw mode
-				p.in.Setup()
+				err = p.in.Setup()
+				debug.Assert(err == nil, err)
 				go p.readBuffer(bufCh, stopReadBufCh)
 				go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 			} else {
@@ -120,7 +110,6 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		p.renderer.BreakLine(p.buf)
 
 		exec = &Exec{input: p.buf.Text()}
-		log.Printf("[History] %s", p.buf.Text())
 		p.buf = NewBuffer()
 		if exec.input != "" {
 			p.history.Add(exec.input)
@@ -223,16 +212,8 @@ func (p *Prompt) handleASCIICodeBinding(b []byte) bool {
 
 // Input just returns user input text.
 func (p *Prompt) Input() string {
-	if l := os.Getenv(envDebugLogPath); l == "" {
-		log.SetOutput(ioutil.Discard)
-	} else if f, err := os.OpenFile(l, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666); err != nil {
-		log.SetOutput(ioutil.Discard)
-	} else {
-		defer f.Close()
-		log.SetOutput(f)
-		log.Println("[INFO] Logging is enabled.")
-	}
-
+	defer debug.Teardown()
+	debug.Log("start prompt")
 	p.setUp()
 	defer p.tearDown()
 
@@ -267,11 +248,11 @@ func (p *Prompt) Input() string {
 }
 
 func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
-	log.Printf("[INFO] readBuffer start")
+	debug.Log("start reading buffer")
 	for {
 		select {
 		case <-stopCh:
-			log.Print("[INFO] stop readBuffer")
+			debug.Log("stop reading buffer")
 			return
 		default:
 			if b, err := p.in.Read(); err == nil && !(len(b) == 1 && b[0] == 0) {
@@ -283,12 +264,14 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 }
 
 func (p *Prompt) setUp() {
-	p.in.Setup()
+	err := p.in.Setup()
+	debug.Assert(err == nil, err)
 	p.renderer.Setup()
 	p.renderer.UpdateWinSize(p.in.GetWinSize())
 }
 
 func (p *Prompt) tearDown() {
-	p.in.TearDown()
+	err := p.in.TearDown()
+	debug.Assert(err == nil, err)
 	p.renderer.TearDown()
 }

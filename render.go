@@ -3,6 +3,7 @@ package prompt
 import (
 	"runtime"
 
+	"github.com/c-bata/go-prompt/internal/debug"
 	runewidth "github.com/mattn/go-runewidth"
 )
 
@@ -40,7 +41,8 @@ type Render struct {
 func (r *Render) Setup() {
 	if r.title != "" {
 		r.out.SetTitle(r.title)
-		r.out.Flush()
+		err := r.out.Flush()
+		debug.Assert(err == nil, err)
 	}
 }
 
@@ -63,7 +65,8 @@ func (r *Render) renderPrefix() {
 func (r *Render) TearDown() {
 	r.out.ClearTitle()
 	r.out.EraseDown()
-	r.out.Flush()
+	err := r.out.Flush()
+	debug.Assert(err == nil, err)
 }
 
 func (r *Render) prepareArea(lines int) {
@@ -175,7 +178,10 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	if r.col == 0 {
 		return
 	}
-	defer r.out.Flush()
+	defer func() {
+		err := r.out.Flush()
+		debug.Assert(err == nil, err)
+	}()
 	r.move(r.previousCursor, 0)
 
 	line := buffer.Text()
@@ -233,7 +239,8 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(buffer.Document().Text + "\n")
 	r.out.SetColor(DefaultColor, DefaultColor, false)
-	r.out.Flush()
+	err := r.out.Flush()
+	debug.Assert(err == nil, err)
 
 	r.previousCursor = 0
 }
