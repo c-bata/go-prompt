@@ -1,8 +1,9 @@
 package prompt
 
 import (
-	"log"
 	"strings"
+
+	"github.com/c-bata/go-prompt/internal/debug"
 )
 
 // Buffer emulates the console buffer.
@@ -63,9 +64,7 @@ func (b *Buffer) InsertText(v string, overwrite bool, moveCursor bool) {
 // (When doing this, make sure that the cursor_position is valid for this text.
 // text/cursor_position should be consistent at any time, otherwise set a Document instead.)
 func (b *Buffer) setText(v string) {
-	if b.cursorPosition > len([]rune(v)) {
-		log.Print("[ERROR] The length of input value should be shorter than the position of cursor.")
-	}
+	debug.Assert(b.cursorPosition <= len([]rune(v)), "length of input should be shorter than cursor position")
 	o := b.workingLines[b.workingIndex]
 	b.workingLines[b.workingIndex] = v
 
@@ -138,9 +137,7 @@ func (b *Buffer) CursorDown(count int) {
 
 // DeleteBeforeCursor delete specified number of characters before cursor and return the deleted text.
 func (b *Buffer) DeleteBeforeCursor(count int) (deleted string) {
-	if count <= 0 {
-		log.Print("[ERROR] The count argument on DeleteBeforeCursor should grater than 0.")
-	}
+	debug.Assert(count > 0, "count should be grater than 0")
 	r := []rune(b.Text())
 
 	if b.cursorPosition > 0 {

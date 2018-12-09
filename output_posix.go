@@ -3,7 +3,6 @@
 package prompt
 
 import (
-	"log"
 	"syscall"
 )
 
@@ -24,7 +23,6 @@ func (w *PosixWriter) Flush() error {
 	for {
 		n, err := syscall.Write(w.fd, w.buffer[offset:])
 		if err != nil {
-			log.Printf("[DEBUG] flush error: %s", err)
 			if retry < flushMaxRetryCount {
 				retry++
 				continue

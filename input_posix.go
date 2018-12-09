@@ -4,7 +4,6 @@ package prompt
 
 import (
 	"bytes"
-	"log"
 	"syscall"
 	"unsafe"
 
@@ -23,11 +22,9 @@ type PosixParser struct {
 func (t *PosixParser) Setup() error {
 	// Set NonBlocking mode because if syscall.Read block this goroutine, it cannot receive data from stopCh.
 	if err := syscall.SetNonblock(t.fd, true); err != nil {
-		log.Println("[ERROR] Cannot set non blocking mode.")
 		return err
 	}
 	if err := t.setRawMode(); err != nil {
-		log.Println("[ERROR] Cannot set raw mode.")
 		return err
 	}
 	return nil
@@ -36,11 +33,9 @@ func (t *PosixParser) Setup() error {
 // TearDown should be called after stopping input
 func (t *PosixParser) TearDown() error {
 	if err := syscall.SetNonblock(t.fd, false); err != nil {
-		log.Println("[ERROR] Cannot set blocking mode.")
 		return err
 	}
 	if err := t.resetRawMode(); err != nil {
-		log.Println("[ERROR] Cannot reset from raw mode.")
 		return err
 	}
 	return nil

@@ -1,9 +1,9 @@
 package prompt
 
 import (
-	"log"
 	"strings"
 
+	"github.com/c-bata/go-prompt/internal/debug"
 	runewidth "github.com/mattn/go-runewidth"
 )
 
@@ -44,7 +44,7 @@ func (c *CompletionManager) GetSelectedSuggestion() (s Suggest, ok bool) {
 	if c.selected == -1 {
 		return Suggest{}, false
 	} else if c.selected < -1 {
-		log.Printf("[ERROR] shoud be reached here, selected=%d", c.selected)
+		debug.Assert(true, "must not reach here")
 		c.selected = -1
 		return Suggest{}, false
 	}
@@ -136,7 +136,6 @@ func formatTexts(o []string, max int, prefix, suffix string) (new []string, widt
 		return n, 0
 	}
 	if min >= max {
-		log.Println("[WARN] formatTexts: max is lower than length of prefix and suffix.")
 		return n, 0
 	}
 	if lenPrefix+width+lenSuffix > max {
