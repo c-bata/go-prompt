@@ -1,10 +1,223 @@
 package prompt
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"unicode/utf8"
 )
+
+func ExampleDocument_CurrentLine() {
+	d := &Document{
+		Text: `Hello! my name is c-bata.
+This is a example of Document component.
+This component has texts displayed in terminal and cursor position.
+`,
+		cursorPosition: len(`Hello! my name is c-bata.
+This is a exam`),
+	}
+	fmt.Println(d.CurrentLine())
+	// Output:
+	// This is a example of Document component.
+}
+
+func ExampleDocument_DisplayCursorPosition() {
+	d := &Document{
+		Text:           `Hello! my name is c-bata.`,
+		cursorPosition: len(`Hello`),
+	}
+	fmt.Println("DisplayCursorPosition", d.DisplayCursorPosition())
+	// Output:
+	// DisplayCursorPosition 5
+}
+
+func ExampleDocument_CursorPositionRow() {
+	d := &Document{
+		Text: `Hello! my name is c-bata.
+This is a example of Document component.
+This component has texts displayed in terminal and cursor position.
+`,
+		cursorPosition: len(`Hello! my name is c-bata.
+This is a exam`),
+	}
+	fmt.Println("CursorPositionRow", d.CursorPositionRow())
+	// Output:
+	// CursorPositionRow 1
+}
+
+func ExampleDocument_CursorPositionCol() {
+	d := &Document{
+		Text: `Hello! my name is c-bata.
+This is a example of Document component.
+This component has texts displayed in terminal and cursor position.
+`,
+		cursorPosition: len(`Hello! my name is c-bata.
+This is a exam`),
+	}
+	fmt.Println("CursorPositionCol", d.CursorPositionCol())
+	// Output:
+	// CursorPositionCol 14
+}
+
+func ExampleDocument_TextBeforeCursor() {
+	d := &Document{
+		Text: `Hello! my name is c-bata.
+This is a example of Document component.
+This component has texts displayed in terminal and cursor position.
+`,
+		cursorPosition: len(`Hello! my name is c-bata.
+This is a exam`),
+	}
+	fmt.Println(d.TextBeforeCursor())
+	// Output:
+	// Hello! my name is c-bata.
+	// This is a exam
+}
+
+func ExampleDocument_TextAfterCursor() {
+	d := &Document{
+		Text: `Hello! my name is c-bata.
+This is a example of Document component.
+This component has texts displayed in terminal and cursor position.
+`,
+		cursorPosition: len(`Hello! my name is c-bata.
+This is a exam`),
+	}
+	fmt.Println(d.TextAfterCursor())
+	// Output:
+	// ple of Document component.
+	// This component has texts displayed in terminal and cursor position.
+}
+
+func ExampleDocument_DisplayCursorPosition_withJapanese() {
+	d := &Document{
+		Text:           `こんにちは、芝田 将です。`,
+		cursorPosition: 3,
+	}
+	fmt.Println("DisplayCursorPosition", d.DisplayCursorPosition())
+	// Output:
+	// DisplayCursorPosition 6
+}
+
+func ExampleDocument_CurrentLineBeforeCursor() {
+	d := &Document{
+		Text: `Hello! my name is c-bata.
+This is a example of Document component.
+This component has texts displayed in terminal and cursor position.
+`,
+		cursorPosition: len(`Hello! my name is c-bata.
+This is a exam`),
+	}
+	fmt.Println(d.CurrentLineBeforeCursor())
+	// Output:
+	// This is a exam
+}
+
+func ExampleDocument_CurrentLineAfterCursor() {
+	d := &Document{
+		Text: `Hello! my name is c-bata.
+This is a example of Document component.
+This component has texts displayed in terminal and cursor position.
+`,
+		cursorPosition: len(`Hello! my name is c-bata.
+This is a exam`),
+	}
+	fmt.Println(d.CurrentLineAfterCursor())
+	// Output:
+	// ple of Document component.
+}
+
+func ExampleDocument_GetWordBeforeCursor() {
+	d := &Document{
+		Text: `Hello! my name is c-bata.
+This is a example of Document component.
+`,
+		cursorPosition: len(`Hello! my name is c-bata.
+This is a exam`),
+	}
+	fmt.Println(d.GetWordBeforeCursor())
+	// Output:
+	// exam
+}
+
+func ExampleDocument_GetWordAfterCursor() {
+	d := &Document{
+		Text: `Hello! my name is c-bata.
+This is a example of Document component.
+`,
+		cursorPosition: len(`Hello! my name is c-bata.
+This is a exam`),
+	}
+	fmt.Println(d.GetWordAfterCursor())
+	// Output:
+	// ple
+}
+
+func ExampleDocument_GetWordBeforeCursorWithSpace() {
+	d := &Document{
+		Text: `Hello! my name is c-bata.
+This is a example of Document component.
+`,
+		cursorPosition: len(`Hello! my name is c-bata.
+This is a example `),
+	}
+	fmt.Println(d.GetWordBeforeCursorWithSpace())
+	// Output:
+	// example
+}
+
+func ExampleDocument_GetWordAfterCursorWithSpace() {
+	d := &Document{
+		Text: `Hello! my name is c-bata.
+This is a example of Document component.
+`,
+		cursorPosition: len(`Hello! my name is c-bata.
+This is a`),
+	}
+	fmt.Println(d.GetWordAfterCursorWithSpace())
+	// Output:
+	//  example
+}
+
+func ExampleDocument_GetWordBeforeCursorUntilSeparator() {
+	d := &Document{
+		Text:           `hello,i am c-bata`,
+		cursorPosition: len(`hello,i am c`),
+	}
+	fmt.Println(d.GetWordBeforeCursorUntilSeparator(","))
+	// Output:
+	// i am c
+}
+
+func ExampleDocument_GetWordAfterCursorUntilSeparator() {
+	d := &Document{
+		Text:           `hello,i am c-bata,thank you for using go-prompt`,
+		cursorPosition: len(`hello,i a`),
+	}
+	fmt.Println(d.GetWordAfterCursorUntilSeparator(","))
+	// Output:
+	// m c-bata
+}
+
+func ExampleDocument_GetWordBeforeCursorUntilSeparatorIgnoreNextToCursor() {
+	d := &Document{
+		Text:           `hello,i am c-bata,thank you for using go-prompt`,
+		cursorPosition: len(`hello,i am c-bata,`),
+	}
+	fmt.Println(d.GetWordBeforeCursorUntilSeparatorIgnoreNextToCursor(","))
+	// Output:
+	// i am c-bata,
+}
+
+func ExampleDocument_GetWordAfterCursorUntilSeparatorIgnoreNextToCursor() {
+	d := &Document{
+		Text:           `hello,i am c-bata,thank you for using go-prompt`,
+		cursorPosition: len(`hello`),
+	}
+	fmt.Println(d.GetWordAfterCursorUntilSeparatorIgnoreNextToCursor(","))
+	// Output:
+	// ,i am c-bata
+}
 
 func TestDocument_DisplayCursorPosition(t *testing.T) {
 	patterns := []struct {
@@ -1038,20 +1251,5 @@ func TestDocument_GetEndOfLinePosition(t *testing.T) {
 	ex := len("ne 2")
 	if ac != ex {
 		t.Errorf("Should be %#v, got %#v", ex, ac)
-	}
-}
-
-func TestBisectRight(t *testing.T) {
-	// Thanks!! https://play.golang.org/p/y9NRj_XVIW
-	in := []int{1, 2, 3, 3, 3, 6, 7}
-
-	r := bisectRight(in, 0)
-	if r != 0 {
-		t.Errorf("number 0 should inserted at 0 position, but got %d", r)
-	}
-
-	r = bisectRight(in, 4)
-	if r != 5 {
-		t.Errorf("number 4 should inserted at 5 position, but got %d", r)
 	}
 }

@@ -1,10 +1,11 @@
 package prompt
 
 import (
-	"sort"
 	"strings"
 	"unicode/utf8"
 
+	"github.com/c-bata/go-prompt/internal/bisect"
+	istrings "github.com/c-bata/go-prompt/internal/strings"
 	runewidth "github.com/mattn/go-runewidth"
 )
 
@@ -133,7 +134,7 @@ func (d *Document) FindStartOfPreviousWord() int {
 // The only difference is to ignore contiguous spaces.
 func (d *Document) FindStartOfPreviousWordWithSpace() int {
 	x := d.TextBeforeCursor()
-	end := lastIndexByteNot(x, ' ')
+	end := istrings.LastIndexNotByte(x, ' ')
 	if end == -1 {
 		return 0
 	}
@@ -168,7 +169,7 @@ func (d *Document) FindStartOfPreviousWordUntilSeparatorIgnoreNextToCursor(sep s
 	}
 
 	x := d.TextBeforeCursor()
-	end := lastIndexAnyNot(x, sep)
+	end := istrings.LastIndexNotAny(x, sep)
 	if end == -1 {
 		return 0
 	}
@@ -195,7 +196,7 @@ func (d *Document) FindEndOfCurrentWord() int {
 func (d *Document) FindEndOfCurrentWordWithSpace() int {
 	x := d.TextAfterCursor()
 
-	start := indexByteNot(x, ' ')
+	start := istrings.IndexNotByte(x, ' ')
 	if start == -1 {
 		return len(x)
 	}
@@ -232,7 +233,7 @@ func (d *Document) FindEndOfCurrentWordUntilSeparatorIgnoreNextToCursor(sep stri
 
 	x := d.TextAfterCursor()
 
-	start := indexAnyNot(x, sep)
+	start := istrings.IndexNotAny(x, sep)
 	if start == -1 {
 		return len(x)
 	}
@@ -292,7 +293,7 @@ func (d *Document) lineStartIndexes() []int {
 // the first character on that line.
 func (d *Document) findLineStartIndex(index int) (pos int, lineStartIndex int) {
 	indexes := d.lineStartIndexes()
-	pos = bisectRight(indexes, index) - 1
+	pos = bisect.Right(indexes, index) - 1
 	lineStartIndex = indexes[pos]
 	return
 }
@@ -431,103 +432,4 @@ func (d *Document) leadingWhitespaceInCurrentLine() (margin string) {
 	trimmed := strings.TrimSpace(d.CurrentLine())
 	margin = d.CurrentLine()[:len(d.CurrentLine())-len(trimmed)]
 	return
-}
-
-// bisectRight to Locate the insertion point for v in a to maintain sorted order.
-func bisectRight(a []int, v int) int {
-	return bisectRightRange(a, v, 0, len(a))
-}
-
-func bisectRightRange(a []int, v int, lo, hi int) int {
-	s := a[lo:hi]
-	return sort.Search(len(s), func(i int) bool {
-		return s[i] > v
-	})
-}
-
-func indexByteNot(s string, c byte) int {
-	n := len(s)
-	for i := 0; i < n; i++ {
-		if s[i] != c {
-			return i
-		}
-	}
-	return -1
-}
-
-func lastIndexByteNot(s string, c byte) int {
-	for i := len(s) - 1; i >= 0; i-- {
-		if s[i] != c {
-			return i
-		}
-	}
-	return -1
-}
-
-type asciiSet [8]uint32
-
-func (as *asciiSet) notContains(c byte) bool {
-	return (as[c>>5] & (1 << uint(c&31))) == 0
-}
-
-func makeASCIISet(chars string) (as asciiSet, ok bool) {
-	for i := 0; i < len(chars); i++ {
-		c := chars[i]
-		if c >= utf8.RuneSelf {
-			return as, false
-		}
-		as[c>>5] |= 1 << uint(c&31)
-	}
-	return as, true
-}
-
-func indexAnyNot(s, chars string) int {
-	if len(chars) > 0 {
-		if len(s) > 8 {
-			if as, isASCII := makeASCIISet(chars); isASCII {
-				for i := 0; i < len(s); i++ {
-					if as.notContains(s[i]) {
-						return i
-					}
-				}
-				return -1
-			}
-		}
-		for i := 0; i < len(s); {
-			// I don't know why strings.IndexAny doesn't add rune count here.
-			r, size := utf8.DecodeRuneInString(s[i:])
-			i += size
-			for _, c := range chars {
-				if r != c {
-					return i
-				}
-			}
-		}
-	}
-	return -1
-}
-
-func lastIndexAnyNot(s, chars string) int {
-	if len(chars) > 0 {
-		if len(s) > 8 {
-			if as, isASCII := makeASCIISet(chars); isASCII {
-				for i := len(s) - 1; i >= 0; i-- {
-					if as.notContains(s[i]) {
-						return i
-					}
-				}
-				return -1
-			}
-		}
-		for i := len(s); i > 0; {
-			r, size := utf8.DecodeLastRuneInString(s[:i])
-			i -= size
-			for _, c := range chars {
-				if r != c {
-					return i
-				}
-			}
-		}
-	}
-	return -1
 }

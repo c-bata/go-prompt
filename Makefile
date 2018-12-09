@@ -21,8 +21,12 @@ lint: ## Run golint and go vet.
 	@go vet .
 
 .PHONY: test
-test:  ## Run the tests with race condition checking.
-	@go test -race .
+test:  ## Run tests with race condition checking.
+	@go test -race ./...
+
+.PHONY: bench
+bench:  ## Run benchmarks.
+	@go test -bench=. -run=- -benchmem ./...
 
 .PHONY: coverage
 cover:  ## Run the tests.
