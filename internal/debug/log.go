@@ -17,8 +17,7 @@ var (
 )
 
 func init() {
-	enableLog := os.Getenv(envEnableLog)
-	if enableLog == "true" || enableLog == "1" {
+	if e := os.Getenv(envEnableLog); e == "true" || e == "1" {
 		var err error
 		logfile, err = os.OpenFile(logFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 		if err == nil {

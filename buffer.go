@@ -137,7 +137,7 @@ func (b *Buffer) CursorDown(count int) {
 
 // DeleteBeforeCursor delete specified number of characters before cursor and return the deleted text.
 func (b *Buffer) DeleteBeforeCursor(count int) (deleted string) {
-	debug.Assert(count > 0, "count should be grater than 0")
+	debug.Assert(count >= 0, "count should be positive")
 	r := []rune(b.Text())
 
 	if b.cursorPosition > 0 {

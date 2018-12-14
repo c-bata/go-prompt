@@ -114,8 +114,7 @@ var emacsKeyBindings = []KeyBind{
 		Fn: func(buf *Buffer) {
 			consoleWriter.EraseScreen()
 			consoleWriter.CursorGoTo(0, 0)
-			err := consoleWriter.Flush()
-			debug.Assert(err == nil, err)
+			debug.AssertNoError(consoleWriter.Flush())
 		},
 	},
 }

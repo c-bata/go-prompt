@@ -44,7 +44,7 @@ func (c *CompletionManager) GetSelectedSuggestion() (s Suggest, ok bool) {
 	if c.selected == -1 {
 		return Suggest{}, false
 	} else if c.selected < -1 {
-		debug.Assert(true, "must not reach here")
+		debug.Assert(false, "must not reach here")
 		c.selected = -1
 		return Suggest{}, false
 	}

@@ -41,8 +41,7 @@ type Render struct {
 func (r *Render) Setup() {
 	if r.title != "" {
 		r.out.SetTitle(r.title)
-		err := r.out.Flush()
-		debug.Assert(err == nil, err)
+		debug.AssertNoError(r.out.Flush())
 	}
 }
 
@@ -65,8 +64,7 @@ func (r *Render) renderPrefix() {
 func (r *Render) TearDown() {
 	r.out.ClearTitle()
 	r.out.EraseDown()
-	err := r.out.Flush()
-	debug.Assert(err == nil, err)
+	debug.AssertNoError(r.out.Flush())
 }
 
 func (r *Render) prepareArea(lines int) {
@@ -178,10 +176,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	if r.col == 0 {
 		return
 	}
-	defer func() {
-		err := r.out.Flush()
-		debug.Assert(err == nil, err)
-	}()
+	defer func() { debug.AssertNoError(r.out.Flush()) }()
 	r.move(r.previousCursor, 0)
 
 	line := buffer.Text()
@@ -239,8 +234,7 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(buffer.Document().Text + "\n")
 	r.out.SetColor(DefaultColor, DefaultColor, false)
-	err := r.out.Flush()
-	debug.Assert(err == nil, err)
+	debug.AssertNoError(r.out.Flush())
 
 	r.previousCursor = 0
 }
