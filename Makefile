@@ -33,6 +33,10 @@ cover:  ## Run the tests.
 	@go test -coverprofile=coverage.o
 	@go tool cover -func=coverage.o
 
+.PHONY: generate
+generate: ## Run go generate
+	@go generate ./...
+
 .PHONY: build
 build: ## Build example command lines.
 	./_example/build.sh
