@@ -10,31 +10,24 @@ const (
 )
 
 var (
-	assertFunc = assertLog
+	enableAssert bool
 )
 
 func init() {
-	enableAssert := os.Getenv(envAssertPanic)
-	if enableAssert == "true" || enableAssert == "1" {
-		assertFunc = assertPanic
+	if e := os.Getenv(envAssertPanic); e == "true" || e == "1" {
+		enableAssert = true
 	}
 }
 
-func assertPanic(msg interface{}) {
-	panic(msg)
-}
-
-func assertLog(msg interface{}) {
-	calldepth := 3
-	writeWithSync(calldepth, "[ASSERT] "+toString(msg))
-}
-
-// Assert raise panic or write log if cond is false.
+// Assert ensures expected condition.
 func Assert(cond bool, msg interface{}) {
 	if cond {
 		return
 	}
-	assertFunc(msg)
+	if enableAssert {
+		panic(msg)
+	}
+	writeWithSync(2, "[ASSERT] "+toString(msg))
 }
 
 func toString(v interface{}) string {
@@ -48,4 +41,15 @@ func toString(v interface{}) string {
 	default:
 		return fmt.Sprintf("unexpected type, %t", v)
 	}
+}
+
+// AssertNoError ensures err is nil.
+func AssertNoError(err error) {
+	if err == nil {
+		return
+	}
+	if enableAssert {
+		panic(err)
+	}
+	writeWithSync(2, "[ASSERT] "+err.Error())
 }

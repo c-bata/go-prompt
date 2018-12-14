@@ -69,16 +69,14 @@ func (p *Prompt) Run() {
 
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
-				err := p.in.TearDown()
-				debug.Assert(err == nil, err)
+				debug.AssertNoError(p.in.TearDown())
 				p.executor(e.input)
 
 				p.completion.Update(*p.buf.Document())
 				p.renderer.Render(p.buf, p.completion)
 
 				// Set raw mode
-				err = p.in.Setup()
-				debug.Assert(err == nil, err)
+				debug.AssertNoError(p.in.Setup())
 				go p.readBuffer(bufCh, stopReadBufCh)
 				go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 			} else {
@@ -264,14 +262,12 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 }
 
 func (p *Prompt) setUp() {
-	err := p.in.Setup()
-	debug.Assert(err == nil, err)
+	debug.AssertNoError(p.in.Setup())
 	p.renderer.Setup()
 	p.renderer.UpdateWinSize(p.in.GetWinSize())
 }
 
 func (p *Prompt) tearDown() {
-	err := p.in.TearDown()
-	debug.Assert(err == nil, err)
+	debug.AssertNoError(p.in.TearDown())
 	p.renderer.TearDown()
 }
