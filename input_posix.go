@@ -3,11 +3,10 @@
 package prompt
 
 import (
-	"bytes"
 	"syscall"
 	"unsafe"
 
-	"github.com/pkg/term/termios"
+	"github.com/c-bata/go-prompt/internal/term"
 )
 
 const maxReadBytes = 1024
@@ -24,7 +23,7 @@ func (t *PosixParser) Setup() error {
 	if err := syscall.SetNonblock(t.fd, true); err != nil {
 		return err
 	}
-	if err := t.setRawMode(); err != nil {
+	if err := term.SetRaw(t.fd); err != nil {
 		return err
 	}
 	return nil
@@ -35,7 +34,7 @@ func (t *PosixParser) TearDown() error {
 	if err := syscall.SetNonblock(t.fd, false); err != nil {
 		return err
 	}
-	if err := t.resetRawMode(); err != nil {
+	if err := term.Restore(); err != nil {
 		return err
 	}
 	return nil
@@ -49,42 +48,6 @@ func (t *PosixParser) Read() ([]byte, error) {
 		return []byte{}, err
 	}
 	return buf[:n], nil
-}
-
-func (t *PosixParser) setRawMode() error {
-	x := t.origTermios.Lflag
-	if x &^= syscall.ICANON; x != 0 && x == t.origTermios.Lflag {
-		// fd is already raw mode
-		return nil
-	}
-	var n syscall.Termios
-	if err := termios.Tcgetattr(uintptr(t.fd), &t.origTermios); err != nil {
-		return err
-	}
-	n = t.origTermios
-	// "&^=" used like: https://play.golang.org/p/8eJw3JxS4O
-	n.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG
-	n.Cc[syscall.VMIN] = 1
-	n.Cc[syscall.VTIME] = 0
-	termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &n)
-	return nil
-}
-
-func (t *PosixParser) resetRawMode() error {
-	if t.origTermios.Lflag == 0 {
-		return nil
-	}
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, &t.origTermios)
-}
-
-// GetKey returns Key correspond to input byte codes.
-func (t *PosixParser) GetKey(b []byte) Key {
-	for _, k := range asciiSequences {
-		if bytes.Equal(k.ASCIICode, b) {
-			return k.Key
-		}
-	}
-	return NotDefined
 }
 
 // winsize is winsize struct got from the ioctl(2) system call.
