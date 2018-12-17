@@ -1,5 +1,7 @@
 package prompt
 
+import "bytes"
+
 // WinSize represents the width and height of terminal.
 type WinSize struct {
 	Row uint16
@@ -12,15 +14,24 @@ type ConsoleParser interface {
 	Setup() error
 	// TearDown should be called after stopping input
 	TearDown() error
-	// GetKey returns Key correspond to input byte codes.
-	GetKey(b []byte) Key
 	// GetWinSize returns WinSize object to represent width and height of terminal.
 	GetWinSize() *WinSize
 	// Read returns byte array.
 	Read() ([]byte, error)
 }
 
-var asciiSequences = []*ASCIICode{
+// GetKey returns Key correspond to input byte codes.
+func GetKey(b []byte) Key {
+	for _, k := range ASCIISequences {
+		if bytes.Equal(k.ASCIICode, b) {
+			return k.Key
+		}
+	}
+	return NotDefined
+}
+
+// ASCIISequences holds mappings of the key and byte array.
+var ASCIISequences = []*ASCIICode{
 	{Key: Escape, ASCIICode: []byte{0x1b}},
 
 	{Key: ControlSpace, ASCIICode: []byte{0x00}},

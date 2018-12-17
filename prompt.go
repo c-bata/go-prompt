@@ -97,7 +97,7 @@ func (p *Prompt) Run() {
 }
 
 func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
-	key := p.in.GetKey(b)
+	key := GetKey(b)
 
 	// completion
 	completing := p.completion.Completing()
