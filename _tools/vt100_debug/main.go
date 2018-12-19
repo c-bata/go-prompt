@@ -21,74 +21,64 @@ type KeyPress struct {
 }
 
 type Parser struct {
-	Input chan []byte
+	Input chan rune
 	Out   chan KeyPress
 }
 
-func (p *Parser) Feed(data []byte) {
-	p.Input <- data
-}
-
-func (p *Parser) process(prefix []byte, retry bool, in []byte) ([]byte, bool) {
-	if retry {
-		retry = false
-	} else {
-		prefix = append(prefix, in...)
-	}
-	if len(prefix) > 0 {
-		isPrefixOfLongerMatch := false
-		for _, s := range prompt.ASCIISequences {
-			if bytes.HasPrefix(s.ASCIICode, prefix) && bytes.Compare(s.ASCIICode, prefix) != 0 {
-				isPrefixOfLongerMatch = true
-				break
-			}
-		}
-		match := false
-		matchedKey := prompt.GetKey(prefix)
-		if matchedKey != prompt.NotDefined {
-			match = true
-		}
-		if !isPrefixOfLongerMatch && match {
-			p.Out <- KeyPress{Key: matchedKey, Bytes: prefix}
-			prefix = make([]byte, 0, 5)
-		} else if !isPrefixOfLongerMatch && !match {
-			found := false
-			retry = true
-
-			for i := len(prefix); i > 0; i-- {
-				matchedKey = prompt.GetKey(prefix[:i])
-				if matchedKey != prompt.NotDefined {
-					match = true
-					break
-				}
-
-				if match {
-					p.Out <- KeyPress{Key: matchedKey, Bytes: prefix}
-					prefix = prefix[i:]
-					found = true
-				}
-			}
-			if !found {
-				p.Out <- KeyPress{Key: matchedKey, Bytes: prefix}
-				prefix = prefix[1:]
-			}
-		}
-	}
-	return prefix, retry
+func (p *Parser) Feed(r rune) {
+	p.Input <- r
 }
 
 func (p *Parser) Start() {
-	prefix := make([]byte, 0, 5)
+	prefix := bytes.NewBuffer(nil)
 	retry := false
 	for {
-		select {
-		case in, ok := <-p.Input:
+		if retry {
+			retry = false
+		} else {
+			in, ok := <-p.Input
 			if !ok {
-				return
+				break
 			}
-			prefix, retry = p.process(prefix, retry, in)
-			if retry {
-				prefix, retry = p.process(prefix, retry, in)
+			prefix.WriteRune(in)
+		}
+
+		if prefix.Len() > 0 {
+			isPrefixOfLongerMatch := false
+			for _, s := range prompt.ASCIISequences {
+				if bytes.HasPrefix(s.ASCIICode, prefix.Bytes()) && bytes.Compare(s.ASCIICode, prefix.Bytes()) != 0 {
+					isPrefixOfLongerMatch = true
+					break
+				}
+			}
+			match := prompt.GetKey(prefix.Bytes())
+			if !isPrefixOfLongerMatch && match != prompt.NotDefined {
+				p.Out <- KeyPress{Key: match, Bytes: prefix.Bytes()}
+				prefix.Reset()
+			} else if !isPrefixOfLongerMatch && match == prompt.NotDefined {
+				found := false
+				retry = true
+
+				prefixRunes := []rune(prefix.String())
+				for i := len(prefixRunes); i > 0; i-- {
+					prefixBytes := []byte(string(prefixRunes[:i]))
+					match = prompt.GetKey(prefixBytes)
+					if match != prompt.NotDefined {
+						p.Out <- KeyPress{Key: match, Bytes: prefixBytes}
+						for j := 0; j < i; j++ {
+							_, _, _ = prefix.ReadRune()
+						}
+						found = true
+					}
+				}
+				if !found {
+					r, _, err := prefix.ReadRune()
+					if err == io.EOF {
+						continue // don't reach here.
+					}
+					p.Out <- KeyPress{Key: match, Bytes: []byte(string(r))}
+					_, _, _ = prefix.ReadRune()
+				}
 			}
 		}
 	}
@@ -96,7 +86,7 @@ func (p *Parser) Start() {
 
 func NewParser() *Parser {
 	return &Parser{
-		Input: make(chan []byte, 1),
+		Input: make(chan rune, 1),
 		Out:   make(chan KeyPress, 1),
 	}
 }
@@ -125,7 +115,7 @@ func main() {
 					break
 				}
 			}
-			p.Feed([]byte(string(c)))
+			p.Feed(c)
 		}
 		close(p.Input)
 	}()
