@@ -59,12 +59,16 @@ func filterSuggestions(suggestions []Suggest, sub string, ignoreCase bool, funct
 
 	ret := make([]Suggest, 0, len(suggestions))
 	for i := range suggestions {
-		c := suggestions[i].Text
-		if ignoreCase {
-			c = strings.ToUpper(c)
-		}
-		if function(c, sub) {
-			ret = append(ret, suggestions[i])
+		possibleMatches := append(suggestions[i].AlsoMatch, suggestions[i].Text)
+		for _, possibleMatch := range possibleMatches {
+			c := possibleMatch
+			if ignoreCase {
+				c = strings.ToUpper(c)
+			}
+			if function(c, sub) {
+				ret = append(ret, suggestions[i])
+				break
+			}
 		}
 	}
 	return ret
