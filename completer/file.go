@@ -2,13 +2,13 @@ package completer
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"os/user"
 	"path/filepath"
 	"runtime"
 
 	prompt "github.com/c-bata/go-prompt"
+	"github.com/c-bata/go-prompt/internal/debug"
 )
 
 var (
@@ -62,7 +62,7 @@ func (c *FilePathCompleter) Complete(d prompt.Document) []prompt.Suggest {
 	path := d.GetWordBeforeCursor()
 	dir, base, err := cleanFilePath(path)
 	if err != nil {
-		log.Print("[ERROR] completer: cannot get current user " + err.Error())
+		debug.Log("completer: cannot get current user:" + err.Error())
 		return nil
 	}
 
@@ -74,7 +74,7 @@ func (c *FilePathCompleter) Complete(d prompt.Document) []prompt.Suggest {
 	if err != nil && os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
-		log.Print("[ERROR] completer: cannot read directory items " + err.Error())
+		debug.Log("completer: cannot read directory items:" + err.Error())
 		return nil
 	}
 
