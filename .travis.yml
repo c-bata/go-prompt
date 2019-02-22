@@ -13,6 +13,10 @@ os:
 env:
   - GO111MODULE=on
 
+cache:
+  directories:
+    - $(go env GOCACHE)
+
 install:
   - GO111MODULE=off go get -u golang.org/x/lint/golint
   - GO111MODULE=off go get -u golang.org/x/tools/cmd/goimports
