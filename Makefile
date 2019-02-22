@@ -1,15 +1,13 @@
 .DEFAULT_GOAL := help
 
 PKGS := $(shell go list ./...)
-SOURCES := $(shell find . -path ./vendor -prune -o -name "*.go" -not -name '*_test.go' -print)
+SOURCES := $(shell find . -prune -o -name "*.go" -not -name '*_test.go' -print)
 
 .PHONY: setup
 setup:  ## Setup for required tools.
 	go get -u golang.org/x/lint/golint
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u golang.org/x/tools/cmd/stringer
-	go get -u github.com/golang/dep/cmd/dep
-	dep ensure
 
 .PHONY: fmt
 fmt: $(SOURCES) ## Formatting source codes.

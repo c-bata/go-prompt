@@ -10,11 +10,16 @@ os:
   - osx
   - windows
 
+env:
+  - GO111MODULE=on
+
+cache:
+  directories:
+    - $(go env GOCACHE)
+
 install:
-  - go get -u golang.org/x/lint/golint
-  - go get -u golang.org/x/tools/cmd/goimports
-  - go get -u github.com/golang/dep/cmd/dep
-  - dep ensure
+  - GO111MODULE=off go get -u golang.org/x/lint/golint
+  - GO111MODULE=off go get -u golang.org/x/tools/cmd/goimports
 
 stages:
   - lint
@@ -25,7 +30,7 @@ jobs:
   include:
     - stage: lint
       script:
-        - diff <(goimports -d $(find . -type f -name '*.go' -not -path "./vendor/*")) <(echo -n "")
+        - diff <(goimports -d $(find . -type f -name '*.go')) <(echo -n "")
         - make lint
       go: "1.11.x"
       os: osx
