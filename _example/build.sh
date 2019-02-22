@@ -1,5 +1,6 @@
 #!/bin/sh
 
+export GO111MODULE=on
 DIR=$(cd $(dirname $0); pwd)
 BIN_DIR=$(cd $(dirname $(dirname $0)); pwd)/bin
 
