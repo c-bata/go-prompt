@@ -15,7 +15,7 @@ env:
 
 cache:
   directories:
-    - $(go env GOCACHE)
+    - $GOPATH/pkg/mod/cache
 
 install:
   - GO111MODULE=off go get -u golang.org/x/lint/golint
