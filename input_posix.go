@@ -4,9 +4,9 @@ package prompt
 
 import (
 	"syscall"
-	"unsafe"
 
 	"github.com/c-bata/go-prompt/internal/term"
+	"golang.org/x/sys/unix"
 )
 
 const maxReadBytes = 1024
@@ -50,25 +50,11 @@ func (t *PosixParser) Read() ([]byte, error) {
 	return buf[:n], nil
 }
 
-// winsize is winsize struct got from the ioctl(2) system call.
-type ioctlWinsize struct {
-	Row uint16
-	Col uint16
-	X   uint16 // pixel value
-	Y   uint16 // pixel value
-}
-
 // GetWinSize returns WinSize object to represent width and height of terminal.
 func (t *PosixParser) GetWinSize() *WinSize {
-	ws := &ioctlWinsize{}
-	retCode, _, errno := syscall.Syscall(
-		syscall.SYS_IOCTL,
-		uintptr(t.fd),
-		uintptr(syscall.TIOCGWINSZ),
-		uintptr(unsafe.Pointer(ws)))
-
-	if int(retCode) == -1 {
-		panic(errno)
+	ws, err := unix.IoctlGetWinsize(t.fd, unix.TIOCGWINSZ)
+	if err != nil {
+		panic(err)
 	}
 	return &WinSize{
 		Row: ws.Row,
