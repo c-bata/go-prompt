@@ -2,6 +2,7 @@ package prompt
 
 import (
 	"runtime"
+	"sync"
 
 	"github.com/c-bata/go-prompt/internal/debug"
 	runewidth "github.com/mattn/go-runewidth"
@@ -17,6 +18,10 @@ type Render struct {
 	col                uint16
 
 	previousCursor int
+
+	// info window
+	infoWindowHeight uint16
+	lock             sync.Mutex
 
 	// colors,
 	prefixTextColor              Color
@@ -75,6 +80,37 @@ func (r *Render) prepareArea(lines int) {
 		r.out.ScrollUp()
 	}
 	return
+}
+
+func (r *Render) RenderInfoWindow(i InfoWindow) {
+	if r.infoWindowHeight > 0 {
+		r.lock.Lock()
+		defer r.lock.Unlock()
+		r.out.SaveCursor()
+		r.out.CursorGoTo(1, 0)
+		lines := i.GetLines(int(r.infoWindowHeight))
+		count := len(lines)
+		if count > int(r.infoWindowHeight) {
+			count = int(r.infoWindowHeight)
+		}
+		j := 1
+		for i := 0; i < count; i++ {
+			r.out.CursorGoTo(j, 0)
+			if len(lines[i]) > int(r.col) {
+				r.out.WriteStr(lines[i][:r.col+1])
+			} else {
+				r.out.WriteStr(lines[i])
+			}
+			r.out.EraseEndOfLine()
+			j++
+		}
+		for ; j <= int(r.infoWindowHeight); j++ {
+			r.out.CursorGoTo(j, 0)
+			r.out.EraseEndOfLine()
+		}
+		defer func() { debug.AssertNoError(r.out.Flush()) }()
+		r.out.UnSaveCursor()
+	}
 }
 
 // UpdateWinSize called when window size is changed.
@@ -178,6 +214,11 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	}
 	defer func() { debug.AssertNoError(r.out.Flush()) }()
 	r.move(r.previousCursor, 0)
+
+	// info window
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	r.out.CursorGoTo(int(r.infoWindowHeight+1), 0)
 
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()

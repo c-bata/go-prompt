@@ -245,6 +245,11 @@ func (p *Prompt) Input() string {
 	}
 }
 
+// Update info window if enabled
+func (p *Prompt) UpdateInfoWindow(i InfoWindow) {
+	p.renderer.RenderInfoWindow(i)
+}
+
 func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	debug.Log("start reading buffer")
 	for {
