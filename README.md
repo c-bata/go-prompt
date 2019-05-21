@@ -43,6 +43,7 @@ func main() {
 * [CrushedPixel/moshpit: A Command-line tool for datamoshing.](https://github.com/CrushedPixel/moshpit)
 * [last-ent/testy-go: Testy Go: A tool for easy testing!](https://github.com/last-ent/testy-go)
 * [tiagorlampert/CHAOS: a PoC that allow generate payloads and control remote operating systems.](https://github.com/tiagorlampert/CHAOS)
+* [abs-lang/abs: ABS is a scripting language that works best on terminal. It tries to combine the elegance of languages such as Python, or Ruby, to the convenience of Bash.](https://github.com/abs-lang/abs)
 * (If you create a CLI utility using go-prompt and want your own project to be listed here, please submit a GitHub issue.)
 
 ## Features
