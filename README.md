@@ -44,6 +44,7 @@ func main() {
 * [last-ent/testy-go: Testy Go: A tool for easy testing!](https://github.com/last-ent/testy-go)
 * [tiagorlampert/CHAOS: a PoC that allow generate payloads and control remote operating systems.](https://github.com/tiagorlampert/CHAOS)
 * [abs-lang/abs: ABS is a scripting language that works best on terminal. It tries to combine the elegance of languages such as Python, or Ruby, to the convenience of Bash.](https://github.com/abs-lang/abs)
+* [takashabe/btcli: btcli is a CLI client for the Bigtable. Has many read options and auto-completion.](https://github.com/takashabe/btcli)
 * (If you create a CLI utility using go-prompt and want your own project to be listed here, please submit a GitHub issue.)
 
 ## Features
