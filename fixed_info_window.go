@@ -25,19 +25,11 @@ func (l *FixedInfoWindow) GetLines(count int) []string {
 	return ret
 }
 
-func (l *FixedInfoWindow) AddLine(line *string) error {
-	if len(l.lines) <= l.maxLines {
-		l.lines = append(l.lines, line)
+func (l *FixedInfoWindow) RequestLine(line int) *string {
+	if line < 0 || line > l.maxLines-1 {
 		return nil
 	}
-
-	for i, il := range l.lines {
-		if il != nil {
-			l.lines[i] = line
-			return nil
-		}
-	}
-	return fmt.Errorf("No free lines")
+	return l.lines[line]
 }
 
 func (l *FixedInfoWindow) Clear() {
@@ -51,13 +43,16 @@ func (l *FixedInfoWindow) ClearLine(line int) {
 		return
 	}
 
-	l.lines[line] = nil
+	l.lines[line] = new(string)
 }
 
 func NewFixedInfoWindow(lines int) *FixedInfoWindow {
 	ret := new(FixedInfoWindow)
 	ret.lines = []*string{}
 	ret.maxLines = lines
+	for i := 0; i < ret.maxLines; i++ {
+		ret.lines = new(string)
+	}
 
 	return ret
 }
