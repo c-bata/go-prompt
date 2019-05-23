@@ -1,8 +1,6 @@
 package prompt
 
-import (
-	"fmt"
-)
+import ()
 
 type FixedInfoWindow struct {
 	lines    []*string
@@ -51,7 +49,7 @@ func NewFixedInfoWindow(lines int) *FixedInfoWindow {
 	ret.lines = []*string{}
 	ret.maxLines = lines
 	for i := 0; i < ret.maxLines; i++ {
-		ret.lines = new(string)
+		ret.lines = append(ret.lines, new(string))
 	}
 
 	return ret
