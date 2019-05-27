@@ -216,9 +216,11 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	r.move(r.previousCursor, 0)
 
 	// info window
-	r.lock.Lock()
-	defer r.lock.Unlock()
-	r.out.CursorGoTo(int(r.infoWindowHeight+1), 0)
+	if r.infoWindowHeight > 0 {
+		r.lock.Lock()
+		defer r.lock.Unlock()
+		r.out.CursorGoTo(int(r.infoWindowHeight+1), 0)
+	}
 
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
