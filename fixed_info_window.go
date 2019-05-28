@@ -32,7 +32,7 @@ func (l *FixedInfoWindow) RequestLine(line int) *string {
 
 func (l *FixedInfoWindow) Clear() {
 	for i, _ := range l.lines {
-		l.lines[i] = nil
+		*l.lines[i] = ""
 	}
 }
 
@@ -42,6 +42,10 @@ func (l *FixedInfoWindow) ClearLine(line int) {
 	}
 
 	l.lines[line] = new(string)
+}
+
+func (l *FixedInfoWindow) Len() int {
+	return l.maxLines
 }
 
 func NewFixedInfoWindow(lines int) *FixedInfoWindow {
