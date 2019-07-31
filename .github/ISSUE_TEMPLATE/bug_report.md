@@ -1,13 +1,15 @@
-# Suggestions
-
-*Please write your suggestion here and remove "Bug reports" section.*
-
+---
+name: "Bug report"
+about: Create a bug report to improve go-prompt
+title: "[Bug]"
+labels: bug
+assignees: ''
 
 ---
 
 # Bug reports
 
-*Please file a bug report here and remove "Suggestions" section.*
+*Please file a bug report here.*
 
 ## Expected Behavior
 
