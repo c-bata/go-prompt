@@ -100,7 +100,7 @@ func TestBreakLineCallback(t *testing.T) {
 		t.Errorf("i should initially be 0, before applying a break line callback")
 	}
 
-	r.BreakLineCallback = func() {
+	r.BreakLineCallback = func(doc *Document) {
 		i++
 	}
 	r.BreakLine(b)

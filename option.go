@@ -235,7 +235,7 @@ func OptionShowCompletionAtStart() Option {
 }
 
 // OptionBreakLineCallback to run a callback at every break line
-func OptionBreakLineCallback(fn func()) Option {
+func OptionBreakLineCallback(fn func(*Document)) Option {
 	return func(p *Prompt) error {
 		p.renderer.BreakLineCallback = fn
 		return nil

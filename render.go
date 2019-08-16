@@ -12,7 +12,7 @@ type Render struct {
 	out                ConsoleWriter
 	prefix             string
 	livePrefixCallback func() (prefix string, useLivePrefix bool)
-	BreakLineCallback  func()
+	BreakLineCallback  func(*Document)
 	title              string
 	row                uint16
 	col                uint16
@@ -237,7 +237,7 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 	debug.AssertNoError(r.out.Flush())
 	if r.BreakLineCallback != nil {
-		r.BreakLineCallback()
+		r.BreakLineCallback(buffer.Document())
 	}
 
 	r.previousCursor = 0
