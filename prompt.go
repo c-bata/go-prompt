@@ -25,6 +25,7 @@ type Prompt struct {
 	keyBindings       []KeyBind
 	ASCIICodeBindings []ASCIICodeBind
 	keyBindMode       KeyBindMode
+	completionOnDown  bool
 }
 
 // Exec is the struct contains user input context.
@@ -126,7 +127,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
 			if newBuf, changed := p.history.Newer(p.buf); changed {
 				p.buf = newBuf
-			} else {
+			} else if p.completionOnDown {
 				p.completion.Next()
 			}
 			return
