@@ -234,6 +234,14 @@ func OptionShowCompletionAtStart() Option {
 	}
 }
 
+// OptionBreakLineCallback to run a callback at every break line
+func OptionBreakLineCallback(fn func(*Document)) Option {
+	return func(p *Prompt) error {
+		p.renderer.breakLineCallback = fn
+		return nil
+	}
+}
+
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 	defaultWriter := NewStdoutWriter()
