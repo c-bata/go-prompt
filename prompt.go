@@ -126,6 +126,8 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
 			if newBuf, changed := p.history.Newer(p.buf); changed {
 				p.buf = newBuf
+			} else {
+				p.completion.Next()
 			}
 			return
 		}
