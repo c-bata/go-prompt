@@ -206,7 +206,7 @@ func OptionSwitchKeyBindMode(m KeyBindMode) Option {
 	}
 }
 
-// OptionSwitchKeyBindMode set a key bind mode.
+// OptionCompletionOnDown allows for Down arrow key to trigger completion.
 func OptionCompletionOnDown() Option {
 	return func(p *Prompt) error {
 		p.completionOnDown = true
