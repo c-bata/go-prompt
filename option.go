@@ -250,6 +250,13 @@ func OptionBreakLineCallback(fn func(*Document)) Option {
 	}
 }
 
+func OptionSetExitCheckerOnInput(fn Exitor) Option {
+	return func(p *Prompt) error {
+		p.exitor = fn
+		return nil
+	}
+}
+
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 	defaultWriter := NewStdoutWriter()

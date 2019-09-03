@@ -11,6 +11,10 @@ import (
 // Executor is called when user input something text.
 type Executor func(string)
 
+// Exitor is called after user input something text, to check if
+// prompt must stop and exit
+type Exitor func(string) bool
+
 // Completer should return the suggest item from Document.
 type Completer func(Document) []Suggest
 
@@ -26,6 +30,7 @@ type Prompt struct {
 	ASCIICodeBindings []ASCIICodeBind
 	keyBindMode       KeyBindMode
 	completionOnDown  bool
+	exitor            Exitor
 }
 
 // Exec is the struct contains user input context.
@@ -74,6 +79,11 @@ func (p *Prompt) Run() {
 				p.executor(e.input)
 
 				p.completion.Update(*p.buf.Document())
+
+				if p.exitor != nil && p.exitor(e.input) {
+					return
+				}
+
 				p.renderer.Render(p.buf, p.completion)
 
 				// Set raw mode
