@@ -245,7 +245,7 @@ func (p *Prompt) Input() string {
 	}
 }
 
-// Update info window if enabled
+// UpdateInfoWindow update info window if enabled
 func (p *Prompt) UpdateInfoWindow(i InfoWindow) {
 	p.renderer.RenderInfoWindow(i)
 }

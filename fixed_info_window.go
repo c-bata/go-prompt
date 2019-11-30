@@ -38,8 +38,8 @@ func (l *FixedInfoWindow) RequestLine(line int) *string {
 
 // Clear cleans the whole info window
 func (l *FixedInfoWindow) Clear() {
-	for i, _ := range l.lines {
-		*l.lines[i] = ""
+	for _, l := range l.lines {
+		*l = ""
 	}
 }
 

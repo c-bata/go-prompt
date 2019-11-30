@@ -83,6 +83,7 @@ func (r *Render) prepareArea(lines int) {
 	return
 }
 
+// RenderInfoWindow renders the info window to console
 func (r *Render) RenderInfoWindow(i InfoWindow) {
 	if r.infoWindowHeight > 0 {
 		r.lock.Lock()
