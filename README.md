@@ -2,7 +2,6 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/c-bata/go-prompt)](https://goreportcard.com/report/github.com/c-bata/go-prompt)
 ![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)
-[![Backers on Open Collective](https://opencollective.com/go-prompt/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/go-prompt/sponsors/badge.svg)](#sponsors)
 [![GoDoc](https://godoc.org/github.com/c-bata/go-prompt?status.svg)](https://godoc.org/github.com/c-bata/go-prompt) 
 [![Build Status](https://travis-ci.org/c-bata/go-prompt.svg?branch=master)](https://travis-ci.org/c-bata/go-prompt)
 
@@ -43,6 +42,10 @@ func main() {
 * [CrushedPixel/moshpit: A Command-line tool for datamoshing.](https://github.com/CrushedPixel/moshpit)
 * [last-ent/testy-go: Testy Go: A tool for easy testing!](https://github.com/last-ent/testy-go)
 * [tiagorlampert/CHAOS: a PoC that allow generate payloads and control remote operating systems.](https://github.com/tiagorlampert/CHAOS)
+* [abs-lang/abs: ABS is a scripting language that works best on terminal. It tries to combine the elegance of languages such as Python, or Ruby, to the convenience of Bash.](https://github.com/abs-lang/abs)
+* [takashabe/btcli: btcli is a CLI client for the Bigtable. Has many read options and auto-completion.](https://github.com/takashabe/btcli)
+* [ysn2233/kafka-prompt: An interactive kafka-prompt(kafka-shell) built on existing kafka command client](https://github.com/ysn2233/kafka-prompt)
+* [fishi0x01/vsh: HashiCorp Vault interactive shell](https://github.com/fishi0x01/vsh)
 * (If you create a CLI utility using go-prompt and want your own project to be listed here, please submit a GitHub issue.)
 
 ## Features
@@ -108,30 +111,6 @@ Masashi Shibata
 
 * Twitter: [@c\_bata\_](https://twitter.com/c_bata_/)
 * Github: [@c-bata](https://github.com/c-bata/)
-
-## Supporting go-prompt
-
-### Contributors
-
-This project exists thanks to all the people who contribute. 
-
-<a href="https://github.com/c-bata/go-prompt/graphs/contributors"><img src="https://opencollective.com/go-prompt/contributors.svg?width=890&button=false" /></a>
-
-### Backers and Sponsors (OpenCollective)
-
-Started getting support via opencollective. If you support this project by becoming a sponsor, your logo will show up here with a link to your website.
-
-[![Become a backer](https://opencollective.com/go-prompt/tiers/backer.svg?avatarHeight=64)](https://opencollective.com/go-prompt#backers)
-<a href="https://opencollective.com/go-prompt/sponsor/0/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/go-prompt/sponsor/1/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/go-prompt/sponsor/2/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/go-prompt/sponsor/3/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/go-prompt/sponsor/4/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/go-prompt/sponsor/5/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/go-prompt/sponsor/6/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/go-prompt/sponsor/7/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/go-prompt/sponsor/8/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/go-prompt/sponsor/9/website" target="_blank"><img src="https://opencollective.com/go-prompt/sponsor/9/avatar.svg"></a>
 
 ## License
 

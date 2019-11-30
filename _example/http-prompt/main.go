@@ -105,6 +105,9 @@ func executor(in string) {
 	var method, body string
 	blocks := strings.Split(in, " ")
 	switch blocks[0] {
+	case "exit":
+		fmt.Println("Bye!")
+		os.Exit(0)
 	case "cd":
 		if len(blocks) < 2 {
 			ctx.url.Path = "/"
