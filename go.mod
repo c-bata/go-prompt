@@ -8,3 +8,5 @@ require (
 	github.com/pkg/term v0.0.0-20180423043932-cda20d4ac917
 	golang.org/x/sys v0.0.0-20180620133508-ad87a3a340fa
 )
+
+go 1.13
