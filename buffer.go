@@ -13,6 +13,7 @@ type Buffer struct {
 	cursorPosition  int
 	cacheDocument   *Document
 	preferredColumn int // Remember the original column for the next up/down movement.
+	lastKeyStroke   Key
 }
 
 // Text returns string of the current line.
@@ -30,6 +31,7 @@ func (b *Buffer) Document() (d *Document) {
 			cursorPosition: b.cursorPosition,
 		}
 	}
+	b.cacheDocument.lastKey = b.lastKeyStroke
 	return b.cacheDocument
 }
 
