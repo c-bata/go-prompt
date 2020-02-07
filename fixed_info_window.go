@@ -1,7 +1,5 @@
 package prompt
 
-import ()
-
 // FixedInfoWindow is the info window that
 // uses fixed number of lines and is not scrollable
 type FixedInfoWindow struct {
