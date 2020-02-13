@@ -47,6 +47,7 @@ func main() {
 * [ysn2233/kafka-prompt: An interactive kafka-prompt(kafka-shell) built on existing kafka command client](https://github.com/ysn2233/kafka-prompt)
 * [fishi0x01/vsh: HashiCorp Vault interactive shell](https://github.com/fishi0x01/vsh)
 * [mstrYoda/docker-shell: A simple interactive prompt for docker](https://github.com/mstrYoda/docker-shell)
+* [c-bata/gh-prompt: An interactive GitHub CLI featuring auto-complete.](https://github.com/c-bata/gh-prompt)
 * (If you create a CLI utility using go-prompt and want your own project to be listed here, please submit a GitHub issue.)
 
 ## Features
