@@ -99,7 +99,7 @@ func (p *Prompt) Run() {
 
 func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	key := GetKey(b)
-
+	p.buf.lastKeyStroke = key
 	// completion
 	completing := p.completion.Completing()
 	p.handleCompletionKeyBinding(key, completing)

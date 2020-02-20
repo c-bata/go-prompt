@@ -16,6 +16,7 @@ type Document struct {
 	// So if Document is "日本(cursor)語", cursorPosition is 2.
 	// But DisplayedCursorPosition returns 4 because '日' and '本' are double width characters.
 	cursorPosition int
+	lastKey        Key
 }
 
 // NewDocument return the new empty document.
@@ -24,6 +25,11 @@ func NewDocument() *Document {
 		Text:           "",
 		cursorPosition: 0,
 	}
+}
+
+// LastKeyStroke return the last key pressed in this document.
+func (d *Document) LastKeyStroke() Key {
+	return d.lastKey
 }
 
 // DisplayCursorPosition returns the cursor position on rendered text on terminal emulators.
