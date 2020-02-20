@@ -127,8 +127,6 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
 			if newBuf, changed := p.history.Newer(p.buf); changed {
 				p.buf = newBuf
-			} else if p.completionOnDown {
-				p.completion.Next()
 			}
 			return
 		}
@@ -151,7 +149,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 func (p *Prompt) handleCompletionKeyBinding(key Key, completing bool) {
 	switch key {
 	case Down:
-		if completing {
+		if completing || p.completionOnDown {
 			p.completion.Next()
 		}
 	case Tab, ControlI:
