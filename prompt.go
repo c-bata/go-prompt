@@ -32,7 +32,7 @@ type Prompt struct {
 	keyBindMode       KeyBindMode
 	completionOnDown  bool
 	exitChecker       ExitChecker
-	inNotTearedDown   bool
+	skipTearDown      bool
 }
 
 // Exec is the struct contains user input context.
@@ -42,7 +42,7 @@ type Exec struct {
 
 // Run starts prompt.
 func (p *Prompt) Run() {
-	p.inNotTearedDown = true
+	p.skipTearDown = false
 	defer debug.Teardown()
 	debug.Log("start prompt")
 	p.setUp()
@@ -86,7 +86,7 @@ func (p *Prompt) Run() {
 				p.renderer.Render(p.buf, p.completion)
 
 				if p.exitChecker != nil && p.exitChecker(e.input) {
-					p.inNotTearedDown = false
+					p.skipTearDown = true
 					return
 				}
 				// Set raw mode
@@ -282,7 +282,7 @@ func (p *Prompt) setUp() {
 }
 
 func (p *Prompt) tearDown() {
-	if p.inNotTearedDown {
+	if !p.skipTearDown {
 		debug.AssertNoError(p.in.TearDown())
 	}
 	p.renderer.TearDown()
