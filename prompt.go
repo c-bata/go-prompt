@@ -64,7 +64,6 @@ func (p *Prompt) Run() {
 	go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 
 	for {
-		p.inNotTearedDown = true
 		select {
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
@@ -79,7 +78,6 @@ func (p *Prompt) Run() {
 
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
-				p.inNotTearedDown = false
 				debug.AssertNoError(p.in.TearDown())
 				p.executor(e.input)
 
@@ -88,6 +86,7 @@ func (p *Prompt) Run() {
 				p.renderer.Render(p.buf, p.completion)
 
 				if p.exitor != nil && p.exitor(e.input) {
+					p.inNotTearedDown = false
 					return
 				}
 				// Set raw mode
