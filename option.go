@@ -250,6 +250,14 @@ func OptionBreakLineCallback(fn func(*Document)) Option {
 	}
 }
 
+// OptionSetExitCheckerOnInput set an exit function which checks if go-prompt exits its Run loop
+func OptionSetExitCheckerOnInput(fn ExitChecker) Option {
+	return func(p *Prompt) error {
+		p.exitChecker = fn
+		return nil
+	}
+}
+
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 	defaultWriter := NewStdoutWriter()

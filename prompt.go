@@ -11,6 +11,11 @@ import (
 // Executor is called when user input something text.
 type Executor func(string)
 
+// ExitChecker is called after user input to check if prompt must stop and exit go-prompt Run loop.
+// User input means: selecting/typing an entry, then <return>, and the executor is called.
+// Then, if said entry content matches the ExitChecker function criteria, exit go-prompt (not the overall Go program)
+type ExitChecker func(string) bool
+
 // Completer should return the suggest item from Document.
 type Completer func(Document) []Suggest
 
@@ -26,6 +31,8 @@ type Prompt struct {
 	ASCIICodeBindings []ASCIICodeBind
 	keyBindMode       KeyBindMode
 	completionOnDown  bool
+	exitChecker       ExitChecker
+	skipTearDown      bool
 }
 
 // Exec is the struct contains user input context.
@@ -35,6 +42,7 @@ type Exec struct {
 
 // Run starts prompt.
 func (p *Prompt) Run() {
+	p.skipTearDown = false
 	defer debug.Teardown()
 	debug.Log("start prompt")
 	p.setUp()
@@ -74,8 +82,13 @@ func (p *Prompt) Run() {
 				p.executor(e.input)
 
 				p.completion.Update(*p.buf.Document())
+
 				p.renderer.Render(p.buf, p.completion)
 
+				if p.exitChecker != nil && p.exitChecker(e.input) {
+					p.skipTearDown = true
+					return
+				}
 				// Set raw mode
 				debug.AssertNoError(p.in.Setup())
 				go p.readBuffer(bufCh, stopReadBufCh)
@@ -269,6 +282,8 @@ func (p *Prompt) setUp() {
 }
 
 func (p *Prompt) tearDown() {
-	debug.AssertNoError(p.in.TearDown())
+	if !p.skipTearDown {
+		debug.AssertNoError(p.in.TearDown())
+	}
 	p.renderer.TearDown()
 }
