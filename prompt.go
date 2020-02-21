@@ -12,9 +12,11 @@ import (
 type Executor func(string)
 
 // ExitChecker is called after user input to check if prompt must stop and exit go-prompt Run loop.
-// User input means: selecting/typing an entry, then <return>, and the executor is called.
-// Then, if said entry content matches the ExitChecker function criteria, exit go-prompt (not the overall Go program)
-type ExitChecker func(string) bool
+// User input means: selecting/typing an entry, then, if said entry content matches the ExitChecker function criteria:
+// - immediate exit (if breakline is false) without executor called
+// - exit after typing <return> (meaning breakline is true), and the executor is called first, before exit.
+// Exit means exit go-prompt (not the overall Go program)
+type ExitChecker func(in string, breakline bool) bool
 
 // Completer should return the suggest item from Document.
 type Completer func(Document) []Suggest
@@ -85,7 +87,7 @@ func (p *Prompt) Run() {
 
 				p.renderer.Render(p.buf, p.completion)
 
-				if p.exitChecker != nil && p.exitChecker(e.input) {
+				if p.exitChecker != nil && p.exitChecker(e.input, true) {
 					p.skipTearDown = true
 					return
 				}
@@ -210,7 +212,7 @@ func (p *Prompt) handleKeyBinding(key Key) bool {
 			kb.Fn(p.buf)
 		}
 	}
-	if p.exitChecker != nil && p.exitChecker(p.buf.Text()) {
+	if p.exitChecker != nil && p.exitChecker(p.buf.Text(), false) {
 		shouldExit = true
 	}
 	return shouldExit
