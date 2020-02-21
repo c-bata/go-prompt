@@ -250,6 +250,7 @@ func OptionBreakLineCallback(fn func(*Document)) Option {
 	}
 }
 
+// OptionSetExitCheckerOnInput set an exit function which checks if go-prompt exits its Run loop
 func OptionSetExitCheckerOnInput(fn Exitor) Option {
 	return func(p *Prompt) error {
 		p.exitor = fn
