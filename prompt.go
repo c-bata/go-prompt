@@ -31,6 +31,7 @@ type Prompt struct {
 	keyBindMode       KeyBindMode
 	completionOnDown  bool
 	exitor            Exitor
+	inNotTearDown     bool
 }
 
 // Exec is the struct contains user input context.
@@ -40,6 +41,7 @@ type Exec struct {
 
 // Run starts prompt.
 func (p *Prompt) Run() {
+	p.inNotTearDown = true
 	defer debug.Teardown()
 	debug.Log("start prompt")
 	p.setUp()
@@ -61,6 +63,7 @@ func (p *Prompt) Run() {
 	go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 
 	for {
+		p.inNotTearDown = true
 		select {
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
@@ -75,6 +78,7 @@ func (p *Prompt) Run() {
 
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
+				p.inNotTearDown = false
 				debug.AssertNoError(p.in.TearDown())
 				p.executor(e.input)
 
@@ -279,6 +283,8 @@ func (p *Prompt) setUp() {
 }
 
 func (p *Prompt) tearDown() {
-	debug.AssertNoError(p.in.TearDown())
+	if p.inNotTearDown {
+		debug.AssertNoError(p.in.TearDown())
+	}
 	p.renderer.TearDown()
 }
