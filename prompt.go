@@ -11,10 +11,10 @@ import (
 // Executor is called when user input something text.
 type Executor func(string)
 
-// Exitor is called after user input to check if prompt must stop and exit go-prompt Run loop.
+// ExitChecker is called after user input to check if prompt must stop and exit go-prompt Run loop.
 // User input means: selecting/typing an entry, then <return>, and the executor is called.
-// Then, if said entry content matches the Exitor function criteria, exit go-prompt (not the overall Go program)
-type Exitor func(string) bool
+// Then, if said entry content matches the ExitChecker function criteria, exit go-prompt (not the overall Go program)
+type ExitChecker func(string) bool
 
 // Completer should return the suggest item from Document.
 type Completer func(Document) []Suggest
@@ -31,7 +31,7 @@ type Prompt struct {
 	ASCIICodeBindings []ASCIICodeBind
 	keyBindMode       KeyBindMode
 	completionOnDown  bool
-	exitor            Exitor
+	exitChecker       ExitChecker
 	inNotTearedDown   bool
 }
 
@@ -85,7 +85,7 @@ func (p *Prompt) Run() {
 
 				p.renderer.Render(p.buf, p.completion)
 
-				if p.exitor != nil && p.exitor(e.input) {
+				if p.exitChecker != nil && p.exitChecker(e.input) {
 					p.inNotTearedDown = false
 					return
 				}
