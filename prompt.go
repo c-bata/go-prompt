@@ -31,7 +31,6 @@ type Prompt struct {
 	keyBindMode       KeyBindMode
 	completionOnDown  bool
 	exitor            Exitor
-	inNotTearDown     bool
 }
 
 // Exec is the struct contains user input context.
@@ -41,7 +40,6 @@ type Exec struct {
 
 // Run starts prompt.
 func (p *Prompt) Run() {
-	p.inNotTearDown = true
 	defer debug.Teardown()
 	debug.Log("start prompt")
 	p.setUp()
@@ -63,7 +61,6 @@ func (p *Prompt) Run() {
 	go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 
 	for {
-		p.inNotTearDown = true
 		select {
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
@@ -76,17 +73,16 @@ func (p *Prompt) Run() {
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
 
+				if p.exitor != nil && p.exitor(e.input) {
+					return
+				}
+
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
-				p.inNotTearDown = false
 				debug.AssertNoError(p.in.TearDown())
 				p.executor(e.input)
 
 				p.completion.Update(*p.buf.Document())
-
-				if p.exitor != nil && p.exitor(e.input) {
-					return
-				}
 
 				p.renderer.Render(p.buf, p.completion)
 
@@ -283,8 +279,6 @@ func (p *Prompt) setUp() {
 }
 
 func (p *Prompt) tearDown() {
-	if p.inNotTearDown {
-		debug.AssertNoError(p.in.TearDown())
-	}
+	debug.AssertNoError(p.in.TearDown())
 	p.renderer.TearDown()
 }
