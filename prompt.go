@@ -210,7 +210,7 @@ func (p *Prompt) handleKeyBinding(key Key) bool {
 			kb.Fn(p.buf)
 		}
 	}
-	if p.exitor != nil && p.exitor(p.buf.Text()) {
+	if p.exitChecker != nil && p.exitChecker(p.buf.Text()) {
 		shouldExit = true
 	}
 	return shouldExit
