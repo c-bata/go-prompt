@@ -11,8 +11,9 @@ import (
 // Executor is called when user input something text.
 type Executor func(string)
 
-// Exitor is called after user input something text, to check if
-// prompt must stop and exit
+// Exitor is called after user input to check if prompt must stop and exit go-prompt Run loop.
+// User input means: selecting/typing an entry, then <return>, and the executor is called.
+// Then, if said entry content matches the Exitor function criteria, exit go-prompt (not the overall Go program)
 type Exitor func(string) bool
 
 // Completer should return the suggest item from Document.
@@ -31,6 +32,7 @@ type Prompt struct {
 	keyBindMode       KeyBindMode
 	completionOnDown  bool
 	exitor            Exitor
+	inNotTearedDown   bool
 }
 
 // Exec is the struct contains user input context.
@@ -40,6 +42,7 @@ type Exec struct {
 
 // Run starts prompt.
 func (p *Prompt) Run() {
+	p.inNotTearedDown = true
 	defer debug.Teardown()
 	debug.Log("start prompt")
 	p.setUp()
@@ -61,6 +64,7 @@ func (p *Prompt) Run() {
 	go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 
 	for {
+		p.inNotTearedDown = true
 		select {
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
@@ -73,12 +77,9 @@ func (p *Prompt) Run() {
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
 
-				if p.exitor != nil && p.exitor(e.input) {
-					return
-				}
-
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
+				p.inNotTearedDown = false
 				debug.AssertNoError(p.in.TearDown())
 				p.executor(e.input)
 
@@ -86,6 +87,9 @@ func (p *Prompt) Run() {
 
 				p.renderer.Render(p.buf, p.completion)
 
+				if p.exitor != nil && p.exitor(e.input) {
+					return
+				}
 				// Set raw mode
 				debug.AssertNoError(p.in.Setup())
 				go p.readBuffer(bufCh, stopReadBufCh)
@@ -279,6 +283,8 @@ func (p *Prompt) setUp() {
 }
 
 func (p *Prompt) tearDown() {
-	debug.AssertNoError(p.in.TearDown())
+	if p.inNotTearedDown {
+		debug.AssertNoError(p.in.TearDown())
+	}
 	p.renderer.TearDown()
 }
