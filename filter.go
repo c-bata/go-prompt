@@ -30,10 +30,10 @@ func FilterFuzzy(completions []Suggest, sub string, ignoreCase bool) []Suggest {
 
 func fuzzyMatch(s, sub string) bool {
 	sChars := []rune(s)
-	subChars := []rune(sub)
 	sIdx := 0
 
-	for _, c := range subChars {
+	// https://staticcheck.io/docs/checks#S1029
+	for _, c := range sub {
 		found := false
 		for ; sIdx < len(sChars); sIdx++ {
 			if sChars[sIdx] == c {

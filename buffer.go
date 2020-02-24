@@ -71,6 +71,7 @@ func (b *Buffer) setText(v string) {
 	b.workingLines[b.workingIndex] = v
 
 	if o != v {
+		dummyExecutor("")
 		// Text is changed.
 		// TODO: Call callback function triggered by text changed. And also history search text should reset.
 		// https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/prompt_toolkit/buffer.py#L380-L384
@@ -86,6 +87,7 @@ func (b *Buffer) setCursorPosition(p int) {
 		b.cursorPosition = 0
 	}
 	if p != o {
+		dummyExecutor("")
 		// Cursor position is changed.
 		// TODO: Call a onCursorPositionChanged function.
 	}
@@ -101,14 +103,12 @@ func (b *Buffer) setDocument(d *Document) {
 func (b *Buffer) CursorLeft(count int) {
 	l := b.Document().GetCursorLeftPosition(count)
 	b.cursorPosition += l
-	return
 }
 
 // CursorRight move to right on the current line.
 func (b *Buffer) CursorRight(count int) {
 	l := b.Document().GetCursorRightPosition(count)
 	b.cursorPosition += l
-	return
 }
 
 // CursorUp move cursor to the previous line.

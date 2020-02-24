@@ -61,13 +61,11 @@ func (c *CompletionManager) Reset() {
 	c.selected = -1
 	c.verticalScroll = 0
 	c.Update(*NewDocument())
-	return
 }
 
 // Update to update the suggestions.
 func (c *CompletionManager) Update(in Document) {
 	c.tmp = c.completer(in)
-	return
 }
 
 // Previous to select the previous suggestion item.
@@ -77,7 +75,6 @@ func (c *CompletionManager) Previous() {
 	}
 	c.selected--
 	c.update()
-	return
 }
 
 // Next to select the next suggestion item.
@@ -87,7 +84,6 @@ func (c *CompletionManager) Next() {
 	}
 	c.selected++
 	c.update()
-	return
 }
 
 // Completing returns whether the CompletionManager selects something one.
