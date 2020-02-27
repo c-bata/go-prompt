@@ -37,6 +37,14 @@ func OptionPrefix(x string) Option {
 	}
 }
 
+// OptionInitialBufferText to set the initial buffer text
+func OptionInitialBufferText(x string) Option {
+	return func(p *Prompt) error {
+		p.buf.InsertText(x, false, true)
+		return nil
+	}
+}
+
 // OptionCompletionWordSeparator to set word separators. Enable only ' ' if empty.
 func OptionCompletionWordSeparator(x string) Option {
 	return func(p *Prompt) error {
