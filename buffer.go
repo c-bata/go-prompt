@@ -67,29 +67,15 @@ func (b *Buffer) InsertText(v string, overwrite bool, moveCursor bool) {
 // text/cursor_position should be consistent at any time, otherwise set a Document instead.)
 func (b *Buffer) setText(v string) {
 	debug.Assert(b.cursorPosition <= len([]rune(v)), "length of input should be shorter than cursor position")
-	o := b.workingLines[b.workingIndex]
 	b.workingLines[b.workingIndex] = v
-
-	if o != v {
-		dummyExecutor("")
-		// Text is changed.
-		// TODO: Call callback function triggered by text changed. And also history search text should reset.
-		// https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/prompt_toolkit/buffer.py#L380-L384
-	}
 }
 
 // Set cursor position. Return whether it changed.
 func (b *Buffer) setCursorPosition(p int) {
-	o := b.cursorPosition
 	if p > 0 {
 		b.cursorPosition = p
 	} else {
 		b.cursorPosition = 0
-	}
-	if p != o {
-		dummyExecutor("")
-		// Cursor position is changed.
-		// TODO: Call a onCursorPositionChanged function.
 	}
 }
 
