@@ -28,7 +28,7 @@ func (w *WindowsWriter) Flush() error {
 var _ ConsoleWriter = &WindowsWriter{}
 
 var (
-	// Deprecated: Please use NewStdoutWriter
+	// NewStandardOutputWriter is Deprecated: Please use NewStdoutWriter
 	NewStandardOutputWriter = NewStdoutWriter
 )
 

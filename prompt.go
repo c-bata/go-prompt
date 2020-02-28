@@ -221,7 +221,7 @@ func (p *Prompt) handleKeyBinding(key Key) bool {
 func (p *Prompt) handleASCIICodeBinding(b []byte) bool {
 	checked := false
 	for _, kb := range p.ASCIICodeBindings {
-		if bytes.Compare(kb.ASCIICode, b) == 0 {
+		if bytes.Equal(kb.ASCIICode, b) {
 			kb.Fn(p.buf)
 			checked = true
 		}

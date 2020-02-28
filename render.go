@@ -75,14 +75,12 @@ func (r *Render) prepareArea(lines int) {
 	for i := 0; i < lines; i++ {
 		r.out.ScrollUp()
 	}
-	return
 }
 
 // UpdateWinSize called when window size is changed.
 func (r *Render) UpdateWinSize(ws *WinSize) {
 	r.row = ws.Row
 	r.col = ws.Col
-	return
 }
 
 func (r *Render) renderWindowTooSmall() {
@@ -90,7 +88,6 @@ func (r *Render) renderWindowTooSmall() {
 	r.out.EraseScreen()
 	r.out.SetColor(DarkRed, White, false)
 	r.out.WriteStr("Your console window is too small...")
-	return
 }
 
 func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
@@ -167,7 +164,6 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 
 	r.out.CursorUp(windowHeight)
 	r.out.SetColor(DefaultColor, DefaultColor, false)
-	return
 }
 
 // Render renders to the console.
