@@ -1,9 +1,13 @@
 package bisect_test
 
 import (
+	"encoding/binary"
 	"fmt"
 	"math/rand"
 	"testing"
+
+	crypto_rand "crypto/rand"
+	math_rand "math/rand"
 
 	"github.com/c-bata/go-prompt/internal/bisect"
 )
@@ -34,7 +38,14 @@ func TestBisectRight(t *testing.T) {
 }
 
 func BenchmarkRight(b *testing.B) {
-	rand.Seed(0)
+	// https://stackoverflow.com/a/54491783/6309
+	var bb [8]byte
+	_, err := crypto_rand.Read(bb[:])
+	if err != nil {
+		panic("cannot seed math/rand package with cryptographically secure random number generator")
+	}
+	// Avoid G404: Use of weak random number generator (math/rand instead of crypto/rand)
+	math_rand.Seed(int64(binary.LittleEndian.Uint64(bb[:])))
 
 	for _, l := range []int{10, 1e2, 1e3, 1e4} {
 		x := rand.Perm(l)

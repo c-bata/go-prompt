@@ -40,6 +40,7 @@ func (p *WindowsParser) TearDown() error {
 // Read returns byte array.
 func (p *WindowsParser) Read() ([]byte, error) {
 	var ev uint32
+	// #nosec G103
 	r0, _, err := procGetNumberOfConsoleInputEvents.Call(p.tty.Input().Fd(), uintptr(unsafe.Pointer(&ev)))
 	if r0 == 0 {
 		return nil, err
