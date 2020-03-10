@@ -19,6 +19,8 @@ var procGetNumberOfConsoleInputEvents = kernel32.NewProc("GetNumberOfConsoleInpu
 
 // WindowsParser is a ConsoleParser implementation for Win32 console.
 type WindowsParser struct {
+	row int
+	col int
 	tty *tty.TTY
 }
 
@@ -71,10 +73,22 @@ func (p *WindowsParser) GetWinSize() *WinSize {
 	if err != nil {
 		panic(err)
 	}
+	if h == 0 {
+		h = p.row
+	}
+	if w == 0 {
+		w = p.col
+	}
 	return &WinSize{
 		Row: uint16(h),
 		Col: uint16(w),
 	}
+}
+
+// SetWinSize sets default width and height of terminal when can not be optained automatically.
+func (t *PosixParser) SetWinSize(ws *WinSize) {
+	t.col = int(ws.Col)
+	t.row = int(ws.Row)
 }
 
 // NewStandardInputParser returns ConsoleParser object to read from stdin.

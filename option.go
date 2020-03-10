@@ -266,6 +266,14 @@ func OptionSetExitCheckerOnInput(fn ExitChecker) Option {
 	}
 }
 
+// OptionSetDefaultWinSize set fallback for win size when not provided by tty
+func OptionSetDefaultWinSize(ws *WinSize) Option {
+	return func(p *Prompt) error {
+		p.in.SetWinSize(ws)
+		return nil
+	}
+}
+
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 	defaultWriter := NewStdoutWriter()
