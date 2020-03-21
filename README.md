@@ -48,6 +48,7 @@ func main() {
 * [fishi0x01/vsh: HashiCorp Vault interactive shell](https://github.com/fishi0x01/vsh)
 * [mstrYoda/docker-shell: A simple interactive prompt for docker](https://github.com/mstrYoda/docker-shell)
 * [c-bata/gh-prompt: An interactive GitHub CLI featuring auto-complete.](https://github.com/c-bata/gh-prompt)
+* [docker-slim/docker-slim: Don't change anything in your Docker container image and minify it by up to 30x (and for compiled languages even more) making it secure too! (free and open source)](https://github.com/docker-slim/docker-slim)
 * (If you create a CLI utility using go-prompt and want your own project to be listed here, please submit a GitHub issue.)
 
 ## Features
