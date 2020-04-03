@@ -266,6 +266,9 @@ func (r *Render) move(from, to int) int {
 // toPos returns the relative position from the beginning of the string.
 func (r *Render) toPos(cursor int) (x, y int) {
 	col := int(r.col)
+	if col == 0 {
+		return 0, 0
+	}
 	return cursor % col, cursor / col
 }
 
