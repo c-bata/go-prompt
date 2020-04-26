@@ -68,36 +68,43 @@ func (p *Prompt) Run() {
 	for {
 		select {
 		case b := <-bufCh:
-			if shouldExit, e := p.feed(b); shouldExit {
-				p.renderer.BreakLine(p.buf)
-				stopReadBufCh <- struct{}{}
-				stopHandleSignalCh <- struct{}{}
-				return
-			} else if e != nil {
-				// Stop goroutine to run readBuffer function
-				stopReadBufCh <- struct{}{}
-				stopHandleSignalCh <- struct{}{}
-
-				// Unset raw mode
-				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
-				debug.AssertNoError(p.in.TearDown())
-				p.executor(e.input)
-
-				p.completion.Update(*p.buf.Document())
-
-				p.renderer.Render(p.buf, p.completion)
-
-				if p.exitChecker != nil && p.exitChecker(e.input, true) {
-					p.skipTearDown = true
+			for {
+				shouldExit, e, bufLeft := p.feed(b)
+				if shouldExit {
+					p.renderer.BreakLine(p.buf)
+					stopReadBufCh <- struct{}{}
+					stopHandleSignalCh <- struct{}{}
 					return
+				} else if e != nil {
+					// Stop goroutine to run readBuffer function
+					stopReadBufCh <- struct{}{}
+					stopHandleSignalCh <- struct{}{}
+
+					// Unset raw mode
+					// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
+					debug.AssertNoError(p.in.TearDown())
+					p.executor(e.input)
+
+					p.completion.Update(*p.buf.Document())
+
+					p.renderer.Render(p.buf, p.completion)
+
+					if p.exitChecker != nil && p.exitChecker(e.input, true) {
+						p.skipTearDown = true
+						return
+					}
+					// Set raw mode
+					debug.AssertNoError(p.in.Setup())
+					go p.readBuffer(bufCh, stopReadBufCh)
+					go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
+				} else {
+					p.completion.Update(*p.buf.Document())
+					p.renderer.Render(p.buf, p.completion)
 				}
-				// Set raw mode
-				debug.AssertNoError(p.in.Setup())
-				go p.readBuffer(bufCh, stopReadBufCh)
-				go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
-			} else {
-				p.completion.Update(*p.buf.Document())
-				p.renderer.Render(p.buf, p.completion)
+				if len(bufLeft) == 0 {
+					break
+				}
+				b = bufLeft
 			}
 		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
@@ -112,7 +119,21 @@ func (p *Prompt) Run() {
 	}
 }
 
-func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
+func (p *Prompt) feed(buf []byte) (shouldExit bool, exec *Exec, bufLeft []byte) {
+	idx := bytes.IndexAny(buf, string([]byte{0xa, 0xd}))
+	var b []byte
+	if idx == 0 {
+		b = []byte{buf[0]}
+		if len(buf) > 1 {
+			bufLeft = buf[1:]
+		}
+	} else if idx != -1 {
+		b = buf[0:idx]
+		bufLeft = buf[idx:]
+	} else {
+		b = buf
+	}
+
 	key := GetKey(b)
 	p.buf.lastKeyStroke = key
 	// completion
@@ -248,7 +269,7 @@ func (p *Prompt) Input() string {
 	for {
 		select {
 		case b := <-bufCh:
-			if shouldExit, e := p.feed(b); shouldExit {
+			if shouldExit, e, _ := p.feed(b); shouldExit {
 				p.renderer.BreakLine(p.buf)
 				stopReadBufCh <- struct{}{}
 				return ""
