@@ -20,7 +20,9 @@ func SetRaw(fd int) error {
 		syscall.ICRNL | syscall.IXON
 	n.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.IEXTEN | syscall.ISIG | syscall.ECHONL
 	n.Cflag &^= syscall.CSIZE | syscall.PARENB
+	n.Cflag |= syscall.CS8 // Set to 8-bit wide.  Typical value for displaying characters.
 	n.Cc[syscall.VMIN] = 1
 	n.Cc[syscall.VTIME] = 0
+
 	return termios.Tcsetattr(uintptr(fd), termios.TCSANOW, (*syscall.Termios)(&n))
 }
