@@ -1,22 +1,23 @@
 .DEFAULT_GOAL := help
 
-PKGS := $(shell go list ./...)
 SOURCES := $(shell find . -prune -o -name "*.go" -not -name '*_test.go' -print)
+
+GOIMPORTS ?= goimports
+GOCILINT ?= golangci-lint
 
 .PHONY: setup
 setup:  ## Setup for required tools.
-	go get -u golang.org/x/lint/golint
 	go get -u golang.org/x/tools/cmd/goimports
+	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 	go get -u golang.org/x/tools/cmd/stringer
 
 .PHONY: fmt
 fmt: $(SOURCES) ## Formatting source codes.
-	@goimports -w $^
+	@$(GOIMPORTS) -w $^
 
 .PHONY: lint
-lint: ## Run golint and go vet.
-	@golint -set_exit_status=1 $(PKGS)
-	@go vet $(PKGS)
+lint: ## Run golangci-lint.
+	@$(GOCILINT) run --no-config --disable-all --enable=goimports --enable=misspell ./...
 
 .PHONY: test
 test:  ## Run tests with race condition checking.
