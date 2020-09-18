@@ -53,10 +53,10 @@ jobs:
         uses: actions/checkout@master
       - name: Download golangci-lint
         run: |
-          wget https://github.com/golangci/golangci-lint/releases/download/v1.20.1/golangci-lint-1.20.1-linux-amd64.tar.gz
-          tar -xvf ./golangci-lint-1.20.1-linux-amd64.tar.gz
+          wget https://github.com/golangci/golangci-lint/releases/download/v1.31.0/golangci-lint-1.31.0-linux-amd64.tar.gz
+          tar -xvf ./golangci-lint-1.31.0-linux-amd64.tar.gz
       - name: Running golangci-lint
         env:
           GO111MODULE: on
           GOPATH: /home/runner/work/
-        run: GOCILINT=${GOPATH}/bin/golangci-lint make lint
+        run: GOCILINT=./golangci-lint-1.31.0-linux-amd64/golangci-lint make lint
