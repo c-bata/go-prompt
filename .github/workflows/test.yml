@@ -1,4 +1,4 @@
-name: Run tests
+name: tests
 on:
   pull_request:
     branches:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    name: Test
+    name: Run tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
