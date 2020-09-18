@@ -4,18 +4,18 @@ package term
 
 import (
 	"sync"
-	"syscall"
 
 	"github.com/pkg/term/termios"
+	"golang.org/x/sys/unix"
 )
 
 var (
-	saveTermios     syscall.Termios
+	saveTermios     unix.Termios
 	saveTermiosFD   int
 	saveTermiosOnce sync.Once
 )
 
-func getOriginalTermios(fd int) (syscall.Termios, error) {
+func getOriginalTermios(fd int) (unix.Termios, error) {
 	var err error
 	saveTermiosOnce.Do(func() {
 		saveTermiosFD = fd
