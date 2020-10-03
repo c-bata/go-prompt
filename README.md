@@ -52,6 +52,7 @@ func main() {
 * [rueyaa332266/ezcron: Ezcron is a CLI tool, helping you deal with cron expression easier.](https://github.com/rueyaa332266/ezcron)
 * [qingstor/qsctl: Advanced command line tool for QingStor Object Storage.](https://github.com/qingstor/qsctl)
 * [segmentio/topicctl: Tool for declarative management of Kafka topics](https://github.com/segmentio/topicctl)
+* [chriswalz/bit: Bit is a modern Git CLI](https://github.com/chriswalz/bit)
 * (If you create a CLI utility using go-prompt and want your own project to be listed here, please submit a GitHub issue.)
 
 ## Features
