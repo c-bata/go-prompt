@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"syscall"
 	"testing"
+
+	fcolor "github.com/fatih/color"
 )
 
 func TestFormatCompletion(t *testing.T) {
@@ -76,24 +78,17 @@ func TestBreakLineCallback(t *testing.T) {
 		out: &PosixWriter{
 			fd: syscall.Stdin, // "write" to stdin just so we don't mess with the output of the tests
 		},
-		livePrefixCallback:           func() (string, bool) { return "", false },
-		prefixTextColor:              Blue,
-		prefixBGColor:                DefaultColor,
-		inputTextColor:               DefaultColor,
-		inputBGColor:                 DefaultColor,
-		previewSuggestionTextColor:   Green,
-		previewSuggestionBGColor:     DefaultColor,
-		suggestionTextColor:          White,
-		suggestionBGColor:            Cyan,
-		selectedSuggestionTextColor:  Black,
-		selectedSuggestionBGColor:    Turquoise,
-		descriptionTextColor:         Black,
-		descriptionBGColor:           Turquoise,
-		selectedDescriptionTextColor: White,
-		selectedDescriptionBGColor:   Cyan,
-		scrollbarThumbColor:          DarkGray,
-		scrollbarBGColor:             Cyan,
-		col:                          1,
+		livePrefixCallback:       func() (string, bool) { return "", false },
+		prefixColor:              fcolor.New(fcolor.FgBlue),
+		inputColor:               nil,
+		previewSuggestionColor:   fcolor.New(fcolor.FgGreen),
+		suggestionColor:          fcolor.New(fcolor.FgWhite, fcolor.BgCyan),
+		selectedSuggestionColor:  fcolor.New(fcolor.FgBlack, fcolor.BgHiCyan),
+		descriptionColor:         fcolor.New(fcolor.FgBlack, fcolor.BgHiCyan),
+		selectedDescriptionColor: fcolor.New(fcolor.FgWhite, fcolor.BgCyan),
+		scrollbarColor:           fcolor.New(fcolor.FgCyan),
+		scrollbarThumbColor:      fcolor.New(fcolor.FgHiBlack),
+		col:                      1,
 	}
 	b := NewBuffer()
 	r.BreakLine(b)

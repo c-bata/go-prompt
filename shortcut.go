@@ -1,5 +1,6 @@
 package prompt
 
+/*
 func dummyExecutor(in string) {}
 
 // Input get the input data from the user and return it.
@@ -41,3 +42,4 @@ func newChoiceCompleter(choices []string, filter Filter) Completer {
 		return filter(s, x.GetWordBeforeCursor(), true)
 	}
 }
+*/

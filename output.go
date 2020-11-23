@@ -1,6 +1,10 @@
 package prompt
 
-import "sync"
+import (
+	"sync"
+
+	fcolor "github.com/fatih/color"
+)
 
 var (
 	consoleWriterMu sync.Mutex
@@ -13,8 +17,9 @@ func registerConsoleWriter(f ConsoleWriter) {
 	consoleWriter = f
 }
 
+/*
 // DisplayAttribute represents display  attributes like Blinking, Bold, Italic and so on.
-type DisplayAttribute int
+// type DisplayAttribute int
 
 const (
 	// DisplayReset reset all display attributes.
@@ -42,7 +47,7 @@ const (
 )
 
 // Color represents color on terminal.
-type Color int
+// type Color int
 
 const (
 	// DefaultColor represents a default color.
@@ -85,20 +90,20 @@ const (
 	Turquoise
 	// White represents a white.
 	White
-)
+) */
 
 // ConsoleWriter is an interface to abstract output layer.
 type ConsoleWriter interface {
 	/* Write */
 
-	// WriteRaw to write raw byte array.
-	WriteRaw(data []byte)
+	// // WriteRaw to write raw byte array.
+	// WriteRaw(data []byte)
 	// Write to write safety byte array by removing control sequences.
-	Write(data []byte)
-	// WriteStr to write raw string.
-	WriteRawStr(data string)
+	// Write(data []byte)
+	// // WriteStr to write raw string.
+	// WriteRawStr(data string)
 	// WriteStr to write safety string by removing control sequences.
-	WriteStr(data string)
+	WriteStr(data string, color *fcolor.Color)
 	// Flush to flush buffer.
 	Flush() error
 
@@ -154,8 +159,11 @@ type ConsoleWriter interface {
 	// ClearTitle clears a title of terminal window.
 	ClearTitle()
 
-	/* Font */
+	// /* Font */
 
-	// SetColor sets text and background colors. and specify whether text is bold.
-	SetColor(fg, bg Color, bold bool)
+	// // SetColor sets text and background colors. and specify whether text is bold.
+	// SetColor(color *color.Color)
+
+	// // ResetColor resets the text and background colors to default
+	// ResetColor()
 }

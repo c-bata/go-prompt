@@ -3,7 +3,9 @@ package prompt
 import (
 	"runtime"
 
-	"github.com/c-bata/go-prompt/internal/debug"
+	"github.com/daichi-m/go-prompt/internal/debug"
+	"github.com/fatih/color"
+	fcolor "github.com/fatih/color"
 	runewidth "github.com/mattn/go-runewidth"
 )
 
@@ -20,22 +22,34 @@ type Render struct {
 	previousCursor int
 
 	// colors,
-	prefixTextColor              Color
-	prefixBGColor                Color
-	inputTextColor               Color
-	inputBGColor                 Color
-	previewSuggestionTextColor   Color
-	previewSuggestionBGColor     Color
-	suggestionTextColor          Color
-	suggestionBGColor            Color
-	selectedSuggestionTextColor  Color
-	selectedSuggestionBGColor    Color
-	descriptionTextColor         Color
-	descriptionBGColor           Color
-	selectedDescriptionTextColor Color
-	selectedDescriptionBGColor   Color
-	scrollbarThumbColor          Color
-	scrollbarBGColor             Color
+
+	prefixColor              *fcolor.Color
+	inputColor               *fcolor.Color
+	previewSuggestionColor   *fcolor.Color
+	suggestionColor          *fcolor.Color
+	selectedSuggestionColor  *fcolor.Color
+	descriptionColor         *fcolor.Color
+	selectedDescriptionColor *fcolor.Color
+	scrollbarColor           *fcolor.Color
+	scrollbarThumbColor      *fcolor.Color
+
+	/*
+		prefixTextColor              color.Color
+		prefixBGColor                color.Color
+		inputTextColor               color.Color
+		inputBGColor                 color.Color
+		previewSuggestionTextColor   color.Color
+		previewSuggestionBGColor     color.Color
+		suggestionTextColor          color.Color
+		suggestionBGColor            color.Color
+		selectedSuggestionTextColor  color.Color
+		selectedSuggestionBGColor    color.Color
+		descriptionTextColor         color.Color
+		descriptionBGColor           color.Color
+		selectedDescriptionTextColor color.Color
+		selectedDescriptionBGColor   color.Color
+		scrollbarThumbColor          color.Color
+		scrollbarBGColor             color.Color*/
 }
 
 // Setup to initialize console output.
@@ -56,9 +70,7 @@ func (r *Render) getCurrentPrefix() string {
 }
 
 func (r *Render) renderPrefix() {
-	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
-	r.out.WriteStr(r.getCurrentPrefix())
-	r.out.SetColor(DefaultColor, DefaultColor, false)
+	r.out.WriteStr(r.getCurrentPrefix(), r.prefixColor)
 }
 
 // TearDown to clear title and erasing.
@@ -86,8 +98,7 @@ func (r *Render) UpdateWinSize(ws *WinSize) {
 func (r *Render) renderWindowTooSmall() {
 	r.out.CursorGoTo(0, 0)
 	r.out.EraseScreen()
-	r.out.SetColor(DarkRed, White, false)
-	r.out.WriteStr("Your console window is too small...")
+	r.out.WriteStr("Your console window is too small...", color.New(color.FgHiRed, color.BgWhite))
 }
 
 func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
@@ -121,7 +132,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	fractionVisible := float64(windowHeight) / float64(contentHeight)
 	fractionAbove := float64(completions.verticalScroll) / float64(contentHeight)
 
-	scrollbarHeight := int(clamp(float64(windowHeight), 1, float64(windowHeight)*fractionVisible))
+	scrollbarHeight := int(clamp(float64(windowHeight)*fractionVisible, float64(windowHeight), 1))
 	scrollbarTop := int(float64(windowHeight) * fractionAbove)
 
 	isScrollThumb := func(row int) bool {
@@ -129,30 +140,31 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	}
 
 	selected := completions.selected - completions.verticalScroll
-	r.out.SetColor(White, Cyan, false)
+	// r.out.SetColor(White, Cyan, false)
 	for i := 0; i < windowHeight; i++ {
 		r.out.CursorDown(1)
+		var color *fcolor.Color
 		if i == selected {
-			r.out.SetColor(r.selectedSuggestionTextColor, r.selectedSuggestionBGColor, true)
+			color = r.selectedSuggestionColor.Add(fcolor.Bold)
 		} else {
-			r.out.SetColor(r.suggestionTextColor, r.suggestionBGColor, false)
+			color = r.selectedDescriptionColor
 		}
-		r.out.WriteStr(formatted[i].Text)
+		r.out.WriteStr(formatted[i].Text, color)
 
 		if i == selected {
-			r.out.SetColor(r.selectedDescriptionTextColor, r.selectedDescriptionBGColor, false)
+			color = r.selectedDescriptionColor
 		} else {
-			r.out.SetColor(r.descriptionTextColor, r.descriptionBGColor, false)
+			color = r.descriptionColor
 		}
-		r.out.WriteStr(formatted[i].Description)
+		r.out.WriteStr(formatted[i].Description, color)
 
 		if isScrollThumb(i) {
-			r.out.SetColor(DefaultColor, r.scrollbarThumbColor, false)
+			color = r.scrollbarThumbColor
 		} else {
-			r.out.SetColor(DefaultColor, r.scrollbarBGColor, false)
+			color = r.scrollbarColor
 		}
-		r.out.WriteStr(" ")
-		r.out.SetColor(DefaultColor, DefaultColor, false)
+		r.out.WriteStr(" ", color)
+		// r.out.SetColor(DefaultColor, DefaultColor, false)
 
 		r.lineWrap(cursor + width)
 		r.backward(cursor+width, width)
@@ -163,7 +175,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	}
 
 	r.out.CursorUp(windowHeight)
-	r.out.SetColor(DefaultColor, DefaultColor, false)
+	// r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
 // Render renders to the console.
@@ -194,9 +206,9 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	defer r.out.ShowCursor()
 
 	r.renderPrefix()
-	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-	r.out.WriteStr(line)
-	r.out.SetColor(DefaultColor, DefaultColor, false)
+	// r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
+	r.out.WriteStr(line, r.inputColor)
+	// r.out.SetColor(DefaultColor, DefaultColor, false)
 	r.lineWrap(cursor)
 
 	r.out.EraseDown()
@@ -207,13 +219,13 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
 		cursor = r.backward(cursor, runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
 
-		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
-		r.out.WriteStr(suggest.Text)
-		r.out.SetColor(DefaultColor, DefaultColor, false)
+		// r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
+		r.out.WriteStr(suggest.Text, r.previewSuggestionColor)
+		// r.out.SetColor(DefaultColor, DefaultColor, false)
 		cursor += runewidth.StringWidth(suggest.Text)
 
 		rest := buffer.Document().TextAfterCursor()
-		r.out.WriteStr(rest)
+		r.out.WriteStr(rest, nil)
 		cursor += runewidth.StringWidth(rest)
 		r.lineWrap(cursor)
 
@@ -228,9 +240,9 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	cursor := runewidth.StringWidth(buffer.Document().TextBeforeCursor()) + runewidth.StringWidth(r.getCurrentPrefix())
 	r.clear(cursor)
 	r.renderPrefix()
-	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-	r.out.WriteStr(buffer.Document().Text + "\n")
-	r.out.SetColor(DefaultColor, DefaultColor, false)
+	// r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
+	r.out.WriteStr(buffer.Document().Text+"\n", r.inputColor)
+	// r.out.SetColor(DefaultColor, DefaultColor, false)
 	debug.AssertNoError(r.out.Flush())
 	if r.breakLineCallback != nil {
 		r.breakLineCallback(buffer.Document())
@@ -271,11 +283,12 @@ func (r *Render) toPos(cursor int) (x, y int) {
 
 func (r *Render) lineWrap(cursor int) {
 	if runtime.GOOS != "windows" && cursor > 0 && cursor%int(r.col) == 0 {
-		r.out.WriteRaw([]byte{'\n'})
+		r.out.WriteStr("\n", nil)
 	}
 }
 
-func clamp(high, low, x float64) float64 {
+// clamp ensures that x is within the limit of low and high.
+func clamp(x, high, low float64) float64 {
 	switch {
 	case high < x:
 		return high

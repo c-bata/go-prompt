@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/c-bata/go-prompt/internal/debug"
+	"github.com/daichi-m/go-prompt/internal/debug"
 )
 
 // Executor is called when user input something text.
@@ -68,12 +68,12 @@ func (p *Prompt) Run() {
 	for {
 		select {
 		case b := <-bufCh:
-			if shouldExit, e := p.feed(b); shouldExit {
+			if shouldExit, exec := p.feed(b); shouldExit {
 				p.renderer.BreakLine(p.buf)
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
 				return
-			} else if e != nil {
+			} else if exec != nil {
 				// Stop goroutine to run readBuffer function
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
@@ -81,13 +81,13 @@ func (p *Prompt) Run() {
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
 				debug.AssertNoError(p.in.TearDown())
-				p.executor(e.input)
+				p.executor(exec.input)
 
 				p.completion.Update(*p.buf.Document())
 
 				p.renderer.Render(p.buf, p.completion)
 
-				if p.exitChecker != nil && p.exitChecker(e.input, true) {
+				if p.exitChecker != nil && p.exitChecker(exec.input, true) {
 					p.skipTearDown = true
 					return
 				}

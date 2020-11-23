@@ -22,7 +22,7 @@ func TestVT100WriterWrite(t *testing.T) {
 
 	for _, s := range scenarioTable {
 		pw := &VT100Writer{}
-		pw.Write(s.input)
+		pw.write(s.input, nil)
 
 		if !bytes.Equal(pw.buffer, s.expected) {
 			t.Errorf("Should be %+#v, but got %+#v", pw.buffer, s.expected)
@@ -47,7 +47,7 @@ func TestVT100WriterWriteStr(t *testing.T) {
 
 	for _, s := range scenarioTable {
 		pw := &VT100Writer{}
-		pw.WriteStr(s.input)
+		pw.WriteStr(s.input, nil)
 
 		if !bytes.Equal(pw.buffer, s.expected) {
 			t.Errorf("Should be %+#v, but got %+#v", pw.buffer, s.expected)
@@ -72,7 +72,7 @@ func TestVT100WriterWriteRawStr(t *testing.T) {
 
 	for _, s := range scenarioTable {
 		pw := &VT100Writer{}
-		pw.WriteRawStr(s.input)
+		pw.writeRawStr(s.input)
 
 		if !bytes.Equal(pw.buffer, s.expected) {
 			t.Errorf("Should be %+#v, but got %+#v", pw.buffer, s.expected)

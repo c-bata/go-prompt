@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/c-bata/go-prompt/internal/debug"
+	"github.com/daichi-m/go-prompt/internal/debug"
 )
 
 func (p *Prompt) handleSignals(exitCh chan int, winSizeCh chan *WinSize, stop chan struct{}) {
@@ -24,6 +24,7 @@ func (p *Prompt) handleSignals(exitCh chan int, winSizeCh chan *WinSize, stop ch
 	for {
 		select {
 		case <-stop:
+
 			debug.Log("stop handleSignals")
 			return
 		case s := <-sigCh:
