@@ -111,46 +111,46 @@ func deleteBreakLineCharacters(s string) string {
 	return s
 }
 
-func formatTexts(o []string, max int, prefix, suffix string) (new []string, width int) {
-	l := len(o)
-	n := make([]string, l)
+func formatTexts(orig []string, max int, prefix, suffix string) (new []string, width int) {
+	l := len(orig)
+	formatted := make([]string, l)
 
 	lenPrefix := runewidth.StringWidth(prefix)
 	lenSuffix := runewidth.StringWidth(suffix)
 	lenShorten := runewidth.StringWidth(shortenSuffix)
 	min := lenPrefix + lenSuffix + lenShorten
 	for i := 0; i < l; i++ {
-		o[i] = deleteBreakLineCharacters(o[i])
+		orig[i] = deleteBreakLineCharacters(orig[i])
 
-		w := runewidth.StringWidth(o[i])
+		w := runewidth.StringWidth(orig[i])
 		if width < w {
 			width = w
 		}
 	}
 
 	if width == 0 {
-		return n, 0
+		return formatted, 0
 	}
 	if min >= max {
-		return n, 0
+		return formatted, 0
 	}
 	if lenPrefix+width+lenSuffix > max {
 		width = max - lenPrefix - lenSuffix
 	}
 
 	for i := 0; i < l; i++ {
-		x := runewidth.StringWidth(o[i])
+		x := runewidth.StringWidth(orig[i])
 		if x <= width {
 			spaces := strings.Repeat(" ", width-x)
-			n[i] = prefix + o[i] + spaces + suffix
+			formatted[i] = prefix + orig[i] + spaces + suffix
 		} else if x > width {
-			x := runewidth.Truncate(o[i], width, shortenSuffix)
+			x := runewidth.Truncate(orig[i], width, shortenSuffix)
 			// When calling runewidth.Truncate("您好xxx您好xxx", 11, "...") returns "您好xxx..."
 			// But the length of this result is 10. So we need fill right using runewidth.FillRight.
-			n[i] = prefix + runewidth.FillRight(x, width) + suffix
+			formatted[i] = prefix + runewidth.FillRight(x, width) + suffix
 		}
 	}
-	return n, lenPrefix + width + lenSuffix
+	return formatted, lenPrefix + width + lenSuffix
 }
 
 func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width int) {

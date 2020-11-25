@@ -11,13 +11,15 @@ import (
 
 // Render to render prompt information from state of Buffer.
 type Render struct {
-	out                ConsoleWriter
-	prefix             string
-	livePrefixCallback func() (prefix string, useLivePrefix bool)
-	breakLineCallback  func(*Document)
-	title              string
-	row                uint16
-	col                uint16
+	out                     ConsoleWriter
+	prefix                  string
+	livePrefixCallback      func() (prefix string, useLivePrefix bool)
+	breakLineCallback       func(*Document)
+	statusBarCallback       func(*Buffer, *CompletionManager) (*fcolor.Color, string)
+	statusDecoratorCallback func() (string, string)
+	title                   string
+	row                     uint16
+	col                     uint16
 
 	previousCursor int
 
@@ -178,6 +180,39 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	// r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
+func (r *Render) renderSelectSuggestionInBuffer(buffer *Buffer, suggest Suggest, cursorStart int) (cursor int) {
+
+	// r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
+	r.out.WriteStr(suggest.Text, r.previewSuggestionColor)
+	// r.out.SetColor(DefaultColor, DefaultColor, false)
+	cursor += runewidth.StringWidth(suggest.Text)
+
+	rest := buffer.Document().TextAfterCursor()
+	r.out.WriteStr(rest, nil)
+	cursor += runewidth.StringWidth(rest)
+	r.lineWrap(cursor)
+
+	cursor = r.backward(cursor, runewidth.StringWidth(rest))
+	return
+}
+
+func (r *Render) renderStatusBar(buffer *Buffer, completion *CompletionManager) {
+
+	color, status := r.statusBarCallback(buffer, completion)
+	prefix, suffix := r.statusDecoratorCallback()
+	fs, _ := formatTexts([]string{status}, int(r.col-2), prefix, suffix)
+	if len(fs) == 0 {
+		return
+	}
+	status = prefix + " " + fs[0] + " " + suffix
+	pcx, pcy := r.toPos(buffer.Document().cursorPosition)
+	r.out.CursorGoTo(int(r.row-1), 0)
+	defer r.out.CursorGoTo(pcx, pcy)
+
+	r.out.WriteStr(status, color)
+
+}
+
 // Render renders to the console.
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	// In situations where a pseudo tty is allocated (e.g. within a docker container),
@@ -216,20 +251,23 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	cursor = r.backward(cursor, runewidth.StringWidth(line)-buffer.DisplayCursorPosition())
 
 	r.renderCompletion(buffer, completion)
+	r.renderStatusBar(buffer, completion)
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
-		cursor = r.backward(cursor, runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
+		pushedBackCursor := r.backward(cursor, runewidth.StringWidth(
+			buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
+		cursor = r.renderSelectSuggestionInBuffer(buffer, suggest, pushedBackCursor)
 
-		// r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
-		r.out.WriteStr(suggest.Text, r.previewSuggestionColor)
-		// r.out.SetColor(DefaultColor, DefaultColor, false)
-		cursor += runewidth.StringWidth(suggest.Text)
+		// // r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
+		// r.out.WriteStr(suggest.Text, r.previewSuggestionColor)
+		// // r.out.SetColor(DefaultColor, DefaultColor, false)
+		// cursor += runewidth.StringWidth(suggest.Text)
 
-		rest := buffer.Document().TextAfterCursor()
-		r.out.WriteStr(rest, nil)
-		cursor += runewidth.StringWidth(rest)
-		r.lineWrap(cursor)
+		// rest := buffer.Document().TextAfterCursor()
+		// r.out.WriteStr(rest, nil)
+		// cursor += runewidth.StringWidth(rest)
+		// r.lineWrap(cursor)
 
-		cursor = r.backward(cursor, runewidth.StringWidth(rest))
+		// cursor = r.backward(cursor, runewidth.StringWidth(rest))
 	}
 	r.previousCursor = cursor
 }

@@ -268,10 +268,29 @@ func OptionSetExitCheckerOnInput(fn ExitChecker) Option {
 	}
 }
 
+// OptionStatusBarCallback sets a callback function that returns the status bar message and color to display it in
+func OptionStatusBarCallback(cb func(*Buffer, *CompletionManager) (*fcolor.Color, string)) Option {
+	return func(p *Prompt) error {
+		p.renderer.statusBarCallback = cb
+		return nil
+	}
+}
+
+// OptionStatusBarDecorator sets a callback function that returns the prefix and suffix of the status bar message
+func OptionStatusBarDecorator(cb func() (string, string)) Option {
+	return func(p *Prompt) error {
+		p.renderer.statusDecoratorCallback = cb
+		return nil
+	}
+}
+
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 	defaultWriter := NewStdoutWriter()
 	registerConsoleWriter(defaultWriter)
+	defStatus := func(buf *Buffer, comp *CompletionManager) (*fcolor.Color, string) {
+		return nil, ""
+	}
 
 	pt := &Prompt{
 		in: NewStandardInputParser(),
@@ -279,6 +298,8 @@ func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 			prefix:                   "> ",
 			out:                      defaultWriter,
 			livePrefixCallback:       func() (string, bool) { return "", false },
+			statusBarCallback:        defStatus,
+			statusDecoratorCallback:  func() (string, string) { return "", "" },
 			prefixColor:              fcolor.New(fcolor.FgBlue),
 			inputColor:               nil,
 			previewSuggestionColor:   fcolor.New(fcolor.FgGreen),
