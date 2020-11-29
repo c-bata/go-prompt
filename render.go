@@ -1,7 +1,9 @@
 package prompt
 
 import (
+	"fmt"
 	"runtime"
+	"strings"
 
 	"github.com/daichi-m/go-prompt/internal/debug"
 	"github.com/fatih/color"
@@ -11,15 +13,14 @@ import (
 
 // Render to render prompt information from state of Buffer.
 type Render struct {
-	out                     ConsoleWriter
-	prefix                  string
-	livePrefixCallback      func() (prefix string, useLivePrefix bool)
-	breakLineCallback       func(*Document)
-	statusBarCallback       func(*Buffer, *CompletionManager) (*fcolor.Color, string)
-	statusDecoratorCallback func() (string, string)
-	title                   string
-	row                     uint16
-	col                     uint16
+	out                ConsoleWriter
+	prefix             string
+	livePrefixCallback func() (prefix string, ok bool)
+	breakLineCallback  func(*Document)
+	statusBarCallback  func(*Buffer, *CompletionManager) (status string, ok bool)
+	title              string
+	row                uint16
+	col                uint16
 
 	previousCursor int
 
@@ -32,26 +33,9 @@ type Render struct {
 	selectedSuggestionColor  *fcolor.Color
 	descriptionColor         *fcolor.Color
 	selectedDescriptionColor *fcolor.Color
+	statusBarColor           *fcolor.Color
 	scrollbarColor           *fcolor.Color
 	scrollbarThumbColor      *fcolor.Color
-
-	/*
-		prefixTextColor              color.Color
-		prefixBGColor                color.Color
-		inputTextColor               color.Color
-		inputBGColor                 color.Color
-		previewSuggestionTextColor   color.Color
-		previewSuggestionBGColor     color.Color
-		suggestionTextColor          color.Color
-		suggestionBGColor            color.Color
-		selectedSuggestionTextColor  color.Color
-		selectedSuggestionBGColor    color.Color
-		descriptionTextColor         color.Color
-		descriptionBGColor           color.Color
-		selectedDescriptionTextColor color.Color
-		selectedDescriptionBGColor   color.Color
-		scrollbarThumbColor          color.Color
-		scrollbarBGColor             color.Color*/
 }
 
 // Setup to initialize console output.
@@ -124,10 +108,11 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	r.prepareArea(windowHeight)
 
 	cursor := runewidth.StringWidth(prefix) + runewidth.StringWidth(buf.Document().TextBeforeCursor())
-	x, _ := r.toPos(cursor)
+	x, y := r.toPos(cursor)
 	if x+width >= int(r.col) {
 		cursor = r.backward(cursor, x+width-int(r.col))
 	}
+	debug.Log(fmt.Sprintf("Cursor position for render completion: %d,%d\n", x, y))
 
 	contentHeight := len(completions.tmp)
 
@@ -177,11 +162,11 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	}
 
 	r.out.CursorUp(windowHeight)
-	// r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
 func (r *Render) renderSelectSuggestionInBuffer(buffer *Buffer, suggest Suggest, cursorStart int) (cursor int) {
 
+	cursor = cursorStart
 	// r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
 	r.out.WriteStr(suggest.Text, r.previewSuggestionColor)
 	// r.out.SetColor(DefaultColor, DefaultColor, false)
@@ -198,18 +183,44 @@ func (r *Render) renderSelectSuggestionInBuffer(buffer *Buffer, suggest Suggest,
 
 func (r *Render) renderStatusBar(buffer *Buffer, completion *CompletionManager) {
 
-	color, status := r.statusBarCallback(buffer, completion)
-	prefix, suffix := r.statusDecoratorCallback()
-	fs, _ := formatTexts([]string{status}, int(r.col-2), prefix, suffix)
-	if len(fs) == 0 {
-		return
-	}
-	status = prefix + " " + fs[0] + " " + suffix
-	pcx, pcy := r.toPos(buffer.Document().cursorPosition)
-	r.out.CursorGoTo(int(r.row-1), 0)
-	defer r.out.CursorGoTo(pcx, pcy)
+	r.out.SaveCursor()
+	defer func() {
+		r.out.UnSaveCursor()
+		r.out.CursorUp(0)
+	}()
 
-	r.out.WriteStr(status, color)
+	if status, ok := r.statusBarCallback(buffer, completion); ok {
+		r.out.CursorDown(int(r.row))
+		r.out.CursorBackward(int(r.col))
+		fs, _ := formatTexts([]string{status}, int(r.col-2), "", "")
+		if len(fs) == 0 {
+			return
+		}
+		fs = padTexts(fs, " ", int(r.col))
+		r.out.WriteStr(fs[0], r.statusBarColor)
+	}
+
+}
+
+func padTexts(orig []string, pad string, length int) []string {
+
+	pl := len(pad)
+	if pl <= 0 {
+		return orig
+	}
+	if len(orig) == 0 {
+		tot, mod := length/pl, length%pl
+		return []string{strings.Repeat(pad, tot) + pad[0:mod]}
+	}
+	padded := make([]string, 0, len(orig))
+
+	for _, o := range orig {
+		fillLen := length - len(o)
+		tot, mod := fillLen/pl, fillLen%pl
+		p := strings.Repeat(pad, tot) + pad[0:mod]
+		padded = append(padded, o+p)
+	}
+	return padded
 
 }
 
@@ -217,10 +228,12 @@ func (r *Render) renderStatusBar(buffer *Buffer, completion *CompletionManager) 
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	// In situations where a pseudo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
+	debug.Log(fmt.Sprintf("Window size in which to render: (%d x %d)", r.row, r.col))
 	if r.col == 0 {
 		return
 	}
 	defer func() { debug.AssertNoError(r.out.Flush()) }()
+	r.prepareArea(2)
 	r.move(r.previousCursor, 0)
 
 	line := buffer.Text()
@@ -241,9 +254,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	defer r.out.ShowCursor()
 
 	r.renderPrefix()
-	// r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(line, r.inputColor)
-	// r.out.SetColor(DefaultColor, DefaultColor, false)
 	r.lineWrap(cursor)
 
 	r.out.EraseDown()
@@ -253,21 +264,9 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	r.renderCompletion(buffer, completion)
 	r.renderStatusBar(buffer, completion)
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
-		pushedBackCursor := r.backward(cursor, runewidth.StringWidth(
+		cursor = r.backward(cursor, runewidth.StringWidth(
 			buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
-		cursor = r.renderSelectSuggestionInBuffer(buffer, suggest, pushedBackCursor)
-
-		// // r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
-		// r.out.WriteStr(suggest.Text, r.previewSuggestionColor)
-		// // r.out.SetColor(DefaultColor, DefaultColor, false)
-		// cursor += runewidth.StringWidth(suggest.Text)
-
-		// rest := buffer.Document().TextAfterCursor()
-		// r.out.WriteStr(rest, nil)
-		// cursor += runewidth.StringWidth(rest)
-		// r.lineWrap(cursor)
-
-		// cursor = r.backward(cursor, runewidth.StringWidth(rest))
+		cursor = r.renderSelectSuggestionInBuffer(buffer, suggest, cursor)
 	}
 	r.previousCursor = cursor
 }
@@ -278,9 +277,7 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	cursor := runewidth.StringWidth(buffer.Document().TextBeforeCursor()) + runewidth.StringWidth(r.getCurrentPrefix())
 	r.clear(cursor)
 	r.renderPrefix()
-	// r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 	r.out.WriteStr(buffer.Document().Text+"\n", r.inputColor)
-	// r.out.SetColor(DefaultColor, DefaultColor, false)
 	debug.AssertNoError(r.out.Flush())
 	if r.breakLineCallback != nil {
 		r.breakLineCallback(buffer.Document())
