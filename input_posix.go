@@ -20,9 +20,9 @@ type PosixParser struct {
 // Setup should be called before starting input
 func (t *PosixParser) Setup() error {
 	// Set NonBlocking mode because if syscall.Read block this goroutine, it cannot receive data from stopCh.
-	if err := syscall.SetNonblock(t.fd, true); err != nil {
-		return err
-	}
+	//if err := syscall.SetNonblock(t.fd, true); err != nil {
+	//	return err
+	//}
 	if err := term.SetRaw(t.fd); err != nil {
 		return err
 	}
