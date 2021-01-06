@@ -21,13 +21,13 @@ type Render struct {
 	title              string
 	row                uint16
 	col                uint16
-
-	previousCursor int
+	previousCursor     int
+	keywords           map[string]bool
 
 	// colors,
-
 	prefixColor              *fcolor.Color
 	inputColor               *fcolor.Color
+	keywordColor             *fcolor.Color
 	previewSuggestionColor   *fcolor.Color
 	suggestionColor          *fcolor.Color
 	selectedSuggestionColor  *fcolor.Color
@@ -224,6 +224,22 @@ func padTexts(orig []string, pad string, length int) []string {
 
 }
 
+func (r *Render) renderLine(line string) {
+	words := strings.Split(line, " ")
+	l := len(words)
+	for i, w := range words {
+		lw := strings.ToLower(w)
+		if _, ok := r.keywords[lw]; ok {
+			r.out.WriteStr(w, r.keywordColor)
+		} else if len(w) > 0 {
+			r.out.WriteStr(w, r.inputColor)
+		}
+		if i < l-1 {
+			r.out.WriteStr(" ", r.inputColor)
+		}
+	}
+}
+
 // Render renders to the console.
 func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	// In situations where a pseudo tty is allocated (e.g. within a docker container),
@@ -254,7 +270,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	defer r.out.ShowCursor()
 
 	r.renderPrefix()
-	r.out.WriteStr(line, r.inputColor)
+	r.renderLine(line)
 	r.lineWrap(cursor)
 
 	r.out.EraseDown()
@@ -277,7 +293,8 @@ func (r *Render) BreakLine(buffer *Buffer) {
 	cursor := runewidth.StringWidth(buffer.Document().TextBeforeCursor()) + runewidth.StringWidth(r.getCurrentPrefix())
 	r.clear(cursor)
 	r.renderPrefix()
-	r.out.WriteStr(buffer.Document().Text+"\n", r.inputColor)
+	r.renderLine(buffer.Document().Text)
+	r.out.WriteStr("\n", r.inputColor)
 	debug.AssertNoError(r.out.Flush())
 	if r.breakLineCallback != nil {
 		r.breakLineCallback(buffer.Document())

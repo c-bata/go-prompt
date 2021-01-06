@@ -1,6 +1,10 @@
 package prompt
 
-import fcolor "github.com/fatih/color"
+import (
+	"strings"
+
+	fcolor "github.com/fatih/color"
+)
 
 // Option is the type to replace default parameters.
 // prompt.New accepts any number of options (this is functional option pattern).
@@ -224,6 +228,26 @@ func OptionSetExitCheckerOnInput(fn ExitChecker) Option {
 func OptionStatusBarCallback(cb func(*Buffer, *CompletionManager) (string, bool)) Option {
 	return func(p *Prompt) error {
 		p.renderer.statusBarCallback = cb
+		return nil
+	}
+}
+
+// OptionKeywordColor sets colors for keywords in displaying
+func OptionKeywordColor(kwCol *fcolor.Color) Option {
+	return func(p *Prompt) error {
+		p.renderer.keywordColor = kwCol
+		return nil
+	}
+}
+
+// OptionKeywords sets the list of words to consider as keywords
+func OptionKeywords(kw []string) Option {
+	return func(p *Prompt) error {
+		p.renderer.keywords = make(map[string]bool)
+		for _, w := range kw {
+			lw := strings.ToLower(w)
+			p.renderer.keywords[lw] = true
+		}
 		return nil
 	}
 }
