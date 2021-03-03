@@ -163,7 +163,22 @@ func completer(in prompt.Document) []prompt.Suggest {
 	return prompt.FilterHasPrefix(suggestions, w, true)
 }
 
+func setLog() *os.File {
+	f, err := os.OpenFile("log", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetOutput(f)
+	return f
+}
+
 func main() {
+
+	f := setLog()
+	defer f.Close()
+
 	var baseURL = "http://localhost:8000/"
 	if len(os.Args) == 2 {
 		baseURL = os.Args[1]

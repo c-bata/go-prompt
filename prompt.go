@@ -3,7 +3,6 @@ package prompt
 import (
 	"bytes"
 	"os"
-	"time"
 
 	"github.com/c-bata/go-prompt/internal/debug"
 )
@@ -46,7 +45,7 @@ type Exec struct {
 func (p *Prompt) Run() {
 	p.skipTearDown = false
 	defer debug.Teardown()
-	debug.Log("start prompt")
+	debug.Log("Run start prompt")
 	p.setUp()
 	defer p.tearDown()
 
@@ -56,9 +55,8 @@ func (p *Prompt) Run() {
 
 	p.renderer.Render(p.buf, p.completion)
 
-	bufCh := make(chan []byte, 128)
-	stopReadBufCh := make(chan struct{})
-	go p.readBuffer(bufCh, stopReadBufCh)
+	bufCh := make(chan []byte)
+	go p.readBuffer(bufCh)
 
 	exitCh := make(chan int)
 	winSizeCh := make(chan *WinSize)
@@ -70,12 +68,9 @@ func (p *Prompt) Run() {
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
 				p.renderer.BreakLine(p.buf)
-				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
 				return
 			} else if e != nil {
-				// Stop goroutine to run readBuffer function
-				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
 
 				// Unset raw mode
@@ -93,7 +88,6 @@ func (p *Prompt) Run() {
 				}
 				// Set raw mode
 				debug.AssertNoError(p.in.Setup())
-				go p.readBuffer(bufCh, stopReadBufCh)
 				go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 			} else {
 				p.completion.Update(*p.buf.Document())
@@ -106,8 +100,6 @@ func (p *Prompt) Run() {
 			p.renderer.BreakLine(p.buf)
 			p.tearDown()
 			os.Exit(code)
-		default:
-			time.Sleep(10 * time.Millisecond)
 		}
 	}
 }
@@ -150,6 +142,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 			shouldExit = true
 			return
 		}
+
 	case NotDefined:
 		if p.handleASCIICodeBinding(b) {
 			return
@@ -232,7 +225,7 @@ func (p *Prompt) handleASCIICodeBinding(b []byte) bool {
 // Input just returns user input text.
 func (p *Prompt) Input() string {
 	defer debug.Teardown()
-	debug.Log("start prompt")
+	debug.Log("Input start prompt")
 	p.setUp()
 	defer p.tearDown()
 
@@ -241,44 +234,33 @@ func (p *Prompt) Input() string {
 	}
 
 	p.renderer.Render(p.buf, p.completion)
-	bufCh := make(chan []byte, 128)
-	stopReadBufCh := make(chan struct{})
-	go p.readBuffer(bufCh, stopReadBufCh)
+	bufCh := make(chan []byte)
+	go p.readBuffer(bufCh)
 
 	for {
 		select {
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
 				p.renderer.BreakLine(p.buf)
-				stopReadBufCh <- struct{}{}
 				return ""
 			} else if e != nil {
-				// Stop goroutine to run readBuffer function
-				stopReadBufCh <- struct{}{}
 				return e.input
 			} else {
 				p.completion.Update(*p.buf.Document())
 				p.renderer.Render(p.buf, p.completion)
 			}
-		default:
-			time.Sleep(10 * time.Millisecond)
 		}
 	}
 }
 
-func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
+func (p *Prompt) readBuffer(bufCh chan []byte) {
 	debug.Log("start reading buffer")
+
+	// blocking read from tty, this groutine will not exit until os.Exit()
 	for {
-		select {
-		case <-stopCh:
-			debug.Log("stop reading buffer")
-			return
-		default:
-			if b, err := p.in.Read(); err == nil && !(len(b) == 1 && b[0] == 0) {
-				bufCh <- b
-			}
+		if b, err := p.in.Read(); err == nil && !(len(b) == 1 && b[0] == 0) {
+			bufCh <- b // blocking send
 		}
-		time.Sleep(10 * time.Millisecond)
 	}
 }
 
