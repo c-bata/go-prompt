@@ -16,6 +16,8 @@ type ConsoleParser interface {
 	TearDown() error
 	// GetWinSize returns WinSize object to represent width and height of terminal.
 	GetWinSize() *WinSize
+	// SetWinSize sets default width and height of terminal when can not be optained automatically.
+	SetWinSize(*WinSize)
 	// Read returns byte array.
 	Read() ([]byte, error)
 }

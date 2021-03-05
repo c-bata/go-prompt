@@ -14,6 +14,8 @@ const maxReadBytes = 1024
 // PosixParser is a ConsoleParser implementation for POSIX environment.
 type PosixParser struct {
 	fd          int
+	row         uint16
+	col         uint16
 	origTermios syscall.Termios
 }
 
@@ -56,10 +58,22 @@ func (t *PosixParser) GetWinSize() *WinSize {
 	if err != nil {
 		panic(err)
 	}
+	if ws.Row == 0 {
+		ws.Row = t.row
+	}
+	if ws.Col == 0 {
+		ws.Col = t.col
+	}
 	return &WinSize{
 		Row: ws.Row,
 		Col: ws.Col,
 	}
+}
+
+// SetWinSize sets default width and height of terminal when can not be optained automatically.
+func (t *PosixParser) SetWinSize(ws *WinSize) {
+	t.col = ws.Col
+	t.row = ws.Row
 }
 
 var _ ConsoleParser = &PosixParser{}
