@@ -189,6 +189,14 @@ func OptionScrollbarBGColor(x Color) Option {
 	}
 }
 
+// OptionInfoWindowHeight to enable or change the size of the info window.
+func OptionInfoWindowHeight(x uint16) Option {
+	return func(p *Prompt) error {
+		p.renderer.infoWindowHeight = x
+		return nil
+	}
+}
+
 // OptionMaxSuggestion specify the max number of displayed suggestions.
 func OptionMaxSuggestion(x uint16) Option {
 	return func(p *Prompt) error {

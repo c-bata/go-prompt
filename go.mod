@@ -9,3 +9,5 @@ require (
 	github.com/pkg/term v1.2.0-beta.2
 	golang.org/x/sys v0.0.0-20200918174421-af09f7315aff
 )
+
+go 1.13
