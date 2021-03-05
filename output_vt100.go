@@ -219,6 +219,12 @@ func (w *VT100Writer) SetColor(fg, bg Color, bold bool) {
 	}
 }
 
+// SetColorFormat sets text and background colors. and format
+func (w *VT100Writer) SetColorFormat(fg, bg Color, format DisplayAttribute) {
+	w.SetDisplayAttributes(fg, bg, format)
+	return
+}
+
 // SetDisplayAttributes to set VT100 display attributes.
 func (w *VT100Writer) SetDisplayAttributes(fg, bg Color, attrs ...DisplayAttribute) {
 	w.WriteRaw([]byte{0x1b, '['}) // control sequence introducer
