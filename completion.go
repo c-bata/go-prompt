@@ -25,6 +25,7 @@ var (
 type Suggest struct {
 	Text        string
 	Description string
+	IsFreeForm  bool
 }
 
 // CompletionManager manages which suggestion is now selected.
@@ -48,6 +49,11 @@ func (c *CompletionManager) GetSelectedSuggestion() (s Suggest, ok bool) {
 		c.selected = -1
 		return Suggest{}, false
 	}
+
+	if c.tmp[c.selected].IsFreeForm {
+		return Suggest{}, false
+	}
+
 	return c.tmp[c.selected], true
 }
 
