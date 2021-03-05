@@ -275,7 +275,16 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 			return
 		default:
 			if b, err := p.in.Read(); err == nil && !(len(b) == 1 && b[0] == 0) {
-				bufCh <- b
+				start := 0
+				for i, e := range b {
+					switch GetKey([]byte{e}) {
+					case Enter, ControlJ, ControlM:
+						bufCh <- b[start:i]
+						bufCh <- []byte{e}
+						start = i + 1
+					}
+				}
+				bufCh <- b[start:]
 			}
 		}
 		time.Sleep(10 * time.Millisecond)
