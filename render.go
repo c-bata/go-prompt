@@ -13,6 +13,7 @@ type Render struct {
 	prefix             string
 	livePrefixCallback func() (prefix string, useLivePrefix bool)
 	breakLineCallback  func(*Document)
+	closeOnControlC    bool
 	title              string
 	row                uint16
 	col                uint16

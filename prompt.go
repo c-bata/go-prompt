@@ -129,9 +129,14 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 			p.history.Add(exec.input)
 		}
 	case ControlC:
-		p.renderer.BreakLine(p.buf)
-		p.buf = NewBuffer()
-		p.history.Clear()
+		if p.renderer.closeOnControlC && p.buf.Text() == "" {
+			shouldExit = true
+			return
+		} else {
+			p.renderer.BreakLine(p.buf)
+			p.buf = NewBuffer()
+			p.history.Clear()
+		}
 	case Up, ControlP:
 		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
 			if newBuf, changed := p.history.Older(p.buf); changed {

@@ -250,6 +250,14 @@ func OptionShowCompletionAtStart() Option {
 	}
 }
 
+// OptionCloseOnControlC causes prompts to close on ControlC
+func OptionCloseOnControlC() Option {
+	return func(p *Prompt) error {
+		p.renderer.closeOnControlC = true
+		return nil
+	}
+}
+
 // OptionBreakLineCallback to run a callback at every break line
 func OptionBreakLineCallback(fn func(*Document)) Option {
 	return func(p *Prompt) error {
