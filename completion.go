@@ -25,6 +25,7 @@ var (
 type Suggest struct {
 	Text        string
 	Description string
+	AlsoMatch   []string
 }
 
 // CompletionManager manages which suggestion is now selected.
