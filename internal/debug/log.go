@@ -19,7 +19,8 @@ var (
 func init() {
 	if e := os.Getenv(envEnableLog); e == "true" || e == "1" {
 		var err error
-		logfile, err = os.OpenFile(logFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+		// Avoid G302: Expect file permissions to be 0600 or less
+		logfile, err = os.OpenFile(logFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 		if err == nil {
 			logger = log.New(logfile, "", log.Llongfile)
 			return
