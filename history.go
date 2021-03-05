@@ -51,6 +51,33 @@ func (h *History) Newer(buf *Buffer) (new *Buffer, changed bool) {
 	return new, true
 }
 
+// Get x lines back in the history as a string array
+func (h *History) GetLines(lines int) []string {
+	if lines > len(h.histories) {
+        lines = len(h.histories)
+    }
+    
+    // begin := int(math.Abs(float64(lines - h.selected)))
+    begin := lines - h.selected
+    if lines - h.selected < 0 {
+    	begin = -begin
+    }
+    if begin > h.selected - 1 {
+    	begin = 0
+    }
+	return h.histories[begin:h.selected]
+}
+
+// Get the specific line in the history by index
+func (h *History) GetLine(idx int) string {
+    return h.histories[idx]
+}
+
+// Get the most rest entry in history
+func (h *History) GetLast() string {
+    return h.GetLine(len(h.histories) - 1)
+}
+
 // NewHistory returns new history object.
 func NewHistory() *History {
 	return &History{
