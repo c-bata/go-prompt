@@ -96,7 +96,7 @@ var ASCIISequences = []*ASCIICode{
 	{Key: F3, ASCIICode: []byte{0x1b, 0x4f, 0x52}},
 	{Key: F4, ASCIICode: []byte{0x1b, 0x4f, 0x53}},
 
-	{Key: F1, ASCIICode: []byte{0x1b, 0x4f, 0x50, 0x41}}, // Linux console
+	{Key: F1, ASCIICode: []byte{0x1b, 0x4f, 0x5b, 0x41}}, // Linux console
 	{Key: F2, ASCIICode: []byte{0x1b, 0x5b, 0x5b, 0x42}}, // Linux console
 	{Key: F3, ASCIICode: []byte{0x1b, 0x5b, 0x5b, 0x43}}, // Linux console
 	{Key: F4, ASCIICode: []byte{0x1b, 0x5b, 0x5b, 0x44}}, // Linux console
