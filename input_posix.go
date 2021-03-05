@@ -3,6 +3,7 @@
 package prompt
 
 import (
+	"os"
 	"syscall"
 
 	"github.com/c-bata/go-prompt/internal/term"
@@ -54,7 +55,12 @@ func (t *PosixParser) Read() ([]byte, error) {
 func (t *PosixParser) GetWinSize() *WinSize {
 	ws, err := unix.IoctlGetWinsize(t.fd, unix.TIOCGWINSZ)
 	if err != nil {
-		panic(err)
+		// If this errors, we simply return the default window size as
+		// it's our best guess.
+		return &WinSize{
+			Row: 25,
+			Col: 80,
+		}
 	}
 	return &WinSize{
 		Row: ws.Row,
@@ -67,7 +73,9 @@ var _ ConsoleParser = &PosixParser{}
 // NewStandardInputParser returns ConsoleParser object to read from stdin.
 func NewStandardInputParser() *PosixParser {
 	in, err := syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
-	if err != nil {
+	if os.IsNotExist(err) {
+		in = syscall.Stdin
+	} else if err != nil {
 		panic(err)
 	}
 
