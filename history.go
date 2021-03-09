@@ -1,10 +1,15 @@
 package prompt
 
+import (
+	"strings"
+)
+
 // History stores the texts that are entered.
 type History struct {
 	histories []string
 	tmp       []string
 	selected  int
+	searchAt  int
 }
 
 // Add to add text in history.
@@ -21,6 +26,63 @@ func (h *History) Clear() {
 	}
 	h.tmp = append(h.tmp, "")
 	h.selected = len(h.tmp) - 1
+	h.searchAt = -1
+}
+
+func (h *History) SearchReset(begin bool) {
+	hlen := len(h.histories)
+	if begin {
+		h.searchAt = 0
+	} else {
+		h.searchAt = hlen - 1
+	}
+}
+
+func (h *History) Search(pattern string, fwd bool, skipCur bool) string {
+	hlen := len(h.histories)
+	if skipCur {
+		if h.searchAt < 0 && fwd {
+			h.searchAt = 0
+		}
+		if h.searchAt >= hlen && !fwd {
+			h.searchAt = hlen -1
+		}
+	}
+	if h.searchAt < 0 || h.searchAt >= hlen {
+		return ""
+	}
+	if fwd {
+		for idx := h.searchAt; idx < hlen; idx++ {
+			hstr := h.histories[idx]
+			if strings.Contains(hstr, pattern) {
+				if skipCur {
+					h.searchAt = idx + 1
+					skipCur = false
+				} else {
+					return hstr
+				}
+			}
+		}
+		if skipCur {
+			h.searchAt = hlen
+		}
+	} else {
+		for idx := h.searchAt; idx >= 0; idx-- {
+			hstr := h.histories[idx]
+			if strings.Contains(hstr, pattern) {
+				if skipCur {
+					h.searchAt = idx - 1
+					skipCur = false
+				} else {
+					return hstr
+				}
+			}
+		}
+		if skipCur {
+			h.searchAt = -1
+		}
+	}
+	return ""
 }
 
 // Older saves a buffer of current line and get a buffer of previous line by up-arrow.
@@ -57,5 +119,6 @@ func NewHistory() *History {
 		histories: []string{},
 		tmp:       []string{""},
 		selected:  0,
+		searchAt:  -1,
 	}
 }

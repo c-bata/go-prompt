@@ -3,7 +3,9 @@ package prompt
 import (
 	"bytes"
 	"os"
+	"strconv"
 	"time"
+	"unicode/utf8"
 
 	"github.com/c-bata/go-prompt/internal/debug"
 )
@@ -25,6 +27,7 @@ type Completer func(Document) []Suggest
 type Prompt struct {
 	in                ConsoleParser
 	buf               *Buffer
+	editBuf           *Buffer
 	renderer          *Render
 	executor          Executor
 	history           *History
@@ -35,6 +38,8 @@ type Prompt struct {
 	completionOnDown  bool
 	exitChecker       ExitChecker
 	skipTearDown      bool
+	histSearch        bool
+	histSearchFwd     bool
 }
 
 // Exec is the struct contains user input context.
@@ -47,11 +52,12 @@ func (p *Prompt) Run() {
 	p.skipTearDown = false
 	defer debug.Teardown()
 	debug.Log("start prompt")
+	p.freshBuffer(false)
 	p.setUp()
 	defer p.tearDown()
 
 	if p.completion.showAtStart {
-		p.completion.Update(*p.buf.Document())
+		p.completion.Update(*p.editBuf.Document())
 	}
 
 	p.renderer.Render(p.buf, p.completion)
@@ -83,7 +89,7 @@ func (p *Prompt) Run() {
 				debug.AssertNoError(p.in.TearDown())
 				p.executor(e.input)
 
-				p.completion.Update(*p.buf.Document())
+				p.completion.Update(*p.editBuf.Document())
 
 				p.renderer.Render(p.buf, p.completion)
 
@@ -96,7 +102,7 @@ func (p *Prompt) Run() {
 				go p.readBuffer(bufCh, stopReadBufCh)
 				go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 			} else {
-				p.completion.Update(*p.buf.Document())
+				p.completion.Update(*p.editBuf.Document())
 				p.renderer.Render(p.buf, p.completion)
 			}
 		case w := <-winSizeCh:
@@ -112,41 +118,127 @@ func (p *Prompt) Run() {
 	}
 }
 
+func (p *Prompt) SetHistory(hist *History) {
+	p.history = hist
+}
+
+func (p *Prompt) freshBuffer(split bool) {
+	p.buf = NewBuffer()
+	p.histSearch = split
+	p.completion.Enable(!split)
+	if split {
+		p.editBuf = NewBuffer()
+	} else {
+		p.editBuf = p.buf
+	}
+}
+
+func (p *Prompt) updateHistSearch(finalize bool) {
+	if p.histSearch {
+		editText := p.editBuf.Text()
+		found := p.history.Search(editText, p.histSearchFwd, false)
+		p.buf = NewBuffer()
+		if !finalize {
+			p.buf.InsertText(editText+": ", false, true)
+		}
+		if found == "" {
+			if finalize {
+				p.buf.InsertText(editText, false, true)
+			}
+		} else {
+			p.buf.InsertText(found, false, true)
+		}
+		//p.completion.Update(*NewBuffer().Document())
+		p.renderer.Render(p.buf, p.completion)
+	}
+}
+
 func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	key := GetKey(b)
-	p.buf.lastKeyStroke = key
+	p.editBuf.lastKeyStroke = key
 	// completion
-	completing := p.completion.Completing()
+	completing := p.completion.Completing() && !p.histSearch
 	p.handleCompletionKeyBinding(key, completing)
 
 	switch key {
 	case Enter, ControlJ, ControlM:
+		if  p.histSearch {
+			p.updateHistSearch(true)
+		}
 		p.renderer.BreakLine(p.buf)
 
 		exec = &Exec{input: p.buf.Text()}
-		p.buf = NewBuffer()
+		p.freshBuffer(false)
 		if exec.input != "" {
 			p.history.Add(exec.input)
 		}
 	case ControlC:
+		p.histSearch = false
 		p.renderer.BreakLine(p.buf)
-		p.buf = NewBuffer()
+		p.freshBuffer(false)
 		p.history.Clear()
+		p.histSearch = false
 	case Up, ControlP:
-		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
-			if newBuf, changed := p.history.Older(p.buf); changed {
+		if p.histSearch {
+			p.histSearch = false
+			p.freshBuffer(false)
+		} else if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
+			if newBuf, changed := p.history.Older(p.editBuf); changed {
 				p.buf = newBuf
+				p.editBuf = newBuf
 			}
 		}
 	case Down, ControlN:
-		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
-			if newBuf, changed := p.history.Newer(p.buf); changed {
+		if p.histSearch {
+			p.histSearch = false
+			p.freshBuffer(false)
+		} else if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
+			if newBuf, changed := p.history.Newer(p.editBuf); changed {
 				p.buf = newBuf
+				p.editBuf = newBuf
 			}
 			return
 		}
+	case Left, Right:
+		if p.histSearch {
+			p.updateHistSearch(true)
+			p.editBuf = p.buf
+			p.histSearch = false
+			//p.renderer.BreakLine(p.buf)
+			//p.completion.Reset()
+			p.completion.Enable(true)
+			p.completion.Update(*p.buf.Document())
+			p.renderer.Render(p.buf, p.completion)
+		}
+	case ControlR:
+		p.histSearchFwd = false
+		if p.histSearch {
+			p.history.Search(p.editBuf.Text(), p.histSearchFwd, true)
+			p.updateHistSearch(false)
+		} else {
+			p.histSearch = true
+			p.completion.Reset()
+			p.completion.Enable(false)
+			p.buf = NewBuffer()
+			p.history.SearchReset(false)
+			p.updateHistSearch(false)
+		}
+		return
+	case ControlS:
+		p.histSearchFwd = true
+		if p.histSearch {
+			p.history.Search(p.editBuf.Text(), p.histSearchFwd, true)
+			p.updateHistSearch(false)
+			return
+		}
+	case Escape:
+		if p.histSearch {
+			p.histSearch = false
+			p.freshBuffer(false)
+			return
+		}
 	case ControlD:
-		if p.buf.Text() == "" {
+		if p.editBuf.Text() == "" {
 			shouldExit = true
 			return
 		}
@@ -154,10 +246,18 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		if p.handleASCIICodeBinding(b) {
 			return
 		}
-		p.buf.InsertText(string(b), false, true)
+		// check for unprintable characters (e.g. multiple simultaneous cursor-keys)
+		roon, _ := utf8.DecodeRune(b)
+		if strconv.IsPrint(roon) {
+			p.editBuf.InsertText(string(b), false, true)
+		} else {
+			p.histSearch = false
+			p.buf = p.editBuf
+		}
 	}
 
 	shouldExit = p.handleKeyBinding(key)
+	p.updateHistSearch(false)
 	return
 }
 
@@ -177,11 +277,11 @@ func (p *Prompt) handleCompletionKeyBinding(key Key, completing bool) {
 		p.completion.Previous()
 	default:
 		if s, ok := p.completion.GetSelectedSuggestion(); ok {
-			w := p.buf.Document().GetWordBeforeCursorUntilSeparator(p.completion.wordSeparator)
+			w := p.editBuf.Document().GetWordBeforeCursorUntilSeparator(p.completion.wordSeparator)
 			if w != "" {
-				p.buf.DeleteBeforeCursor(len([]rune(w)))
+				p.editBuf.DeleteBeforeCursor(len([]rune(w)))
 			}
-			p.buf.InsertText(s.Text, false, true)
+			p.editBuf.InsertText(s.Text, false, true)
 		}
 		p.completion.Reset()
 	}
@@ -192,7 +292,7 @@ func (p *Prompt) handleKeyBinding(key Key) bool {
 	for i := range commonKeyBindings {
 		kb := commonKeyBindings[i]
 		if kb.Key == key {
-			kb.Fn(p.buf)
+			kb.Fn(p.editBuf)
 		}
 	}
 
@@ -200,7 +300,7 @@ func (p *Prompt) handleKeyBinding(key Key) bool {
 		for i := range emacsKeyBindings {
 			kb := emacsKeyBindings[i]
 			if kb.Key == key {
-				kb.Fn(p.buf)
+				kb.Fn(p.editBuf)
 			}
 		}
 	}
@@ -209,10 +309,10 @@ func (p *Prompt) handleKeyBinding(key Key) bool {
 	for i := range p.keyBindings {
 		kb := p.keyBindings[i]
 		if kb.Key == key {
-			kb.Fn(p.buf)
+			kb.Fn(p.editBuf)
 		}
 	}
-	if p.exitChecker != nil && p.exitChecker(p.buf.Text(), false) {
+	if p.exitChecker != nil && p.exitChecker(p.editBuf.Text(), false) {
 		shouldExit = true
 	}
 	return shouldExit
@@ -222,7 +322,7 @@ func (p *Prompt) handleASCIICodeBinding(b []byte) bool {
 	checked := false
 	for _, kb := range p.ASCIICodeBindings {
 		if bytes.Equal(kb.ASCIICode, b) {
-			kb.Fn(p.buf)
+			kb.Fn(p.editBuf)
 			checked = true
 		}
 	}
@@ -237,7 +337,7 @@ func (p *Prompt) Input() string {
 	defer p.tearDown()
 
 	if p.completion.showAtStart {
-		p.completion.Update(*p.buf.Document())
+		p.completion.Update(*p.editBuf.Document())
 	}
 
 	p.renderer.Render(p.buf, p.completion)
@@ -257,7 +357,7 @@ func (p *Prompt) Input() string {
 				stopReadBufCh <- struct{}{}
 				return e.input
 			} else {
-				p.completion.Update(*p.buf.Document())
+				p.completion.Update(*p.editBuf.Document())
 				p.renderer.Render(p.buf, p.completion)
 			}
 		default:

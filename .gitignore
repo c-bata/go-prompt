@@ -24,3 +24,7 @@ _testmain.go
 
 # Glide
 vendor/
+
+# vim
+*.swp
+*.swo
