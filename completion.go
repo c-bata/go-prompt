@@ -37,11 +37,16 @@ type CompletionManager struct {
 	verticalScroll int
 	wordSeparator  string
 	showAtStart    bool
+	disabled       bool
+}
+
+func (c *CompletionManager) Enable(on bool) {
+	c.disabled = !on
 }
 
 // GetSelectedSuggestion returns the selected item.
 func (c *CompletionManager) GetSelectedSuggestion() (s Suggest, ok bool) {
-	if c.selected == -1 {
+	if c.selected == -1 || c.disabled {
 		return Suggest{}, false
 	} else if c.selected < -1 {
 		debug.Assert(false, "must not reach here")
@@ -53,6 +58,9 @@ func (c *CompletionManager) GetSelectedSuggestion() (s Suggest, ok bool) {
 
 // GetSuggestions returns the list of suggestion.
 func (c *CompletionManager) GetSuggestions() []Suggest {
+	if c.disabled {
+		return []Suggest{}
+	}
 	return c.tmp
 }
 
@@ -88,7 +96,7 @@ func (c *CompletionManager) Next() {
 
 // Completing returns whether the CompletionManager selects something one.
 func (c *CompletionManager) Completing() bool {
-	return c.selected != -1
+	return c.selected != -1 && !c.disabled
 }
 
 func (c *CompletionManager) update() {
