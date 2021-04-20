@@ -47,6 +47,14 @@ func (t *PosixParser) Read() ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
+	if len(buf[:n]) >= 6 {
+		if buf[0] == buf[1] {
+			return buf[:1], nil
+		}
+		if buf[0] == buf[3] && buf[1] == buf[4] && buf[2] == buf[5] {
+			return buf[:3], nil
+		}
+	}
 	return buf[:n], nil
 }
 
