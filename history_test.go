@@ -10,9 +10,10 @@ func TestHistoryClear(t *testing.T) {
 	h.Add("foo")
 	h.Clear()
 	expected := &History{
-		histories: []string{"foo"},
-		tmp:       []string{"foo", ""},
-		selected:  1,
+		histories:        []string{"foo"},
+		tmp:              []string{"foo", ""},
+		selected:         1,
+		ignoreDuplicates: false,
 	}
 	if !reflect.DeepEqual(expected, h) {
 		t.Errorf("Should be %#v, but got %#v", expected, h)
@@ -23,9 +24,27 @@ func TestHistoryAdd(t *testing.T) {
 	h := NewHistory()
 	h.Add("echo 1")
 	expected := &History{
-		histories: []string{"echo 1"},
-		tmp:       []string{"echo 1", ""},
-		selected:  1,
+		histories:        []string{"echo 1"},
+		tmp:              []string{"echo 1", ""},
+		selected:         1,
+		ignoreDuplicates: false,
+	}
+	if !reflect.DeepEqual(h, expected) {
+		t.Errorf("Should be %v, but got %v", expected, h)
+	}
+}
+
+func TestHistoryAddIgnoreDuplicates(t *testing.T) {
+	h := NewHistory()
+	h.ignoreDuplicates = true
+	h.Add("echo 1")
+	h.Add("echo 2")
+	h.Add("echo 1")
+	expected := &History{
+		histories:        []string{"echo 2", "echo 1"},
+		tmp:              []string{"echo 2", "echo 1", ""},
+		selected:         2,
+		ignoreDuplicates: true,
 	}
 	if !reflect.DeepEqual(h, expected) {
 		t.Errorf("Should be %v, but got %v", expected, h)
