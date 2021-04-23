@@ -206,6 +206,15 @@ func OptionHistory(x []string) Option {
 	}
 }
 
+// OptionHistoryIgnoreDuplicates to set history not display a line previously found
+func OptionHistoryIgnoreDuplicates() Option {
+	return func(p *Prompt) error {
+		p.history.ignoreDuplicates = true
+		p.history.Clear()
+		return nil
+	}
+}
+
 // OptionSwitchKeyBindMode set a key bind mode.
 func OptionSwitchKeyBindMode(m KeyBindMode) Option {
 	return func(p *Prompt) error {

@@ -2,14 +2,25 @@ package prompt
 
 // History stores the texts that are entered.
 type History struct {
-	histories []string
-	tmp       []string
-	selected  int
+	histories        []string
+	tmp              []string
+	selected         int
+	ignoreDuplicates bool
 }
 
 // Add to add text in history.
 func (h *History) Add(input string) {
-	h.histories = append(h.histories, input)
+	if h.ignoreDuplicates {
+		var histories []string
+		for _, history := range h.histories {
+			if history != input {
+				histories = append(histories, history)
+			}
+		}
+		h.histories = append(histories, input)
+	} else {
+		h.histories = append(h.histories, input)
+	}
 	h.Clear()
 }
 
