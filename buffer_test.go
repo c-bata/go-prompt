@@ -28,6 +28,33 @@ func TestBuffer_InsertText(t *testing.T) {
 	}
 }
 
+func TestBuffer_InsertText_Overwrite(t *testing.T) {
+	b := NewBuffer()
+	b.InsertText("ABC", false, true)
+
+	if b.Text() != "ABC" {
+		t.Errorf("Text should be %#v, got %#v", "ABC", b.Text())
+	}
+
+	if b.cursorPosition != len("ABC") {
+		t.Errorf("cursorPosition should be %#v, got %#v", len("ABC"), b.cursorPosition)
+	}
+
+	b.CursorLeft(1)
+	b.InsertText("DEF", true, true)
+
+	if b.Text() != "ABDEF" {
+		t.Errorf("Text should be %#v, got %#v", "ABDEF", b.Text())
+	}
+
+	b.CursorLeft(100)
+	b.InsertText("GHI", true, true)
+
+	if b.Text() != "GHIEF" {
+		t.Errorf("Text should be %#v, got %#v", "GHIEF", b.Text())
+	}
+}
+
 func TestBuffer_CursorMovement(t *testing.T) {
 	b := NewBuffer()
 	b.InsertText("some_text", false, true)
