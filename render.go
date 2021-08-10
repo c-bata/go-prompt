@@ -130,9 +130,12 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	}
 
 	selected := completions.selected - completions.verticalScroll
+	cursorColumnSpacing := cursor
+
 	r.out.SetColor(White, Cyan, false)
 	for i := 0; i < windowHeight; i++ {
-		r.out.CursorDown(1)
+		alignNextLine(r, cursorColumnSpacing)
+
 		if i == selected {
 			r.out.SetColor(r.selectedSuggestionTextColor, r.selectedSuggestionBGColor, true)
 		} else {
@@ -285,4 +288,10 @@ func clamp(high, low, x float64) float64 {
 	default:
 		return x
 	}
+}
+
+func alignNextLine(r *Render, col int) {
+	r.out.CursorDown(1)
+	r.out.WriteStr("\r")
+	r.out.CursorForward(col)
 }
