@@ -41,6 +41,7 @@ func TestBuffer_InsertText_Overwrite(t *testing.T) {
 	}
 
 	b.CursorLeft(1)
+	// Replace C with DEF in ABC
 	b.InsertText("DEF", true, true)
 
 	if b.Text() != "ABDEF" {
@@ -48,10 +49,28 @@ func TestBuffer_InsertText_Overwrite(t *testing.T) {
 	}
 
 	b.CursorLeft(100)
+	// Replace ABD with GHI in ABDEF
 	b.InsertText("GHI", true, true)
 
 	if b.Text() != "GHIEF" {
 		t.Errorf("Text should be %#v, got %#v", "GHIEF", b.Text())
+	}
+
+	b.CursorLeft(100)
+	// Replace GHI with J\nK in GHIEF
+	b.InsertText("J\nK", true, true)
+
+	if b.Text() != "J\nKEF" {
+		t.Errorf("Text should be %#v, got %#v", "J\nKEF", b.Text())
+	}
+
+	b.CursorUp(100)
+	b.CursorLeft(100)
+	// Replace J with LMN in J\nKEF test end of line
+	b.InsertText("LMN", true, true)
+
+	if b.Text() != "LMN\nKEF" {
+		t.Errorf("Text should be %#v, got %#v", "LMN\nKEF", b.Text())
 	}
 }
 
