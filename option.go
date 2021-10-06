@@ -266,6 +266,14 @@ func OptionSetExitCheckerOnInput(fn ExitChecker) Option {
 	}
 }
 
+// OptionSetLexer set lexer function and enable it.
+func OptionSetLexer(fn LexerFunc) Option {
+	return func(p *Prompt) error {
+		p.lexer.SetLexerFunction(fn)
+		return nil
+	}
+}
+
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 	defaultWriter := NewStdoutWriter()
@@ -297,6 +305,7 @@ func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 		buf:         NewBuffer(),
 		executor:    executor,
 		history:     NewHistory(),
+		lexer: NewLexer(),
 		completion:  NewCompletionManager(completer, 6),
 		keyBindMode: EmacsKeyBind, // All the above assume that bash is running in the default Emacs setting
 	}

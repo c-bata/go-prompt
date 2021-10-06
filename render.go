@@ -2,6 +2,7 @@ package prompt
 
 import (
 	"runtime"
+	"strings"
 
 	"github.com/c-bata/go-prompt/internal/debug"
 	runewidth "github.com/mattn/go-runewidth"
@@ -167,7 +168,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 }
 
 // Render renders to the console.
-func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
+func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer *Lexer) {
 	// In situations where a pseudo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col == 0 {
@@ -194,9 +195,25 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	defer r.out.ShowCursor()
 
 	r.renderPrefix()
-	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-	r.out.WriteStr(line)
+
+	if lexer.IsEnabled {
+		processed := lexer.Process(line)
+		var s = line
+
+		for _, v := range processed {
+			a := strings.SplitAfter(s, v.Text)
+			s = strings.TrimPrefix(s, a[0])
+
+			r.out.SetColor(v.Color, r.inputBGColor, false)
+			r.out.WriteStr(a[0])
+		}
+	} else {
+		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
+		r.out.WriteStr(line)
+	}
+
 	r.out.SetColor(DefaultColor, DefaultColor, false)
+
 	r.lineWrap(cursor)
 
 	r.out.EraseDown()
@@ -213,7 +230,25 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 		cursor += runewidth.StringWidth(suggest.Text)
 
 		rest := buffer.Document().TextAfterCursor()
-		r.out.WriteStr(rest)
+
+		if lexer.IsEnabled {
+			processed := lexer.Process(rest)
+
+			var s = rest
+
+			for _, v := range processed {
+				a := strings.SplitAfter(s, v.Text)
+				s = strings.TrimPrefix(s, a[0])
+
+				r.out.SetColor(v.Color, r.inputBGColor, false)
+				r.out.WriteStr(a[0])
+			}
+		} else {
+			r.out.WriteStr(rest)
+		}
+
+		r.out.SetColor(DefaultColor, DefaultColor, false)
+
 		cursor += runewidth.StringWidth(rest)
 		r.lineWrap(cursor)
 
@@ -223,14 +258,32 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 }
 
 // BreakLine to break line.
-func (r *Render) BreakLine(buffer *Buffer) {
+func (r *Render) BreakLine(buffer *Buffer, lexer *Lexer) {
 	// Erasing and Render
 	cursor := runewidth.StringWidth(buffer.Document().TextBeforeCursor()) + runewidth.StringWidth(r.getCurrentPrefix())
 	r.clear(cursor)
+
 	r.renderPrefix()
-	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-	r.out.WriteStr(buffer.Document().Text + "\n")
+
+	if lexer.IsEnabled {
+		processed := lexer.Process(buffer.Document().Text + "\n")
+
+		var s = buffer.Document().Text + "\n"
+
+		for _, v := range processed {
+			a := strings.SplitAfter(s, v.Text)
+			s = strings.TrimPrefix(s, a[0])
+
+			r.out.SetColor(v.Color, r.inputBGColor, false)
+			r.out.WriteStr(a[0])
+		}
+	} else {
+		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
+		r.out.WriteStr(buffer.Document().Text + "\n")
+	}
+
 	r.out.SetColor(DefaultColor, DefaultColor, false)
+
 	debug.AssertNoError(r.out.Flush())
 	if r.breakLineCallback != nil {
 		r.breakLineCallback(buffer.Document())
