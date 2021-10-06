@@ -23,11 +23,11 @@ func lexer(line string) []prompt.LexerElement {
 
 	for k, v := range strArr {
 		element := prompt.LexerElement{
-			Text:  v,
+			Text: v,
 		}
 
 		// every even char must be green.
-		if k % 2 == 0 {
+		if k%2 == 0 {
 			element.Color = prompt.Green
 		} else {
 			element.Color = prompt.White
