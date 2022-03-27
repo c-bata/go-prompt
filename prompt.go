@@ -154,6 +154,9 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		if p.handleASCIICodeBinding(b) {
 			return
 		}
+		if len(b) > 0 && (b[0] <= 0x1f || b[0] == 0x7f) {
+			break
+		}
 		p.buf.InsertText(string(b), false, true)
 	}
 
