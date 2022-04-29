@@ -34,6 +34,9 @@ func (t *PosixParser) TearDown() error {
 	if err := syscall.SetNonblock(t.fd, false); err != nil {
 		return err
 	}
+	if err := syscall.Close(t.fd); err != nil {
+		return err
+	}
 	if err := term.Restore(); err != nil {
 		return err
 	}
