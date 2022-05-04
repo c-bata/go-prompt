@@ -146,6 +146,10 @@ type ConsoleWriter interface {
 	ScrollDown()
 	// ScrollUp scroll display up one line.
 	ScrollUp()
+	// SaveCursorPosition saves current cursor position.
+	SaveCursorPosition()
+	// RestoreCursorPosition restores cursor position.
+	RestoreCursorPosition()
 
 	/* Title */
 
