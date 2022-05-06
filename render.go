@@ -69,12 +69,11 @@ func (r *Render) TearDown() {
 }
 
 func (r *Render) prepareArea(lines int) {
-	r.out.SaveCursorPosition()
-
+	r.out.SaveCursor()
 	for i := 0; i < lines; i++ {
 		r.out.WriteStr("\n")
 	}
-	r.out.RestoreCursorPosition()
+	r.out.UnSaveCursor()
 }
 
 // UpdateWinSize called when window size is changed.

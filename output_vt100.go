@@ -174,16 +174,6 @@ func (w *VT100Writer) ScrollUp() {
 	w.WriteRaw([]byte{0x1b, 'M'})
 }
 
-// SaveCursorPosition saves current cursor position.
-func (w *VT100Writer) SaveCursorPosition() {
-	w.WriteRaw([]byte{0x1b, '[', 's'})
-}
-
-// RestoreCursorPosition restores cursor position.
-func (w *VT100Writer) RestoreCursorPosition() {
-	w.WriteRaw([]byte{0x1b, '[', 'u'})
-}
-
 /* Title */
 
 // SetTitle sets a title of terminal window.
