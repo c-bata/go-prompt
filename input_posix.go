@@ -56,6 +56,13 @@ func (t *PosixParser) GetWinSize() *WinSize {
 	if err != nil {
 		panic(err)
 	}
+	// 80 Chars, 24 Lines minimal standard for terminals.
+	if ws.Row <= 0 || ws.Col <= 0 {
+		return &WinSize{
+			Row: 24,
+			Col: 80,
+		}
+	}
 	return &WinSize{
 		Row: ws.Row,
 		Col: ws.Col,
