@@ -231,6 +231,13 @@ func (p *Prompt) handleASCIICodeBinding(b []byte) bool {
 
 // Input just returns user input text.
 func (p *Prompt) Input() string {
+	input, _ := p.InputWithExit()
+
+	return input
+}
+
+// InputWithExit returns user input text along with a signal indicating if an exit was requested.
+func (p *Prompt) InputWithExit() (string, bool) {
 	defer debug.Teardown()
 	debug.Log("start prompt")
 	p.setUp()
@@ -251,11 +258,11 @@ func (p *Prompt) Input() string {
 			if shouldExit, e := p.feed(b); shouldExit {
 				p.renderer.BreakLine(p.buf)
 				stopReadBufCh <- struct{}{}
-				return ""
+				return "", shouldExit
 			} else if e != nil {
 				// Stop goroutine to run readBuffer function
 				stopReadBufCh <- struct{}{}
-				return e.input
+				return e.input, false
 			} else {
 				p.completion.Update(*p.buf.Document())
 				p.renderer.Render(p.buf, p.completion)
