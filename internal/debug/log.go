@@ -1,6 +1,7 @@
 package debug
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -49,4 +50,11 @@ func writeWithSync(calldepth int, msg string) {
 func Log(msg string) {
 	calldepth := 2
 	writeWithSync(calldepth, msg)
+}
+func Trace(s string, args ...interface{}) string {
+	writeWithSync(2, fmt.Sprintln("\n\n------------entering:", s, args))
+	return s
+}
+func Un(s string) {
+	writeWithSync(2, fmt.Sprintln("------------ leaving:", s))
 }

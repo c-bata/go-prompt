@@ -4,22 +4,22 @@ package term
 
 import (
 	"sync"
-	"syscall"
 
 	"github.com/pkg/term/termios"
+	"golang.org/x/sys/unix"
 )
 
 var (
-	saveTermios     syscall.Termios
+	saveTermios     *unix.Termios
 	saveTermiosFD   int
 	saveTermiosOnce sync.Once
 )
 
-func getOriginalTermios(fd int) (syscall.Termios, error) {
+func getOriginalTermios(fd int) (*unix.Termios, error) {
 	var err error
 	saveTermiosOnce.Do(func() {
 		saveTermiosFD = fd
-		err = termios.Tcgetattr(uintptr(fd), &saveTermios)
+		saveTermios, err = termios.Tcgetattr(uintptr(fd))
 	})
 	return saveTermios, err
 }
@@ -30,5 +30,5 @@ func Restore() error {
 	if err != nil {
 		return err
 	}
-	return termios.Tcsetattr(uintptr(saveTermiosFD), termios.TCSANOW, &o)
+	return termios.Tcsetattr(uintptr(saveTermiosFD), termios.TCSANOW, o)
 }

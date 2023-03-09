@@ -21,25 +21,36 @@ type ExitChecker func(in string, breakline bool) bool
 // Completer should return the suggest item from Document.
 type Completer func(Document) []Suggest
 
+// StatementTerminatorCb should return whether statement in buffer has been terminated
+type StatementTerminatorCb func(lastKeyStroke Key, buffer *Buffer) bool
+
 // Prompt is core struct of go-prompt.
 type Prompt struct {
-	in                ConsoleParser
-	buf               *Buffer
-	renderer          *Render
-	executor          Executor
-	history           *History
-	completion        *CompletionManager
-	keyBindings       []KeyBind
-	ASCIICodeBindings []ASCIICodeBind
-	keyBindMode       KeyBindMode
-	completionOnDown  bool
-	exitChecker       ExitChecker
-	skipTearDown      bool
+	in                    ConsoleParser
+	buf                   *Buffer
+	prevText              string
+	renderer              *Render
+	executor              Executor
+	history               *History
+	lexer                 *Lexer
+	completion            *CompletionManager
+	keyBindings           []KeyBind
+	ASCIICodeBindings     []ASCIICodeBind
+	keyBindMode           KeyBindMode
+	completionOnDown      bool
+	exitChecker           ExitChecker
+	statementTerminatorCb StatementTerminatorCb
+	skipTearDown          bool
 }
 
 // Exec is the struct contains user input context.
 type Exec struct {
 	input string
+}
+
+// ClearScreen :: Clears the screen
+func (p *Prompt) ClearScreen() {
+	p.renderer.ClearScreen()
 }
 
 // Run starts prompt.
@@ -54,7 +65,7 @@ func (p *Prompt) Run() {
 		p.completion.Update(*p.buf.Document())
 	}
 
-	p.renderer.Render(p.buf, p.completion)
+	p.renderer.Render(p.buf, p.prevText, p.completion, p.lexer)
 
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
@@ -69,7 +80,7 @@ func (p *Prompt) Run() {
 		select {
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
-				p.renderer.BreakLine(p.buf)
+				p.renderer.BreakLine(p.buf, p.lexer)
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
 				return
@@ -85,7 +96,7 @@ func (p *Prompt) Run() {
 
 				p.completion.Update(*p.buf.Document())
 
-				p.renderer.Render(p.buf, p.completion)
+				p.renderer.Render(p.buf, p.prevText, p.completion, p.lexer)
 
 				if p.exitChecker != nil && p.exitChecker(e.input, true) {
 					p.skipTearDown = true
@@ -97,13 +108,13 @@ func (p *Prompt) Run() {
 				go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 			} else {
 				p.completion.Update(*p.buf.Document())
-				p.renderer.Render(p.buf, p.completion)
+				p.renderer.Render(p.buf, p.prevText, p.completion, p.lexer)
 			}
 		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
-			p.renderer.Render(p.buf, p.completion)
+			p.renderer.Render(p.buf, p.prevText, p.completion, p.lexer)
 		case code := <-exitCh:
-			p.renderer.BreakLine(p.buf)
+			p.renderer.BreakLine(p.buf, p.lexer)
 			p.tearDown()
 			os.Exit(code)
 		default:
@@ -114,6 +125,8 @@ func (p *Prompt) Run() {
 
 func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	key := GetKey(b)
+	p.prevText = p.buf.Text()
+
 	p.buf.lastKeyStroke = key
 	// completion
 	completing := p.completion.Completing()
@@ -121,26 +134,50 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 
 	switch key {
 	case Enter, ControlJ, ControlM:
-		p.renderer.BreakLine(p.buf)
-
-		exec = &Exec{input: p.buf.Text()}
-		p.buf = NewBuffer()
-		if exec.input != "" {
-			p.history.Add(exec.input)
+		if p.statementTerminatorCb == nil || !p.statementTerminatorCb(p.buf.lastKeyStroke, p.buf) {
+			p.buf.NewLine(false)
+		} else {
+			p.renderer.BreakLine(p.buf, p.lexer)
+			exec = &Exec{input: p.buf.Text()}
+			p.buf = NewBuffer()
+			if exec.input != "" {
+				p.history.Add(exec.input)
+			}
 		}
 	case ControlC:
-		p.renderer.BreakLine(p.buf)
+		p.renderer.BreakLine(p.buf, p.lexer)
 		p.buf = NewBuffer()
 		p.history.Clear()
 	case Up, ControlP:
 		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
-			if newBuf, changed := p.history.Older(p.buf); changed {
+
+			// if this is a multiline buffer and the cursor is not at the top line,
+			// then we just move up the cursor
+			if p.buf.NewLineCount() > 0 && p.buf.Document().CursorPositionRow() > 0 {
+				// this is a multiline buffer
+				// move the cursor up by one line
+				p.buf.CursorUp(1)
+			} else if newBuf, changed := p.history.Older(p.buf); changed {
+				p.prevText = p.buf.Text()
 				p.buf = newBuf
 			}
+
+			return
 		}
 	case Down, ControlN:
 		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
-			if newBuf, changed := p.history.Newer(p.buf); changed {
+
+			// if this is a multiline buffer and the cursor is not at the top line,
+			// then we just move up the cursor
+			// debug.Log(fmt.Sprintln("NewLineCount:", p.buf.NewLineCount()))
+			// debug.Log(fmt.Sprintln("CursorPositionRow:", p.buf.Document().CursorPositionRow()))
+
+			if p.buf.NewLineCount() > 0 && p.buf.Document().CursorPositionRow() < (p.buf.NewLineCount()) {
+				// this is a multiline buffer
+				// move the cursor up by one line
+				p.buf.CursorDown(1)
+			} else if newBuf, changed := p.history.Newer(p.buf); changed {
+				p.prevText = p.buf.Text()
 				p.buf = newBuf
 			}
 			return
@@ -240,7 +277,7 @@ func (p *Prompt) Input() string {
 		p.completion.Update(*p.buf.Document())
 	}
 
-	p.renderer.Render(p.buf, p.completion)
+	p.renderer.Render(p.buf, p.prevText, p.completion, p.lexer)
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
 	go p.readBuffer(bufCh, stopReadBufCh)
@@ -249,7 +286,7 @@ func (p *Prompt) Input() string {
 		select {
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
-				p.renderer.BreakLine(p.buf)
+				p.renderer.BreakLine(p.buf, p.lexer)
 				stopReadBufCh <- struct{}{}
 				return ""
 			} else if e != nil {
@@ -258,7 +295,7 @@ func (p *Prompt) Input() string {
 				return e.input
 			} else {
 				p.completion.Update(*p.buf.Document())
-				p.renderer.Render(p.buf, p.completion)
+				p.renderer.Render(p.buf, p.prevText, p.completion, p.lexer)
 			}
 		default:
 			time.Sleep(10 * time.Millisecond)

@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package prompt
@@ -96,7 +97,8 @@ func TestBreakLineCallback(t *testing.T) {
 		col:                          1,
 	}
 	b := NewBuffer()
-	r.BreakLine(b)
+	l := NewLexer()
+	r.BreakLine(b, l)
 
 	if i != 0 {
 		t.Errorf("i should initially be 0, before applying a break line callback")
@@ -105,9 +107,9 @@ func TestBreakLineCallback(t *testing.T) {
 	r.breakLineCallback = func(doc *Document) {
 		i++
 	}
-	r.BreakLine(b)
-	r.BreakLine(b)
-	r.BreakLine(b)
+	r.BreakLine(b, l)
+	r.BreakLine(b, l)
+	r.BreakLine(b, l)
 
 	if i != 3 {
 		t.Errorf("BreakLine callback not called, i should be 3")

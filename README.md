@@ -3,7 +3,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/c-bata/go-prompt)](https://goreportcard.com/report/github.com/c-bata/go-prompt)
 ![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)
 [![GoDoc](https://godoc.org/github.com/c-bata/go-prompt?status.svg)](https://godoc.org/github.com/c-bata/go-prompt) 
-[![Build Status](https://travis-ci.org/c-bata/go-prompt.svg?branch=master)](https://travis-ci.org/c-bata/go-prompt)
+![tests](https://github.com/c-bata/go-prompt/workflows/tests/badge.svg)
 
 A library for building powerful interactive prompts inspired by [python-prompt-toolkit](https://github.com/jonathanslenders/python-prompt-toolkit),
 making it easier to build cross-platform command line tools using Go.
@@ -49,6 +49,10 @@ func main() {
 * [mstrYoda/docker-shell: A simple interactive prompt for docker](https://github.com/mstrYoda/docker-shell)
 * [c-bata/gh-prompt: An interactive GitHub CLI featuring auto-complete.](https://github.com/c-bata/gh-prompt)
 * [docker-slim/docker-slim: Don't change anything in your Docker container image and minify it by up to 30x (and for compiled languages even more) making it secure too! (free and open source)](https://github.com/docker-slim/docker-slim)
+* [rueyaa332266/ezcron: Ezcron is a CLI tool, helping you deal with cron expression easier.](https://github.com/rueyaa332266/ezcron)
+* [qingstor/qsctl: Advanced command line tool for QingStor Object Storage.](https://github.com/qingstor/qsctl)
+* [segmentio/topicctl: Tool for declarative management of Kafka topics](https://github.com/segmentio/topicctl)
+* [chriswalz/bit: Bit is a modern Git CLI](https://github.com/chriswalz/bit)
 * (If you create a CLI utility using go-prompt and want your own project to be listed here, please submit a GitHub issue.)
 
 ## Features

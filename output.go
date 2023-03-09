@@ -158,4 +158,5 @@ type ConsoleWriter interface {
 
 	// SetColor sets text and background colors. and specify whether text is bold.
 	SetColor(fg, bg Color, bold bool)
+	SetDisplayAttributes(fg, bg Color, attrs ...DisplayAttribute)
 }

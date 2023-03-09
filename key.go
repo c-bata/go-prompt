@@ -4,6 +4,7 @@
 package prompt
 
 // Key is the type express the key inserted from user.
+//
 //go:generate stringer -type=Key
 type Key int
 

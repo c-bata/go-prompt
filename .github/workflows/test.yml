@@ -1,0 +1,62 @@
+name: tests
+on:
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+    - name: Set up Go 1.16
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+      id: go
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@master
+    - name: Running go tests
+      env:
+        GO111MODULE: on
+      run: make test
+
+  examples:
+    name: Build examples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@master
+      - name: Building go examples
+        env:
+          GO111MODULE: on
+        run: ./_example/build.sh
+
+  lint:
+    name: Run lint checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@master
+      - name: Download golangci-lint
+        run: |
+          wget https://github.com/golangci/golangci-lint/releases/download/v1.31.0/golangci-lint-1.31.0-linux-amd64.tar.gz
+          tar -xvf ./golangci-lint-1.31.0-linux-amd64.tar.gz
+      - name: Running golangci-lint
+        env:
+          GO111MODULE: on
+          GOPATH: /home/runner/work/
+        run: GOCILINT=./golangci-lint-1.31.0-linux-amd64/golangci-lint make lint

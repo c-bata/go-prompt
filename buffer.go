@@ -21,6 +21,11 @@ func (b *Buffer) Text() string {
 	return b.workingLines[b.workingIndex]
 }
 
+// NewLineCount returns the number of `\n` in the buffer text
+func (b *Buffer) NewLineCount() int {
+	return strings.Count(b.Text(), "\n")
+}
+
 // Document method to return document instance from the current text and cursor position.
 func (b *Buffer) Document() (d *Document) {
 	if b.cacheDocument == nil ||
@@ -67,6 +72,8 @@ func (b *Buffer) InsertText(v string, overwrite bool, moveCursor bool) {
 // text/cursor_position should be consistent at any time, otherwise set a Document instead.)
 func (b *Buffer) setText(v string) {
 	debug.Assert(b.cursorPosition <= len([]rune(v)), "length of input should be shorter than cursor position")
+	// replace CR with LF
+	v = strings.ReplaceAll(v, "\r", "\n")
 	b.workingLines[b.workingIndex] = v
 }
 
@@ -100,10 +107,12 @@ func (b *Buffer) CursorRight(count int) {
 // CursorUp move cursor to the previous line.
 // (for multi-line edit).
 func (b *Buffer) CursorUp(count int) {
+	defer debug.Un(debug.Trace("CursorUp", count))
 	orig := b.preferredColumn
 	if b.preferredColumn == -1 { // -1 means nil
 		orig = b.Document().CursorPositionCol()
 	}
+
 	b.cursorPosition += b.Document().GetCursorUpPosition(count, orig)
 
 	// Remember the original column for the next up/down movement.
