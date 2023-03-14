@@ -29,6 +29,7 @@ type Prompt struct {
 	in                    ConsoleParser
 	buf                   *Buffer
 	prevText              string
+	lastKey               Key
 	renderer              *Render
 	executor              Executor
 	history               *History
@@ -65,7 +66,7 @@ func (p *Prompt) Run() {
 		p.completion.Update(*p.buf.Document())
 	}
 
-	p.renderer.Render(p.buf, p.prevText, p.completion, p.lexer)
+	p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
 
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
@@ -96,7 +97,7 @@ func (p *Prompt) Run() {
 
 				p.completion.Update(*p.buf.Document())
 
-				p.renderer.Render(p.buf, p.prevText, p.completion, p.lexer)
+				p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
 
 				if p.exitChecker != nil && p.exitChecker(e.input, true) {
 					p.skipTearDown = true
@@ -108,11 +109,11 @@ func (p *Prompt) Run() {
 				go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 			} else {
 				p.completion.Update(*p.buf.Document())
-				p.renderer.Render(p.buf, p.prevText, p.completion, p.lexer)
+				p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
 			}
 		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
-			p.renderer.Render(p.buf, p.prevText, p.completion, p.lexer)
+			p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
 		case code := <-exitCh:
 			p.renderer.BreakLine(p.buf, p.lexer)
 			p.tearDown()
@@ -126,7 +127,11 @@ func (p *Prompt) Run() {
 func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	key := GetKey(b)
 	p.prevText = p.buf.Text()
-
+	// We store the last key stroke pressed to p.lastKey in the render to understand what was the last action taken.
+	// For example: if the last action was going to the next erase, we want to erase the statement
+	// that was in the buffer. If the last statement was sent, we want to just print a new empty buffer
+	// and not erase the last statement. This could also be used for other functionalities in the future.
+	p.lastKey = key
 	p.buf.lastKeyStroke = key
 	// completion
 	completing := p.completion.Completing()
@@ -277,7 +282,7 @@ func (p *Prompt) Input() string {
 		p.completion.Update(*p.buf.Document())
 	}
 
-	p.renderer.Render(p.buf, p.prevText, p.completion, p.lexer)
+	p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
 	go p.readBuffer(bufCh, stopReadBufCh)
@@ -295,7 +300,7 @@ func (p *Prompt) Input() string {
 				return e.input
 			} else {
 				p.completion.Update(*p.buf.Document())
-				p.renderer.Render(p.buf, p.prevText, p.completion, p.lexer)
+				p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
 			}
 		default:
 			time.Sleep(10 * time.Millisecond)

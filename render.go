@@ -175,18 +175,22 @@ func (r *Render) ClearScreen() {
 }
 
 // Render renders to the console.
-func (r *Render) Render(buffer *Buffer, previousText string, completion *CompletionManager, lexer *Lexer) {
+func (r *Render) Render(buffer *Buffer, previousText string, lastKeyStroke Key, completion *CompletionManager, lexer *Lexer) (tracedBackLines int) {
+
 	// In situations where a pseudo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col == 0 {
-		return
+		return 0
 	}
 	defer func() { debug.AssertNoError(r.out.Flush()) }()
 
 	line := buffer.Text()
+
+	// Down, ControlN
 	traceBackLines := strings.Count(previousText, "\n")
-	if len(line) == 0 {
-		// if the new buffer is empty, then we shouldn't traceback any
+	// if the new buffer is empty and we are not browsing the history using the Down/controlDown keys
+	// then we reset the traceBackLines to 0 since there's nothing to trace back/erase.
+	if len(line) == 0 && lastKeyStroke != ControlDown && lastKeyStroke != Down {
 		traceBackLines = 0
 	}
 	debug.Log(fmt.Sprintln(line))
@@ -203,7 +207,7 @@ func (r *Render) Render(buffer *Buffer, previousText string, completion *Complet
 	h := y + 1 + int(completion.max)
 	if h > int(r.row) || completionMargin > int(r.col) {
 		r.renderWindowTooSmall()
-		return
+		return traceBackLines
 	}
 
 	// Rendering
@@ -264,6 +268,8 @@ func (r *Render) Render(buffer *Buffer, previousText string, completion *Complet
 		cursor = r.backward(cursor, runewidth.StringWidth(rest))
 	}
 	r.previousCursor = cursor
+
+	return traceBackLines
 }
 
 func (r *Render) renderLine(line string, lexer *Lexer) {
