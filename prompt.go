@@ -2,6 +2,7 @@ package prompt
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // Executor is called when user input something text.
-type Executor func(string)
+type Executor func(ctx context.Context, s string)
 
 // ExitChecker is called after user input to check if prompt must stop and exit go-prompt Run loop.
 // User input means: selecting/typing an entry, then, if said entry content matches the ExitChecker function criteria:
@@ -43,7 +44,7 @@ type Exec struct {
 }
 
 // Run starts prompt.
-func (p *Prompt) Run() {
+func (p *Prompt) Run(ctx context.Context) {
 	p.skipTearDown = false
 	defer debug.Teardown()
 	debug.Log("start prompt")
@@ -67,6 +68,9 @@ func (p *Prompt) Run() {
 
 	for {
 		select {
+		case <-ctx.Done():
+			stopHandleSignalCh <- struct{}{}
+			exitCh <- 1
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
 				p.renderer.BreakLine(p.buf)
@@ -81,7 +85,7 @@ func (p *Prompt) Run() {
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
 				debug.AssertNoError(p.in.TearDown())
-				p.executor(e.input)
+				p.executor(ctx, e.input)
 
 				p.completion.Update(*p.buf.Document())
 

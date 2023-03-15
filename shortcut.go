@@ -1,6 +1,8 @@
 package prompt
 
-func dummyExecutor(in string) {}
+import "context"
+
+func dummyExecutor(ctx context.Context, in string) {}
 
 // Input get the input data from the user and return it.
 func Input(prefix string, completer Completer, opts ...Option) string {
