@@ -1,6 +1,7 @@
 package debug
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -49,4 +50,10 @@ func writeWithSync(calldepth int, msg string) {
 func Log(msg string) {
 	calldepth := 2
 	writeWithSync(calldepth, msg)
+}
+
+// Log to output message
+func Logf(format string, v ...any) {
+	calldepth := 2
+	writeWithSync(calldepth, fmt.Sprintf(format, v...))
 }

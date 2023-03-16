@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 
+	"github.com/c-bata/go-prompt/internal/debug"
 	"github.com/mxk/go-flowrate/flowrate"
 )
 
@@ -14,12 +15,14 @@ type ioParser struct {
 
 // Setup should be called before starting input
 func (p *ioParser) Setup() error {
+	debug.Log("setting up ioParser")
 	p.r.SetBlocking(true)
 	return nil
 }
 
 // TearDown should be called after stopping input
 func (p *ioParser) TearDown() error {
+	debug.Log("tearding down ioParser")
 	p.r.SetBlocking(false)
 	return nil
 }

@@ -2,6 +2,8 @@ package prompt
 
 import (
 	"io"
+
+	"github.com/c-bata/go-prompt/internal/debug"
 )
 
 type ioWriter struct {
@@ -14,6 +16,7 @@ func (w *ioWriter) Flush() error {
 	//_log.Infow("before flush", "message", string(w.buffer))
 	_, err := w.w.Write(w.buffer)
 	if err != nil {
+		debug.Logf("unable to flush, error=%v\n", err)
 		return err
 	}
 	w.buffer = []byte{}

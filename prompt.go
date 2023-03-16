@@ -69,6 +69,7 @@ func (p *Prompt) Run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			stopReadBufCh <- struct{}{}
 			stopHandleSignalCh <- struct{}{}
 			exitCh <- 1
 		case b := <-bufCh:
@@ -77,7 +78,7 @@ func (p *Prompt) Run(ctx context.Context) {
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
 				return
-			} else if e != nil {
+			} else if e != nil && e.input != "" {
 				// Stop goroutine to run readBuffer function
 				stopReadBufCh <- struct{}{}
 				stopHandleSignalCh <- struct{}{}
@@ -126,6 +127,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	switch key {
 	case Enter, ControlJ, ControlM:
 		p.renderer.BreakLine(p.buf)
+		debug.Logf("enter key pressed, buffer=%v", p.buf.Text())
 
 		exec = &Exec{input: p.buf.Text()}
 		p.buf = NewBuffer()
@@ -272,13 +274,19 @@ func (p *Prompt) Input() string {
 
 func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	debug.Log("start reading buffer")
+readLoop:
 	for {
 		select {
 		case <-stopCh:
 			debug.Log("stop reading buffer")
 			return
 		default:
-			if b, err := p.in.Read(); err == nil && !(len(b) == 1 && b[0] == 0) {
+			b, err := p.in.Read()
+			if err != nil {
+				debug.Logf("unable to read buffer, error=%v\n", err)
+				break readLoop
+			}
+			if len(b) > 0 && !(len(b) == 1 && b[0] == 0) {
 				bufCh <- b
 			}
 		}
