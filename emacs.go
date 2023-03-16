@@ -1,6 +1,6 @@
 package prompt
 
-import "github.com/c-bata/go-prompt/internal/debug"
+import "github.com/confluentinc/go-prompt/internal/debug"
 
 /*
 
