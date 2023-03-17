@@ -2,10 +2,9 @@ package prompt
 
 import (
 	"bytes"
+	"github.com/confluentinc/go-prompt/internal/debug"
 	"os"
 	"time"
-
-	"github.com/confluentinc/go-prompt/internal/debug"
 )
 
 // Executor is called when user input something text.
@@ -196,7 +195,10 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		if p.handleASCIICodeBinding(b) {
 			return
 		}
-		p.buf.InsertText(string(b), false, true)
+		// After handling custom key bindings we need to sanitize the input of any
+		// special characters that mess with the rendering (e.g. the escape char)
+		cleanedInput := RemoveASCIISequences(b)
+		p.buf.InsertText(string(cleanedInput), false, true)
 	}
 
 	shouldExit = p.handleKeyBinding(key)
