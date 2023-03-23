@@ -92,7 +92,7 @@ func (r *Render) renderWindowTooSmall() {
 	r.out.WriteStr("Your console window is too small...")
 }
 
-func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
+func (r *Render) renderCompletion(completions *CompletionManager, cursorPos int) {
 	suggestions := completions.GetSuggestions()
 	if len(completions.GetSuggestions()) == 0 {
 		return
@@ -112,7 +112,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
 	r.prepareArea(windowHeight)
 
-	cursor := runewidth.StringWidth(prefix) + runewidth.StringWidth(buf.Document().TextBeforeCursor())
+	cursor := cursorPos
 	x, _ := r.toPos(cursor)
 	if x+width >= int(r.col) {
 		cursor = r.backward(cursor, x+width-int(r.col))
@@ -184,10 +184,11 @@ func (r *Render) Render(buffer *Buffer, previousText string, lastKeyStroke Key, 
 	}
 	defer func() { debug.AssertNoError(r.out.Flush()) }()
 
+	prefix := r.getCurrentPrefix()
 	line := buffer.Text()
 
 	// Down, ControlN
-	traceBackLines := strings.Count(previousText, "\n")
+	traceBackLines := r.previousCursor / int(r.col) // calculate number of lines we had before
 	// if the new buffer is empty and we are not browsing the history using the Down/controlDown keys
 	// then we reset the traceBackLines to 0 since there's nothing to trace back/erase.
 	if len(line) == 0 && lastKeyStroke != ControlDown && lastKeyStroke != Down {
@@ -196,51 +197,34 @@ func (r *Render) Render(buffer *Buffer, previousText string, lastKeyStroke Key, 
 	debug.Log(fmt.Sprintln(line))
 	debug.Log(fmt.Sprintln(traceBackLines))
 
-	r.move((traceBackLines)*int(r.col)+r.previousCursor, 0)
-
-	prefix := r.getCurrentPrefix()
-	cursor := runewidth.StringWidth(prefix) + runewidth.StringWidth(line)
-
-	// prepare area
-	_, y := r.toPos((traceBackLines + int(r.col)) + cursor)
-
+	// prepare area by getting the end position the console cursor will be at after rendering
+	cursorEndPos := r.getCursorEndPos(prefix+line, 0)
+	_, y := r.toPos(cursorEndPos)
 	h := y + 1 + int(completion.max)
 	if h > int(r.row) || completionMargin > int(r.col) {
 		r.renderWindowTooSmall()
 		return traceBackLines
 	}
 
-	// Rendering
-	r.out.HideCursor()
+	// Clear screen
+	r.clear(r.previousCursor)
 
-	r.out.EraseLine()
-	r.out.EraseDown()
+	// Render new text
 	r.renderPrefix()
-
+	r.out.SetColor(DefaultColor, DefaultColor, false)
+	r.renderLine(line, lexer)
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 
-	r.lineWrap(cursor)
-
-	if buffer.NewLineCount() > 0 {
-		r.renderMultiline(buffer, lexer)
-	} else {
-		r.renderLine(line, lexer)
-		defer r.out.ShowCursor()
-	}
-
-	r.lineWrap(cursor)
-	r.out.SetColor(DefaultColor, DefaultColor, false)
-
-	cursor = r.backward(cursor, runewidth.StringWidth(line)-buffer.DisplayCursorPosition())
-
-	r.renderCompletion(buffer, completion)
+	// At this point the rendering is done and the cursor has moved to its end position we calculated earlier.
+	// We now need to find out where the console cursor would be if it had the same position as the buffer cursor.
+	translatedBufferCursorPos := r.getCursorEndPos(prefix+line[:buffer.Document().cursorPosition], 0)
+	cursorPos := r.move(cursorEndPos, translatedBufferCursorPos)
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
-		cursor = r.backward(cursor, runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
+		cursorPos = r.backward(cursorPos, runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
 
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
 		r.out.WriteStr(suggest.Text)
 		r.out.SetColor(DefaultColor, DefaultColor, false)
-		cursor += runewidth.StringWidth(suggest.Text)
 
 		rest := buffer.Document().TextAfterCursor()
 
@@ -259,15 +243,14 @@ func (r *Render) Render(buffer *Buffer, previousText string, lastKeyStroke Key, 
 		} else {
 			r.out.WriteStr(rest)
 		}
-
+		cursorPosBehindSuggestion := cursorPos + runewidth.StringWidth(suggest.Text)
+		cursorEndPosWithInsertedSuggestion := r.getCursorEndPos(suggest.Text+rest, cursorPos)
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
-		cursor += runewidth.StringWidth(rest)
-		r.lineWrap(cursor)
-
-		cursor = r.backward(cursor, runewidth.StringWidth(rest))
+		cursorPos = r.move(cursorEndPosWithInsertedSuggestion, cursorPosBehindSuggestion)
 	}
-	r.previousCursor = cursor
+	r.renderCompletion(completion, cursorPos)
+	r.previousCursor = cursorPos
 
 	return traceBackLines
 }
@@ -290,37 +273,10 @@ func (r *Render) renderLine(line string, lexer *Lexer) {
 	}
 }
 
-func (r *Render) renderMultiline(buffer *Buffer, lexer *Lexer) {
-	before := buffer.Document().TextBeforeCursor()
-	cursor := ""
-	after := ""
-
-	if len(buffer.Document().TextAfterCursor()) == 0 {
-		cursor = " "
-		after = ""
-	} else {
-		cursor = string(buffer.Text()[buffer.Document().cursorPosition])
-		if cursor == "\n" {
-			cursor = " \n"
-		}
-		after = buffer.Document().TextAfterCursor()[1:]
-	}
-
-	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-	r.renderLine(before, lexer)
-
-	r.out.SetDisplayAttributes(r.inputTextColor, r.inputBGColor, DisplayReverse)
-	r.out.WriteRawStr(cursor)
-
-	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-	r.renderLine(after, lexer)
-}
-
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer, lexer *Lexer) {
 	// Erasing and Render
-	cursor := (buffer.NewLineCount() * int(r.col)) + runewidth.StringWidth(buffer.Document().TextBeforeCursor()) + runewidth.StringWidth(r.getCurrentPrefix())
-	r.clear(cursor)
+	r.clear(r.getCursorEndPos(r.getCurrentPrefix()+buffer.Document().TextBeforeCursor(), 0))
 
 	r.renderPrefix()
 
@@ -349,6 +305,20 @@ func (r *Render) BreakLine(buffer *Buffer, lexer *Lexer) {
 	}
 
 	r.previousCursor = 0
+}
+
+func (r *Render) getCursorEndPos(text string, startPos int) int {
+	lines := strings.SplitAfter(text, "\n")
+	cursor := startPos
+	for _, line := range lines {
+		filledCols := runewidth.StringWidth(line)
+		cursor += filledCols
+		if len(line) > 0 && line[len(line)-1:] == "\n" {
+			remainingChars := int(r.col) - (cursor % int(r.col))
+			cursor += remainingChars
+		}
+	}
+	return cursor
 }
 
 // clear erases the screen from a beginning of input

@@ -4,6 +4,8 @@
 package prompt
 
 import (
+	"fmt"
+	"github.com/stretchr/testify/require"
 	"reflect"
 	"testing"
 )
@@ -156,18 +158,69 @@ func TestLinesToTracebackRender(t *testing.T) {
 		selectedDescriptionBGColor:   Cyan,
 		scrollbarThumbColor:          DarkGray,
 		scrollbarBGColor:             Cyan,
-		col:                          1,
+		col:                          100,
+		row:                          100,
 	}
 
-	for _, s := range scenarios {
+	for idx, s := range scenarios {
+		fmt.Printf("Testing scenario: %v\n", idx)
 		b := NewBuffer()
 		b.InsertText(s.nextText, false, true)
 		l := NewLexer()
 
+		r.previousCursor = r.getCursorEndPos(s.previousText, 0)
 		tracedBackLines := r.Render(b, s.previousText, s.lastKey, NewCompletionManager(emptyCompleter, 0), l)
-
-		if tracedBackLines != s.linesToTraceBack {
-			t.Errorf("Should've traced back %d lines before rendering, but got %d", s.linesToTraceBack, tracedBackLines)
-		}
+		require.Equal(t, s.linesToTraceBack, tracedBackLines)
 	}
+}
+
+func TestGetCursorEndPosition(t *testing.T) {
+	r := &Render{
+		prefix:                       "> ",
+		out:                          &PosixWriter{},
+		livePrefixCallback:           func() (string, bool) { return "", false },
+		prefixTextColor:              Blue,
+		prefixBGColor:                DefaultColor,
+		inputTextColor:               DefaultColor,
+		inputBGColor:                 DefaultColor,
+		previewSuggestionTextColor:   Green,
+		previewSuggestionBGColor:     DefaultColor,
+		suggestionTextColor:          White,
+		suggestionBGColor:            Cyan,
+		selectedSuggestionTextColor:  Black,
+		selectedSuggestionBGColor:    Turquoise,
+		descriptionTextColor:         Black,
+		descriptionBGColor:           Turquoise,
+		selectedDescriptionTextColor: White,
+		selectedDescriptionBGColor:   Cyan,
+		scrollbarThumbColor:          DarkGray,
+		scrollbarBGColor:             Cyan,
+		col:                          5,
+		row:                          10,
+	}
+
+	scenarios := []struct {
+		text                 string
+		startPos             int
+		expectedCursorEndPos int
+	}{
+		{text: "abc", startPos: 0, expectedCursorEndPos: 3},
+		{text: "abcd", startPos: 0, expectedCursorEndPos: 4},
+		{text: "abcde", startPos: 0, expectedCursorEndPos: 5},
+		{text: "abc\n", startPos: 0, expectedCursorEndPos: 5},
+		{text: "abc\n\n", startPos: 0, expectedCursorEndPos: 10},
+		{text: "abc\nd", startPos: 0, expectedCursorEndPos: 6},
+		{text: "ab\nc", startPos: 0, expectedCursorEndPos: 6},
+		{text: "ab\n\nc", startPos: 0, expectedCursorEndPos: 11},
+		{text: "ab\n\nc", startPos: 2, expectedCursorEndPos: 11},
+		{text: "ab\n\nc", startPos: 3, expectedCursorEndPos: 16},
+		{text: "ab\n\ncdefghijk", startPos: 3, expectedCursorEndPos: 24},
+	}
+
+	for idx, s := range scenarios {
+		fmt.Printf("Testing scenario: %v\n", idx)
+		actualEndPos := r.getCursorEndPos(s.text, s.startPos)
+		require.Equal(t, s.expectedCursorEndPos, actualEndPos)
+	}
+
 }
