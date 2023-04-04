@@ -45,6 +45,10 @@ func RemoveASCIISequences(input []byte) []byte {
 		})
 	})
 	for _, specialSequence := range ASCIISequences {
+		// skip \n and \r because those are valid input
+		if specialSequence.Key == Enter || specialSequence.Key == ControlM {
+			continue
+		}
 		input = bytes.ReplaceAll(input, specialSequence.ASCIICode, []byte{})
 	}
 	return input
