@@ -13,4 +13,4 @@ blocks:
             - checkout
             - sem-semantic-release
       secrets:
-        - name: semantic-release-credentials
+        - name: semantic-release-credentials-go-prompt
