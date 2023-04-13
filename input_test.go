@@ -32,25 +32,32 @@ func TestPosixParserGetKey(t *testing.T) {
 	}
 }
 
-func RandomASCIIByteSequence() *rapid.Generator[[]byte] {
-	return rapid.Custom(func(t *rapid.T) []byte {
-		return rapid.SampledFrom(ASCIISequences).Draw(t, "random ascii sequence").ASCIICode
+func RandomASCIIByteSequence() *rapid.Generator[*ASCIICode] {
+	return rapid.Custom(func(t *rapid.T) *ASCIICode {
+		return rapid.SampledFrom(ASCIISequences).Draw(t, "random ascii sequence")
 	})
 }
 
 func TestSanitizeInputWithASCIISequences(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		expectedString := []byte("this_is_a_longer_sized_text_input_for_testing_purposes")
-		inputString := make([]byte, len(expectedString))
+		testString := []byte("this_is_a_longer_sized_text_input_for_testing_purposes")
+		inputString := make([]byte, len(testString))
+		expectedString := make([]byte, 0)
 		//at each index insert some random number of ascii control sequences
-		for _, char := range expectedString {
+		for _, char := range testString {
 			inputString = append(inputString, char)
+			expectedString = append(expectedString, char)
 			//append 1-5 ascii control sequences
 			sequences := rapid.SliceOfN(RandomASCIIByteSequence(), 1, 5).Draw(t, "random number of ascii control sequences")
 			for _, sequence := range sequences {
-				inputString = append(inputString, sequence...)
+				// allow \n and \r to be inserted
+				if sequence.Key == Enter || sequence.Key == ControlM {
+					expectedString = append(expectedString, sequence.ASCIICode...)
+				}
+
+				inputString = append(inputString, sequence.ASCIICode...)
 			}
 		}
-		assert.Equal(t, expectedString, RemoveASCIISequences(inputString))
+		assert.Equal(t, string(expectedString), string(RemoveASCIISequences(inputString)))
 	})
 }
