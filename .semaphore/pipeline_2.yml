@@ -11,6 +11,6 @@ blocks:
         - name: Tag and release
           commands:
             - 'curl -sL https://git.io/autotag-install | sh --'
-            - .bin/autotag | git push origin
+            - 'git push https://confluentinc:$GH_TOKEN@github.com/confluentinc/go-prompt.git v$(./bin/autotag)'
       secrets:
         - name: semantic-release-credentials-go-prompt
