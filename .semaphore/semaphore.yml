@@ -11,10 +11,10 @@ global_job_config:
       - checkout
       - go install gotest.tools/gotestsum@latest
 blocks:
-  - name: 'Test'
+  - name: Test
     task:
       jobs:
-        - name: 'Test'
+        - name: Test
           commands:
             - go mod download
             - cache store
@@ -26,3 +26,8 @@ blocks:
         always:
           commands:
             - test-results publish junit.xml
+promotions:
+  - name: Release
+    pipeline_file: pipeline_2.yml
+    auto_promote:
+      when: branch = 'master' AND result = 'passed'

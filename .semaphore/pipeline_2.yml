@@ -1,0 +1,14 @@
+version: v1.0
+name: Release to GitHub
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2004
+blocks:
+  - name: Release
+    task:
+      jobs:
+        - name: Tag and release
+          commands:
+            - checkout
+            - sem-semantic-release
