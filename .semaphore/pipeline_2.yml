@@ -10,7 +10,7 @@ blocks:
       jobs:
         - name: Tag and release
           commands:
-            - checkout
-            - sem-semantic-release
+            - 'curl -sL https://git.io/autotag-install | sh --'
+            - .bin/autotag | git push origin
       secrets:
         - name: semantic-release-credentials-go-prompt
