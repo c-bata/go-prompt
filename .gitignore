@@ -25,3 +25,4 @@ _testmain.go
 # Glide
 vendor/
 .idea/
+junit.xml

@@ -1,0 +1,28 @@
+version: v1.0
+name: Initial Pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2004
+global_job_config:
+  prologue:
+    commands:
+      - sem-version go 1.19
+      - checkout
+      - go install gotest.tools/gotestsum@latest
+blocks:
+  - name: 'Test'
+    task:
+      jobs:
+        - name: 'Test'
+          commands:
+            - go mod download
+            - cache store
+            - gotestsum --junitfile junit.xml ./...
+      prologue:
+        commands:
+          - cache restore
+      epilogue:
+        always:
+          commands:
+            - test-results publish junit.xml
