@@ -10,6 +10,7 @@ blocks:
       jobs:
         - name: Tag and release
           commands:
+            - checkout
             - 'curl -sL https://git.io/autotag-install | sh --'
             - 'git push https://confluentinc:$GH_TOKEN@github.com/confluentinc/go-prompt.git v$(./bin/autotag)'
       secrets:
