@@ -12,3 +12,5 @@ blocks:
           commands:
             - checkout
             - sem-semantic-release
+      secrets:
+        - name: semantic-release-credentials
