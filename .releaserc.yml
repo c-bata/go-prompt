@@ -1,0 +1,2 @@
+branches: ["master"]
+repositoryUrl: git@github.com:confluentinc/go-prompt.git
