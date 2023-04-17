@@ -289,21 +289,35 @@ func (p *Prompt) Input() string {
 	stopReadBufCh := make(chan struct{})
 	go p.readBuffer(bufCh, stopReadBufCh)
 
+	exitCh := make(chan int)
+	winSizeCh := make(chan *WinSize)
+	stopHandleSignalCh := make(chan struct{})
+	go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
+
 	for {
 		select {
 		case b := <-bufCh:
 			if shouldExit, e := p.feed(b); shouldExit {
 				p.renderer.BreakLine(p.buf, p.lexer)
 				stopReadBufCh <- struct{}{}
+				stopHandleSignalCh <- struct{}{}
 				return ""
 			} else if e != nil {
 				// Stop goroutine to run readBuffer function
 				stopReadBufCh <- struct{}{}
+				stopHandleSignalCh <- struct{}{}
 				return e.input
 			} else {
 				p.completion.Update(*p.buf.Document())
 				p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
 			}
+		case w := <-winSizeCh:
+			p.renderer.UpdateWinSize(w)
+			p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
+		case code := <-exitCh:
+			p.renderer.BreakLine(p.buf, p.lexer)
+			p.tearDown()
+			os.Exit(code)
 		default:
 			time.Sleep(10 * time.Millisecond)
 		}
