@@ -2,6 +2,7 @@ package prompt
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"reflect"
 	"testing"
 	"unicode/utf8"
@@ -531,10 +532,59 @@ func TestDocument_FindStartOfPreviousWord(t *testing.T) {
 	}{
 		{
 			document: &Document{
+				Text:           "",
+				cursorPosition: len(""),
+			},
+			expected: 0,
+		},
+		{
+			document: &Document{
+				Text:           " ",
+				cursorPosition: len(" "),
+			},
+			expected: len(" "),
+		},
+		{
+			document: &Document{
+				Text:           "apple bana ",
+				cursorPosition: len("apple bana "),
+			},
+			expected: len("apple bana "),
+		},
+		{
+			document: &Document{
 				Text:           "apple bana",
 				cursorPosition: len("apple bana"),
 			},
 			expected: len("apple "),
+		},
+		{
+			document: &Document{
+				Text:           "apple\nbana",
+				cursorPosition: len("apple\nbana"),
+			},
+			expected: len("apple\n"),
+		},
+		{
+			document: &Document{
+				Text:           "apple\tbana",
+				cursorPosition: len("apple\tbana"),
+			},
+			expected: len("apple\t"),
+		},
+		{
+			document: &Document{
+				Text:           "apple\rbana",
+				cursorPosition: len("apple\rbana"),
+			},
+			expected: len("apple\r"),
+		},
+		{
+			document: &Document{
+				Text:           "apple\fbana",
+				cursorPosition: len("apple\fbana"),
+			},
+			expected: len("apple\f"),
 		},
 		{
 			document: &Document{
@@ -568,6 +618,13 @@ func TestDocument_FindStartOfPreviousWord(t *testing.T) {
 		},
 		{
 			document: &Document{
+				Text:           "あいうえお\nかきくけこ さしすせそ",
+				cursorPosition: 8, // between 'き' and 'く'
+			},
+			expected: len("あいうえお\n"), // this function returns index byte in string
+		},
+		{
+			document: &Document{
 				Text:           "Добрый день Добрый день",
 				cursorPosition: 9,
 			},
@@ -575,21 +632,13 @@ func TestDocument_FindStartOfPreviousWord(t *testing.T) {
 		},
 	}
 
-	for _, p := range pattern {
+	for idx, p := range pattern {
+		fmt.Println(fmt.Sprintf("Evaluating test case #%v", idx))
 		if p.sep == "" {
-			ac := p.document.FindStartOfPreviousWord()
-			if ac != p.expected {
-				t.Errorf("Should be %#v, got %#v", p.expected, ac)
-			}
-			ac = p.document.FindStartOfPreviousWordUntilSeparator("")
-			if ac != p.expected {
-				t.Errorf("Should be %#v, got %#v", p.expected, ac)
-			}
+			require.Equal(t, p.expected, p.document.FindStartOfPreviousWord())
+			require.Equal(t, p.expected, p.document.FindStartOfPreviousWordUntilSeparator(""))
 		} else {
-			ac := p.document.FindStartOfPreviousWordUntilSeparator(p.sep)
-			if ac != p.expected {
-				t.Errorf("Should be %#v, got %#v", p.expected, ac)
-			}
+			require.Equal(t, p.expected, p.document.FindStartOfPreviousWordUntilSeparator(p.sep))
 		}
 	}
 }
@@ -602,8 +651,50 @@ func TestDocument_FindStartOfPreviousWordWithSpace(t *testing.T) {
 	}{
 		{
 			document: &Document{
+				Text:           "",
+				cursorPosition: len(""),
+			},
+			expected: 0,
+		},
+		{
+			document: &Document{
+				Text:           " ",
+				cursorPosition: len(" "),
+			},
+			expected: 0,
+		},
+		{
+			document: &Document{
 				Text:           "apple bana ",
 				cursorPosition: len("apple bana "),
+			},
+			expected: len("apple "),
+		},
+		{
+			document: &Document{
+				Text:           "apple bana\n",
+				cursorPosition: len("apple bana\n"),
+			},
+			expected: len("apple "),
+		},
+		{
+			document: &Document{
+				Text:           "apple bana\t",
+				cursorPosition: len("apple bana\t"),
+			},
+			expected: len("apple "),
+		},
+		{
+			document: &Document{
+				Text:           "apple bana\r",
+				cursorPosition: len("apple bana\r"),
+			},
+			expected: len("apple "),
+		},
+		{
+			document: &Document{
+				Text:           "apple bana\f",
+				cursorPosition: len("apple bana\f"),
 			},
 			expected: len("apple "),
 		},
@@ -639,6 +730,13 @@ func TestDocument_FindStartOfPreviousWordWithSpace(t *testing.T) {
 		},
 		{
 			document: &Document{
+				Text:           "あいうえお かきくけこ\n",
+				cursorPosition: 12, // cursor points to last
+			},
+			expected: len("あいうえお "), // this function returns index byte in string
+		},
+		{
+			document: &Document{
 				Text:           "Добрый день ",
 				cursorPosition: 12,
 			},
@@ -646,21 +744,13 @@ func TestDocument_FindStartOfPreviousWordWithSpace(t *testing.T) {
 		},
 	}
 
-	for _, p := range pattern {
+	for idx, p := range pattern {
+		fmt.Println(fmt.Sprintf("Evaluating test case #%v", idx))
 		if p.sep == "" {
-			ac := p.document.FindStartOfPreviousWordWithSpace()
-			if ac != p.expected {
-				t.Errorf("Should be %#v, got %#v", p.expected, ac)
-			}
-			ac = p.document.FindStartOfPreviousWordUntilSeparatorIgnoreNextToCursor("")
-			if ac != p.expected {
-				t.Errorf("Should be %#v, got %#v", p.expected, ac)
-			}
+			require.Equal(t, p.expected, p.document.FindStartOfPreviousWordWithSpace())
+			require.Equal(t, p.expected, p.document.FindStartOfPreviousWordUntilSeparatorIgnoreNextToCursor(""))
 		} else {
-			ac := p.document.FindStartOfPreviousWordUntilSeparatorIgnoreNextToCursor(p.sep)
-			if ac != p.expected {
-				t.Errorf("Should be %#v, got %#v", p.expected, ac)
-			}
+			require.Equal(t, p.expected, p.document.FindStartOfPreviousWordUntilSeparatorIgnoreNextToCursor(p.sep))
 		}
 	}
 }

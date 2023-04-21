@@ -1,7 +1,9 @@
 package prompt
 
 import (
+	"regexp"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/confluentinc/go-prompt/internal/bisect"
@@ -129,28 +131,40 @@ func (d *Document) GetWordAfterCursorUntilSeparatorIgnoreNextToCursor(sep string
 // FindStartOfPreviousWord returns an index relative to the cursor position
 // pointing to the start of the previous word. Return 0 if nothing was found.
 func (d *Document) FindStartOfPreviousWord() int {
-	x := d.TextBeforeCursor()
-	i := strings.LastIndexByte(x, ' ')
-	if i != -1 {
-		return i + 1
+	textBeforeCursor := d.TextBeforeCursor()
+	regex := regexp.MustCompile(`\s`)
+	matchPositions := regex.FindAllStringIndex(textBeforeCursor, -1)
+	if len(matchPositions) == 0 {
+		return 0
 	}
-	return 0
+	lastMatch := matchPositions[len(matchPositions)-1]
+	return lastMatch[0] + 1
 }
 
 // FindStartOfPreviousWordWithSpace is almost the same as FindStartOfPreviousWord.
 // The only difference is to ignore contiguous spaces.
 func (d *Document) FindStartOfPreviousWordWithSpace() int {
-	x := d.TextBeforeCursor()
-	end := istrings.LastIndexNotByte(x, ' ')
+	textBeforeCursor := d.TextBeforeCursor()
+	runes := []rune(textBeforeCursor)
+	end := len(runes) - 1
+	for ; end >= 0; end-- {
+		char := runes[end]
+		if !unicode.IsSpace(char) {
+			break
+		}
+	}
 	if end == -1 {
 		return 0
 	}
 
-	start := strings.LastIndexByte(x[:end], ' ')
-	if start == -1 {
+	regex := regexp.MustCompile(`\s`)
+	runes = runes[:end]
+	matchPositions := regex.FindAllStringIndex(string(runes), -1)
+	if len(matchPositions) == 0 {
 		return 0
 	}
-	return start + 1
+	lastMatch := matchPositions[len(matchPositions)-1]
+	return lastMatch[0] + 1
 }
 
 // FindStartOfPreviousWordUntilSeparator is almost the same as FindStartOfPreviousWord.
