@@ -6,7 +6,7 @@ require (
 	github.com/mattn/go-colorable v0.1.7
 	github.com/mattn/go-runewidth v0.0.9
 	github.com/mattn/go-tty v0.0.3
-	github.com/pkg/term v1.2.0-beta.2
+	github.com/pkg/term v1.1.0
 	github.com/stretchr/testify v1.8.2
 	golang.org/x/sys v0.6.0
 	pgregory.net/rapid v0.5.5
