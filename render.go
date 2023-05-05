@@ -201,10 +201,11 @@ func (r *Render) Render(buffer *Buffer, previousText string, lastKeyStroke Key, 
 	_, y := r.toPos(cursorEndPos)
 	h := y + 1 + int(completion.max)
 	if h > int(r.row) || completionMargin > int(r.col) {
-		windowTooSmallMsg := "Your console window is too small, please delete some lines..."
-		r.renderWindowTooSmall(windowTooSmallMsg)
-		r.previousCursor = r.getCursorEndPos(windowTooSmallMsg, 0)
-		return traceBackLines
+		//TODO: comment back in after demo
+		//windowTooSmallMsg := "Your console window is too small, please delete some lines..."
+		//r.renderWindowTooSmall(windowTooSmallMsg)
+		//r.previousCursor = r.getCursorEndPos(windowTooSmallMsg, 0)
+		//return traceBackLines
 	}
 
 	// Clear screen
