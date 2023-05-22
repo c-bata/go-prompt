@@ -317,6 +317,13 @@ func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 		lexer:       NewLexer(),
 		completion:  NewCompletionManager(completer, 6),
 		keyBindMode: EmacsKeyBind, // All the above assume that bash is running in the default Emacs setting
+		statementTerminatorCb: func(lastKeyStroke Key, buffer *Buffer) bool {
+			// terminate statement on enter which is either \r or \n, based on OS
+			if lastKeyStroke == ControlM || lastKeyStroke == Enter {
+				return true
+			}
+			return false
+		},
 	}
 
 	for _, opt := range opts {
