@@ -5,8 +5,8 @@ func dummyExecutor(in string) {}
 // Input get the input data from the user and return it.
 func Input(prefix string, completer Completer, opts ...Option) string {
 	pt := New(dummyExecutor, completer)
-	pt.renderer.prefixTextColor = DefaultColor
-	pt.renderer.prefix = prefix
+	pt.Renderer().prefixTextColor = DefaultColor
+	pt.Renderer().prefix = prefix
 
 	for _, opt := range opts {
 		if err := opt(pt); err != nil {
@@ -21,8 +21,8 @@ func Input(prefix string, completer Completer, opts ...Option) string {
 func Choose(prefix string, choices []string, opts ...Option) string {
 	completer := newChoiceCompleter(choices, FilterHasPrefix)
 	pt := New(dummyExecutor, completer)
-	pt.renderer.prefixTextColor = DefaultColor
-	pt.renderer.prefix = prefix
+	pt.Renderer().prefixTextColor = DefaultColor
+	pt.Renderer().prefix = prefix
 
 	for _, opt := range opts {
 		if err := opt(pt); err != nil {

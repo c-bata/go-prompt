@@ -23,6 +23,24 @@ type Completer func(Document) []Suggest
 // StatementTerminatorCb should return whether statement in buffer has been terminated
 type StatementTerminatorCb func(lastKeyStroke Key, buffer *Buffer) bool
 
+type IPrompt interface {
+	Run()
+	Input() string
+	ClearScreen()
+	SetConsoleParser(ConsoleParser)
+	Buffer() *Buffer
+	Renderer() *Render
+	History() *History
+	Lexer() *Lexer
+	CompletionManager() *CompletionManager
+	AddKeyBindings(...KeyBind)
+	AddASCIICodeBindings(...ASCIICodeBind)
+	SetKeyBindMode(KeyBindMode)
+	SetCompletionOnDown(bool)
+	SetExitChecker(ExitChecker)
+	SetStatementTerminatorCb(StatementTerminatorCb)
+}
+
 // Prompt is core struct of go-prompt.
 type Prompt struct {
 	in                    ConsoleParser
@@ -46,11 +64,6 @@ type Prompt struct {
 // Exec is the struct contains user input context.
 type Exec struct {
 	input string
-}
-
-// ClearScreen :: Clears the screen
-func (p *Prompt) ClearScreen() {
-	p.renderer.ClearScreen()
 }
 
 // Run starts prompt.
@@ -121,6 +134,110 @@ func (p *Prompt) Run() {
 			time.Sleep(10 * time.Millisecond)
 		}
 	}
+}
+
+// Input just returns user input text.
+func (p *Prompt) Input() string {
+	defer debug.Teardown()
+	debug.Log("start prompt")
+	p.setUp()
+	defer p.tearDown()
+
+	if p.completion.showAtStart {
+		p.completion.Update(*p.buf.Document())
+	}
+
+	p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
+	bufCh := make(chan []byte, 128)
+	stopReadBufCh := make(chan struct{})
+	go p.readBuffer(bufCh, stopReadBufCh)
+
+	exitCh := make(chan int)
+	winSizeCh := make(chan *WinSize)
+	stopHandleSignalCh := make(chan struct{})
+	go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
+
+	for {
+		select {
+		case b := <-bufCh:
+			if shouldExit, e := p.feed(b); shouldExit {
+				p.renderer.BreakLine(p.buf, p.lexer)
+				stopReadBufCh <- struct{}{}
+				stopHandleSignalCh <- struct{}{}
+				return ""
+			} else if e != nil {
+				// Stop goroutine to run readBuffer function
+				stopReadBufCh <- struct{}{}
+				stopHandleSignalCh <- struct{}{}
+				return e.input
+			} else {
+				p.completion.Update(*p.buf.Document())
+				p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
+			}
+		case w := <-winSizeCh:
+			p.renderer.UpdateWinSize(w)
+			p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
+		case code := <-exitCh:
+			p.renderer.BreakLine(p.buf, p.lexer)
+			p.tearDown()
+			os.Exit(code)
+		default:
+			time.Sleep(10 * time.Millisecond)
+		}
+	}
+}
+
+// ClearScreen :: Clears the screen
+func (p *Prompt) ClearScreen() {
+	p.renderer.ClearScreen()
+}
+
+func (p *Prompt) SetConsoleParser(parser ConsoleParser) {
+	p.in = parser
+}
+
+func (p *Prompt) Buffer() *Buffer {
+	return p.buf
+}
+
+func (p *Prompt) Renderer() *Render {
+	return p.renderer
+}
+
+func (p *Prompt) History() *History {
+	return p.history
+}
+
+func (p *Prompt) Lexer() *Lexer {
+	return p.lexer
+}
+
+func (p *Prompt) CompletionManager() *CompletionManager {
+	return p.completion
+}
+
+func (p *Prompt) AddKeyBindings(keyBindings ...KeyBind) {
+	p.keyBindings = append(p.keyBindings, keyBindings...)
+}
+
+func (p *Prompt) AddASCIICodeBindings(asciiCodeBindings ...ASCIICodeBind) {
+	p.ASCIICodeBindings = append(p.ASCIICodeBindings, asciiCodeBindings...)
+}
+
+func (p *Prompt) SetKeyBindMode(keyBindMode KeyBindMode) {
+	p.keyBindMode = keyBindMode
+}
+
+func (p *Prompt) SetCompletionOnDown(completionOnDown bool) {
+	p.completionOnDown = completionOnDown
+}
+
+func (p *Prompt) SetExitChecker(exitChecker ExitChecker) {
+	p.exitChecker = exitChecker
+}
+
+func (p *Prompt) SetStatementTerminatorCb(statementTerminatorCb StatementTerminatorCb) {
+	p.statementTerminatorCb = statementTerminatorCb
 }
 
 func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
@@ -271,57 +388,6 @@ func (p *Prompt) handleASCIICodeBinding(b []byte) bool {
 		}
 	}
 	return checked
-}
-
-// Input just returns user input text.
-func (p *Prompt) Input() string {
-	defer debug.Teardown()
-	debug.Log("start prompt")
-	p.setUp()
-	defer p.tearDown()
-
-	if p.completion.showAtStart {
-		p.completion.Update(*p.buf.Document())
-	}
-
-	p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
-	bufCh := make(chan []byte, 128)
-	stopReadBufCh := make(chan struct{})
-	go p.readBuffer(bufCh, stopReadBufCh)
-
-	exitCh := make(chan int)
-	winSizeCh := make(chan *WinSize)
-	stopHandleSignalCh := make(chan struct{})
-	go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
-
-	for {
-		select {
-		case b := <-bufCh:
-			if shouldExit, e := p.feed(b); shouldExit {
-				p.renderer.BreakLine(p.buf, p.lexer)
-				stopReadBufCh <- struct{}{}
-				stopHandleSignalCh <- struct{}{}
-				return ""
-			} else if e != nil {
-				// Stop goroutine to run readBuffer function
-				stopReadBufCh <- struct{}{}
-				stopHandleSignalCh <- struct{}{}
-				return e.input
-			} else {
-				p.completion.Update(*p.buf.Document())
-				p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
-			}
-		case w := <-winSizeCh:
-			p.renderer.UpdateWinSize(w)
-			p.renderer.Render(p.buf, p.prevText, p.lastKey, p.completion, p.lexer)
-		case code := <-exitCh:
-			p.renderer.BreakLine(p.buf, p.lexer)
-			p.tearDown()
-			os.Exit(code)
-		default:
-			time.Sleep(10 * time.Millisecond)
-		}
-	}
 }
 
 func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
