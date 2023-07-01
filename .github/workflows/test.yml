@@ -12,9 +12,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        go: [1.18, 1.19, 1.20]
+        go: ['1.18', '1.19', '1.20']
     steps:
-    - name: Set up Go 1.16
+    - name: Set up Go
       uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go }}
@@ -33,7 +33,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.20
+          go-version: '1.20'
         id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@master
