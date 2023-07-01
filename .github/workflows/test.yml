@@ -11,11 +11,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        go: [1.18, 1.19, 1.20]
     steps:
     - name: Set up Go 1.16
       uses: actions/setup-go@v2
       with:
-        go-version: 1.16
+        go-version: ${{ matrix.go }}
       id: go
     - name: Check out code into the Go module directory
       uses: actions/checkout@master
@@ -28,10 +29,10 @@ jobs:
     name: Build examples
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.16
+      - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.20
         id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@master
@@ -41,22 +42,15 @@ jobs:
         run: ./_example/build.sh
 
   lint:
-    name: Run lint checks
+    name: Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.16
-        uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
         with:
-          go-version: 1.16
-        id: go
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@master
-      - name: Download golangci-lint
-        run: |
-          wget https://github.com/golangci/golangci-lint/releases/download/v1.31.0/golangci-lint-1.31.0-linux-amd64.tar.gz
-          tar -xvf ./golangci-lint-1.31.0-linux-amd64.tar.gz
-      - name: Running golangci-lint
-        env:
-          GO111MODULE: on
-          GOPATH: /home/runner/work/
-        run: GOCILINT=./golangci-lint-1.31.0-linux-amd64/golangci-lint make lint
+          go-version: '1.20'
+          cache: false
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
