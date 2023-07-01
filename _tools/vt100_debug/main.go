@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package main
@@ -6,8 +7,8 @@ import (
 	"fmt"
 	"syscall"
 
-	prompt "github.com/c-bata/go-prompt"
-	"github.com/c-bata/go-prompt/internal/term"
+	prompt "github.com/elk-language/go-prompt"
+	"github.com/elk-language/go-prompt/internal/term"
 )
 
 func main() {

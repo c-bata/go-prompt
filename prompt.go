@@ -7,7 +7,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/c-bata/go-prompt/internal/debug"
+	"github.com/elk-language/go-prompt/internal/debug"
 )
 
 // Executor is called when the user

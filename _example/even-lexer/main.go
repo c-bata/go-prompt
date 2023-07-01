@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/c-bata/go-prompt"
 	"strings"
+
+	"github.com/elk-language/go-prompt"
 )
 
 func main() {

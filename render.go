@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/c-bata/go-prompt/internal/debug"
+	"github.com/elk-language/go-prompt/internal/debug"
 	runewidth "github.com/mattn/go-runewidth"
 )
 

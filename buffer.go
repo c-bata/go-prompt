@@ -3,7 +3,7 @@ package prompt
 import (
 	"strings"
 
-	"github.com/c-bata/go-prompt/internal/debug"
+	"github.com/elk-language/go-prompt/internal/debug"
 )
 
 // Buffer emulates the console buffer.
@@ -49,7 +49,7 @@ func (b *Buffer) InsertText(v string, overwrite bool, moveCursor bool) {
 	if overwrite {
 		overwritten := string(or[oc:])
 		if len(overwritten) >= oc+len(v) {
-			overwritten = string(or[oc : oc+len(v)])			
+			overwritten = string(or[oc : oc+len(v)])
 		}
 		if strings.Contains(overwritten, "\n") {
 			i := strings.IndexAny(overwritten, "\n")
