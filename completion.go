@@ -21,7 +21,8 @@ var (
 	completionMargin = leftMargin + rightMargin
 )
 
-// Suggest is printed when completing.
+// Suggest represents a single suggestion
+// in the auto-complete box.
 type Suggest struct {
 	Text        string
 	Description string
@@ -29,7 +30,7 @@ type Suggest struct {
 
 // CompletionManager manages which suggestion is now selected.
 type CompletionManager struct {
-	selected  int // -1 means nothing one is selected.
+	selected  int // -1 means nothing is selected.
 	tmp       []Suggest
 	max       uint16
 	completer Completer
@@ -58,19 +59,19 @@ func (c *CompletionManager) GetSuggestions() []Suggest {
 	return c.tmp
 }
 
-// Reset to select nothing.
+// Unselect the currently selected suggestion.
 func (c *CompletionManager) Reset() {
 	c.selected = -1
 	c.verticalScroll = 0
 	c.Update(*NewDocument())
 }
 
-// Update to update the suggestions.
+// Update the suggestions.
 func (c *CompletionManager) Update(in Document) {
 	c.tmp = c.completer(in)
 }
 
-// Previous to select the previous suggestion item.
+// Select the previous suggestion item.
 func (c *CompletionManager) Previous() {
 	if c.verticalScroll == c.selected && c.selected > 0 {
 		c.verticalScroll--
@@ -88,7 +89,7 @@ func (c *CompletionManager) Next() {
 	c.update()
 }
 
-// Completing returns whether the CompletionManager selects something one.
+// Completing returns true when the CompletionManager selects something.
 func (c *CompletionManager) Completing() bool {
 	return c.selected != -1
 }
@@ -180,7 +181,7 @@ func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width int) {
 	return new, leftWidth + rightWidth
 }
 
-// NewCompletionManager returns initialized CompletionManager object.
+// NewCompletionManager returns an initialized CompletionManager object.
 func NewCompletionManager(completer Completer, max uint16) *CompletionManager {
 	return &CompletionManager{
 		selected:  -1,
@@ -193,6 +194,8 @@ func NewCompletionManager(completer Completer, max uint16) *CompletionManager {
 
 var _ Completer = NoopCompleter
 
+// NoopCompleter implements a Completer function
+// that always returns no suggestions.
 func NoopCompleter(_ Document) []Suggest {
 	return nil
 }

@@ -8,7 +8,8 @@ import (
 	"github.com/c-bata/go-prompt/internal/debug"
 )
 
-// Executor is called when user input something text.
+// Executor is called when the user
+// inputs a line of text.
 type Executor func(string)
 
 // ExitChecker is called after user input to check if prompt must stop and exit go-prompt Run loop.
@@ -18,17 +19,18 @@ type Executor func(string)
 // Exit means exit go-prompt (not the overall Go program)
 type ExitChecker func(in string, breakline bool) bool
 
-// Completer should return the suggest item from Document.
+// Completer is a function that returns
+// a slice of suggestions for the given Document.
 type Completer func(Document) []Suggest
 
-// Prompt is core struct of go-prompt.
+// Prompt is a core struct of go-prompt.
 type Prompt struct {
 	in                ConsoleParser
 	buf               *Buffer
 	renderer          *Render
 	executor          Executor
 	history           *History
-	lexer *Lexer
+	lexer             *Lexer
 	completion        *CompletionManager
 	keyBindings       []KeyBind
 	ASCIICodeBindings []ASCIICodeBind
@@ -38,12 +40,12 @@ type Prompt struct {
 	skipTearDown      bool
 }
 
-// Exec is the struct contains user input context.
+// Exec is the struct that contains the user input context.
 type Exec struct {
 	input string
 }
 
-// Run starts prompt.
+// Run starts the prompt.
 func (p *Prompt) Run() {
 	p.skipTearDown = false
 	defer debug.Teardown()
@@ -230,7 +232,8 @@ func (p *Prompt) handleASCIICodeBinding(b []byte) bool {
 	return checked
 }
 
-// Input just returns user input text.
+// Input starts the prompt, lets the user
+// input a single line and returns this line as a string.
 func (p *Prompt) Input() string {
 	defer debug.Teardown()
 	debug.Log("start prompt")
