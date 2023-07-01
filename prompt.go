@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"os"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/c-bata/go-prompt/internal/debug"
 )
@@ -157,6 +159,11 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		if p.handleASCIICodeBinding(b) {
 			return
 		}
+		char, _ := utf8.DecodeRune(b)
+		if unicode.IsControl(char) {
+			return
+		}
+
 		p.buf.InsertText(string(b), false, true)
 	}
 
