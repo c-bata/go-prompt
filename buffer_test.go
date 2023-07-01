@@ -28,6 +28,52 @@ func TestBuffer_InsertText(t *testing.T) {
 	}
 }
 
+func TestBuffer_InsertText_Overwrite(t *testing.T) {
+	b := NewBuffer()
+	b.InsertText("ABC", false, true)
+
+	if b.Text() != "ABC" {
+		t.Errorf("Text should be %#v, got %#v", "ABC", b.Text())
+	}
+
+	if b.cursorPosition != len("ABC") {
+		t.Errorf("cursorPosition should be %#v, got %#v", len("ABC"), b.cursorPosition)
+	}
+
+	b.CursorLeft(1)
+	// Replace C with DEF in ABC
+	b.InsertText("DEF", true, true)
+
+	if b.Text() != "ABDEF" {
+		t.Errorf("Text should be %#v, got %#v", "ABDEF", b.Text())
+	}
+
+	b.CursorLeft(100)
+	// Replace ABD with GHI in ABDEF
+	b.InsertText("GHI", true, true)
+
+	if b.Text() != "GHIEF" {
+		t.Errorf("Text should be %#v, got %#v", "GHIEF", b.Text())
+	}
+
+	b.CursorLeft(100)
+	// Replace GHI with J\nK in GHIEF
+	b.InsertText("J\nK", true, true)
+
+	if b.Text() != "J\nKEF" {
+		t.Errorf("Text should be %#v, got %#v", "J\nKEF", b.Text())
+	}
+
+	b.CursorUp(100)
+	b.CursorLeft(100)
+	// Replace J with LMN in J\nKEF test end of line
+	b.InsertText("LMN", true, true)
+
+	if b.Text() != "LMN\nKEF" {
+		t.Errorf("Text should be %#v, got %#v", "LMN\nKEF", b.Text())
+	}
+}
+
 func TestBuffer_CursorMovement(t *testing.T) {
 	b := NewBuffer()
 	b.InsertText("some_text", false, true)
