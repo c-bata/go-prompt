@@ -14,8 +14,7 @@ const maxReadBytes = 1024
 
 // PosixParser is a ConsoleParser implementation for POSIX environment.
 type PosixParser struct {
-	fd          int
-	origTermios syscall.Termios
+	fd int
 }
 
 // Setup should be called before starting input
