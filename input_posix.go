@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package prompt
@@ -19,6 +20,11 @@ type PosixParser struct {
 
 // Setup should be called before starting input
 func (t *PosixParser) Setup() error {
+	in, err := syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
+	if err != nil {
+		panic(err)
+	}
+	t.fd = in
 	// Set NonBlocking mode because if syscall.Read block this goroutine, it cannot receive data from stopCh.
 	if err := syscall.SetNonblock(t.fd, true); err != nil {
 		return err
@@ -31,9 +37,6 @@ func (t *PosixParser) Setup() error {
 
 // TearDown should be called after stopping input
 func (t *PosixParser) TearDown() error {
-	if err := syscall.SetNonblock(t.fd, false); err != nil {
-		return err
-	}
 	if err := syscall.Close(t.fd); err != nil {
 		return err
 	}
@@ -69,12 +72,5 @@ var _ ConsoleParser = &PosixParser{}
 
 // NewStandardInputParser returns ConsoleParser object to read from stdin.
 func NewStandardInputParser() *PosixParser {
-	in, err := syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
-	if err != nil {
-		panic(err)
-	}
-
-	return &PosixParser{
-		fd: in,
-	}
+	return &PosixParser{}
 }
