@@ -190,3 +190,9 @@ func NewCompletionManager(completer Completer, max uint16) *CompletionManager {
 		verticalScroll: 0,
 	}
 }
+
+var _ Completer = NoopCompleter
+
+func NoopCompleter(_ Document) []Suggest {
+	return nil
+}
