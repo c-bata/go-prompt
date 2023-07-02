@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"fmt"
 	"runtime"
 	"strings"
 
@@ -172,7 +173,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 }
 
 // Render renders to the console.
-func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer *Lexer) {
+func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lexer) {
 	// In situations where a pseudo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col == 0 {
@@ -200,17 +201,8 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer *Le
 
 	r.renderPrefix()
 
-	if lexer.IsEnabled {
-		processed := lexer.Process(line)
-		var s = line
-
-		for _, v := range processed {
-			a := strings.SplitAfter(s, v.Text)
-			s = strings.TrimPrefix(s, a[0])
-
-			r.out.SetColor(v.Color, r.inputBGColor, false)
-			r.out.WriteStr(a[0])
-		}
+	if lexer != nil {
+		r.lex(lexer, line)
 	} else {
 		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 		r.out.WriteStr(line)
@@ -235,18 +227,8 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer *Le
 
 		rest := buffer.Document().TextAfterCursor()
 
-		if lexer.IsEnabled {
-			processed := lexer.Process(rest)
-
-			var s = rest
-
-			for _, v := range processed {
-				a := strings.SplitAfter(s, v.Text)
-				s = strings.TrimPrefix(s, a[0])
-
-				r.out.SetColor(v.Color, r.inputBGColor, false)
-				r.out.WriteStr(a[0])
-			}
+		if lexer != nil {
+			r.lex(lexer, rest)
 		} else {
 			r.out.WriteStr(rest)
 		}
@@ -261,26 +243,37 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer *Le
 	r.previousCursor = cursor
 }
 
+// lex processes the given input with the given lexer
+// and writes the result
+func (r *Render) lex(lexer Lexer, input string) {
+	lexer.Init(input)
+	s := input
+
+	for {
+		token, ok := lexer.Next()
+		if !ok {
+			break
+		}
+
+		a := strings.SplitAfter(s, token.Lexeme())
+		s = strings.TrimPrefix(s, a[0])
+
+		fmt.Printf("%#v\n", token)
+		r.out.SetColor(token.Color(), r.inputBGColor, false)
+		r.out.WriteStr(a[0])
+	}
+}
+
 // BreakLine to break line.
-func (r *Render) BreakLine(buffer *Buffer, lexer *Lexer) {
+func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 	// Erasing and Render
 	cursor := runewidth.StringWidth(buffer.Document().TextBeforeCursor()) + runewidth.StringWidth(r.getCurrentPrefix())
 	r.clear(cursor)
 
 	r.renderPrefix()
 
-	if lexer.IsEnabled {
-		processed := lexer.Process(buffer.Document().Text + "\n")
-
-		var s = buffer.Document().Text + "\n"
-
-		for _, v := range processed {
-			a := strings.SplitAfter(s, v.Text)
-			s = strings.TrimPrefix(s, a[0])
-
-			r.out.SetColor(v.Color, r.inputBGColor, false)
-			r.out.WriteStr(a[0])
-		}
+	if lexer != nil {
+		r.lex(lexer, buffer.Document().Text+"\n")
 	} else {
 		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
 		r.out.WriteStr(buffer.Document().Text + "\n")

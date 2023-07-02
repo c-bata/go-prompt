@@ -267,9 +267,9 @@ func OptionSetExitCheckerOnInput(fn ExitChecker) Option {
 }
 
 // OptionSetLexer set lexer function and enable it.
-func OptionSetLexer(fn LexerFunc) Option {
+func OptionSetLexer(lex Lexer) Option {
 	return func(p *Prompt) error {
-		p.lexer.SetLexerFunction(fn)
+		p.lexer = lex
 		return nil
 	}
 }
@@ -305,7 +305,6 @@ func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 		buf:         NewBuffer(),
 		executor:    executor,
 		history:     NewHistory(),
-		lexer: NewLexer(),
 		completion:  NewCompletionManager(completer, 6),
 		keyBindMode: EmacsKeyBind, // All the above assume that bash is running in the default Emacs setting
 	}

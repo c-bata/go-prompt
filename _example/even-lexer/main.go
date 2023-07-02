@@ -11,28 +11,26 @@ func main() {
 	p := prompt.New(
 		executor,
 		completer,
-		prompt.OptionSetLexer(lexer),
+		prompt.OptionSetLexer(prompt.NewEagerLexer(lexer)),
 	)
 
 	p.Run()
 }
 
-func lexer(line string) []prompt.LexerElement {
-	var elements []prompt.LexerElement
+func lexer(line string) []prompt.Token {
+	var elements []prompt.Token
 
 	strArr := strings.Split(line, "")
 
-	for k, v := range strArr {
-		element := prompt.LexerElement{
-			Text: v,
-		}
-
+	for i, value := range strArr {
+		var color prompt.Color
 		// every even char must be green.
-		if k%2 == 0 {
-			element.Color = prompt.Green
+		if i%2 == 0 {
+			color = prompt.Green
 		} else {
-			element.Color = prompt.White
+			color = prompt.White
 		}
+		element := prompt.NewSimpleToken(color, value)
 
 		elements = append(elements, element)
 	}

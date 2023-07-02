@@ -32,7 +32,7 @@ type Prompt struct {
 	renderer          *Render
 	executor          Executor
 	history           *History
-	lexer             *Lexer
+	lexer             Lexer
 	completion        *CompletionManager
 	keyBindings       []KeyBind
 	ASCIICodeBindings []ASCIICodeBind
