@@ -1,7 +1,6 @@
 package prompt
 
 import (
-	"fmt"
 	"runtime"
 	"strings"
 
@@ -258,7 +257,6 @@ func (r *Render) lex(lexer Lexer, input string) {
 		a := strings.SplitAfter(s, token.Lexeme())
 		s = strings.TrimPrefix(s, a[0])
 
-		fmt.Printf("%#v\n", token)
 		r.out.SetColor(token.Color(), r.inputBGColor, false)
 		r.out.WriteStr(a[0])
 	}
