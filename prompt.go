@@ -285,17 +285,21 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 			debug.Log("stop reading buffer")
 			return
 		default:
-			if b, err := p.in.Read(); err == nil && !(len(b) == 1 && b[0] == 0) {
-				start := 0
-				for i, e := range b {
-					switch GetKey([]byte{e}) {
-					case Enter, ControlJ, ControlM:
-						bufCh <- b[start:i]
-						bufCh <- []byte{e}
-						start = i + 1
+			if bytes, err := p.in.Read(); err == nil && !(len(bytes) == 1 && bytes[0] == 0) {
+				// bufCh <- bytes
+				newBytes := make([]byte, len(bytes))
+				for i, byt := range bytes {
+					// translate raw mode \r into \n
+					// to make pasting multiline text
+					// work properly
+					switch byt {
+					case '\r':
+						newBytes[i] = '\n'
+					default:
+						newBytes[i] = byt
 					}
 				}
-				bufCh <- b[start:]
+				bufCh <- newBytes
 			}
 		}
 		time.Sleep(10 * time.Millisecond)
