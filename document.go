@@ -6,7 +6,7 @@ import (
 
 	"github.com/elk-language/go-prompt/internal/bisect"
 	istrings "github.com/elk-language/go-prompt/internal/strings"
-	runewidth "github.com/mattn/go-runewidth"
+	"golang.org/x/exp/utf8string"
 )
 
 // Document has text displayed in terminal and cursor position.
@@ -34,13 +34,9 @@ func (d *Document) LastKeyStroke() Key {
 
 // DisplayCursorPosition returns the cursor position on rendered text on terminal emulators.
 // So if Document is "日本(cursor)語", DisplayedCursorPosition returns 4 because '日' and '本' are double width characters.
-func (d *Document) DisplayCursorPosition() int {
-	var position int
-	runes := []rune(d.Text)[:d.cursorPosition]
-	for i := range runes {
-		position += runewidth.RuneWidth(runes[i])
-	}
-	return position
+func (d *Document) DisplayCursorPosition(columns int) Position {
+	str := utf8string.NewString(d.Text).Slice(0, d.cursorPosition)
+	return positionAtEndOfString(str, columns)
 }
 
 // GetCharRelativeToCursor return character relative to cursor position, or empty string
@@ -129,7 +125,7 @@ func (d *Document) GetWordAfterCursorUntilSeparatorIgnoreNextToCursor(sep string
 // pointing to the start of the previous word. Return 0 if nothing was found.
 func (d *Document) FindStartOfPreviousWord() int {
 	x := d.TextBeforeCursor()
-	i := strings.LastIndexByte(x, ' ')
+	i := strings.LastIndexAny(x, " \n")
 	if i != -1 {
 		return i + 1
 	}
@@ -324,10 +320,17 @@ func (d *Document) GetCursorLeftPosition(count int) int {
 	if count < 0 {
 		return d.GetCursorRightPosition(-count)
 	}
-	if d.CursorPositionCol() > count {
-		return -count
+	runeSlice := []rune(d.Text)
+	counter := 0
+	targetPosition := d.cursorPosition - count
+	if targetPosition < 0 {
+		targetPosition = 0
 	}
-	return -d.CursorPositionCol()
+	for range runeSlice[targetPosition:d.cursorPosition] {
+		counter--
+	}
+
+	return counter
 }
 
 // GetCursorRightPosition returns relative position for cursor right.
@@ -335,10 +338,17 @@ func (d *Document) GetCursorRightPosition(count int) int {
 	if count < 0 {
 		return d.GetCursorLeftPosition(-count)
 	}
-	if len(d.CurrentLineAfterCursor()) > count {
-		return count
+	runeSlice := []rune(d.Text)
+	counter := 0
+	targetPosition := d.cursorPosition + count
+	if targetPosition > len(runeSlice) {
+		targetPosition = len(runeSlice)
 	}
-	return len(d.CurrentLineAfterCursor())
+	for range runeSlice[d.cursorPosition:targetPosition] {
+		counter++
+	}
+
+	return counter
 }
 
 // GetCursorUpPosition return the relative cursor position (character index) where we would be

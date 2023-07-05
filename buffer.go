@@ -37,8 +37,8 @@ func (b *Buffer) Document() (d *Document) {
 
 // DisplayCursorPosition returns the cursor position on rendered text on terminal emulators.
 // So if Document is "日本(cursor)語", DisplayedCursorPosition returns 4 because '日' and '本' are double width characters.
-func (b *Buffer) DisplayCursorPosition() int {
-	return b.Document().DisplayCursorPosition()
+func (b *Buffer) DisplayCursorPosition(columns int) Position {
+	return b.Document().DisplayCursorPosition(columns)
 }
 
 // InsertText insert string from current line.

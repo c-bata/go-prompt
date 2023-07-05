@@ -26,9 +26,9 @@ func ExampleDocument_DisplayCursorPosition() {
 		Text:           `Hello! my name is c-bata.`,
 		cursorPosition: len(`Hello`),
 	}
-	fmt.Println("DisplayCursorPosition", d.DisplayCursorPosition())
+	fmt.Println("DisplayCursorPosition", d.DisplayCursorPosition(50))
 	// Output:
-	// DisplayCursorPosition 5
+	// DisplayCursorPosition {5 0}
 }
 
 func ExampleDocument_CursorPositionRow() {
@@ -94,9 +94,9 @@ func ExampleDocument_DisplayCursorPosition_withJapanese() {
 		Text:           `こんにちは、芝田 将です。`,
 		cursorPosition: 3,
 	}
-	fmt.Println("DisplayCursorPosition", d.DisplayCursorPosition())
+	fmt.Println("DisplayCursorPosition", d.DisplayCursorPosition(30))
 	// Output:
-	// DisplayCursorPosition 6
+	// DisplayCursorPosition {6 0}
 }
 
 func ExampleDocument_CurrentLineBeforeCursor() {
@@ -222,21 +222,21 @@ func ExampleDocument_GetWordAfterCursorUntilSeparatorIgnoreNextToCursor() {
 func TestDocument_DisplayCursorPosition(t *testing.T) {
 	patterns := []struct {
 		document *Document
-		expected int
+		expected Position
 	}{
 		{
 			document: &Document{
 				Text:           "hello",
 				cursorPosition: 2,
 			},
-			expected: 2,
+			expected: Position{X: 2},
 		},
 		{
 			document: &Document{
 				Text:           "こんにちは",
 				cursorPosition: 2,
 			},
-			expected: 4,
+			expected: Position{X: 4},
 		},
 		{
 			// If you're facing test failure on this test case and your terminal is iTerm2,
@@ -247,12 +247,12 @@ func TestDocument_DisplayCursorPosition(t *testing.T) {
 				Text:           "Добрый день",
 				cursorPosition: 3,
 			},
-			expected: 3,
+			expected: Position{X: 3},
 		},
 	}
 
 	for _, p := range patterns {
-		ac := p.document.DisplayCursorPosition()
+		ac := p.document.DisplayCursorPosition(30)
 		if ac != p.expected {
 			t.Errorf("Should be %#v, got %#v", p.expected, ac)
 		}
@@ -1105,7 +1105,13 @@ func TestDocument_GetCursorLeftPosition(t *testing.T) {
 		t.Errorf("Should be %#v, got %#v", ex, ac)
 	}
 	ac = d.GetCursorLeftPosition(10)
-	ex = -3
+	ex = -10
+	if ac != ex {
+		t.Errorf("Should be %#v, got %#v", ex, ac)
+	}
+
+	ac = d.GetCursorLeftPosition(30)
+	ex = -17
 	if ac != ex {
 		t.Errorf("Should be %#v, got %#v", ex, ac)
 	}
@@ -1158,7 +1164,13 @@ func TestDocument_GetCursorRightPosition(t *testing.T) {
 		t.Errorf("Should be %#v, got %#v", ex, ac)
 	}
 	ac = d.GetCursorRightPosition(10)
-	ex = 3
+	ex = 10
+	if ac != ex {
+		t.Errorf("Should be %#v, got %#v", ex, ac)
+	}
+
+	ac = d.GetCursorRightPosition(30)
+	ex = 11
 	if ac != ex {
 		t.Errorf("Should be %#v, got %#v", ex, ac)
 	}

@@ -18,7 +18,7 @@ type Render struct {
 	row                uint16
 	col                uint16
 
-	previousCursor int
+	previousCursor Position
 
 	// colors,
 	prefixTextColor              Color
@@ -94,7 +94,7 @@ func (r *Render) renderWindowTooSmall() {
 
 func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	suggestions := completions.GetSuggestions()
-	if len(completions.GetSuggestions()) == 0 {
+	if len(suggestions) == 0 {
 		return
 	}
 	prefix := r.getCurrentPrefix()
@@ -112,8 +112,8 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
 	r.prepareArea(windowHeight)
 
-	cursor := runewidth.StringWidth(prefix) + runewidth.StringWidth(buf.Document().TextBeforeCursor())
-	x, _ := r.toPos(cursor)
+	cursor := positionAtEndOfString(prefix+buf.Document().TextBeforeCursor(), int(r.col))
+	x := cursor.X
 	if x+width >= int(r.col) {
 		cursor = r.backward(cursor, x+width-int(r.col))
 	}
@@ -135,7 +135,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 
 	r.out.SetColor(White, Cyan, false)
 	for i := 0; i < windowHeight; i++ {
-		alignNextLine(r, cursorColumnSpacing)
+		alignNextLine(r, cursorColumnSpacing.X)
 
 		if i == selected {
 			r.out.SetColor(r.selectedSuggestionTextColor, r.selectedSuggestionBGColor, true)
@@ -159,8 +159,9 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 		r.out.WriteStr(" ")
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
-		r.lineWrap(cursor + width)
-		r.backward(cursor+width, width)
+		c := cursor.Add(Position{X: width})
+		r.lineWrap(&c)
+		r.backward(c, width)
 	}
 
 	if x+width >= int(r.col) {
@@ -179,14 +180,15 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 		return
 	}
 	defer func() { debug.AssertNoError(r.out.Flush()) }()
-	r.move(r.previousCursor, 0)
+	r.clear(r.previousCursor)
 
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
-	cursor := runewidth.StringWidth(prefix) + runewidth.StringWidth(line)
+	prefixWidth := runewidth.StringWidth(prefix)
+	cursor := positionAtEndOfString(prefix+line, int(r.col))
 
 	// prepare area
-	_, y := r.toPos(cursor)
+	y := cursor.Y
 
 	h := y + 1 + int(completion.max)
 	if h > int(r.row) || completionMargin > int(r.col) {
@@ -209,11 +211,13 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 
-	r.lineWrap(cursor)
+	r.lineWrap(&cursor)
 
-	r.out.EraseDown()
-
-	cursor = r.backward(cursor, runewidth.StringWidth(line)-buffer.DisplayCursorPosition())
+	targetCursor := buffer.DisplayCursorPosition(int(r.col))
+	if targetCursor.Y == 0 {
+		targetCursor.X += prefixWidth
+	}
+	cursor = r.move(cursor, targetCursor)
 
 	r.renderCompletion(buffer, completion)
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
@@ -222,7 +226,8 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
 		r.out.WriteStr(suggest.Text)
 		r.out.SetColor(DefaultColor, DefaultColor, false)
-		cursor += runewidth.StringWidth(suggest.Text)
+		cursor.X += runewidth.StringWidth(suggest.Text)
+		endOfSuggestionPos := cursor
 
 		rest := buffer.Document().TextAfterCursor()
 
@@ -234,10 +239,11 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
-		cursor += runewidth.StringWidth(rest)
-		r.lineWrap(cursor)
+		cursor = cursor.Join(positionAtEndOfString(rest, int(r.col)))
 
-		cursor = r.backward(cursor, runewidth.StringWidth(rest))
+		r.lineWrap(&cursor)
+
+		cursor = r.move(cursor, endOfSuggestionPos)
 	}
 	r.previousCursor = cursor
 }
@@ -265,7 +271,7 @@ func (r *Render) lex(lexer Lexer, input string) {
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 	// Erasing and Render
-	cursor := runewidth.StringWidth(buffer.Document().TextBeforeCursor()) + runewidth.StringWidth(r.getCurrentPrefix())
+	cursor := positionAtEndOfString(buffer.Document().TextBeforeCursor()+r.getCurrentPrefix(), int(r.col))
 	r.clear(cursor)
 
 	r.renderPrefix()
@@ -284,41 +290,35 @@ func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 		r.breakLineCallback(buffer.Document())
 	}
 
-	r.previousCursor = 0
+	r.previousCursor = Position{}
 }
 
 // clear erases the screen from a beginning of input
 // even if there is line break which means input length exceeds a window's width.
-func (r *Render) clear(cursor int) {
-	r.move(cursor, 0)
+func (r *Render) clear(cursor Position) {
+	r.move(cursor, Position{})
 	r.out.EraseDown()
 }
 
 // backward moves cursor to backward from a current cursor position
 // regardless there is a line break.
-func (r *Render) backward(from, n int) int {
-	return r.move(from, from-n)
+func (r *Render) backward(from Position, n int) Position {
+	return r.move(from, Position{X: from.X - n, Y: from.Y})
 }
 
 // move moves cursor to specified position from the beginning of input
 // even if there is a line break.
-func (r *Render) move(from, to int) int {
-	fromX, fromY := r.toPos(from)
-	toX, toY := r.toPos(to)
-
-	r.out.CursorUp(fromY - toY)
-	r.out.CursorBackward(fromX - toX)
+func (r *Render) move(from, to Position) Position {
+	newPosition := from.Subtract(to)
+	r.out.CursorUp(newPosition.Y)
+	r.out.CursorBackward(newPosition.X)
 	return to
 }
 
-// toPos returns the relative position from the beginning of the string.
-func (r *Render) toPos(cursor int) (x, y int) {
-	col := int(r.col)
-	return cursor % col, cursor / col
-}
-
-func (r *Render) lineWrap(cursor int) {
-	if runtime.GOOS != "windows" && cursor > 0 && cursor%int(r.col) == 0 {
+func (r *Render) lineWrap(cursor *Position) {
+	if runtime.GOOS != "windows" && cursor.X > 0 && cursor.X%int(r.col) == 0 {
+		cursor.X = 0
+		cursor.Y += 1
 		r.out.WriteRaw([]byte{'\n'})
 	}
 }
