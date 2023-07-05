@@ -351,6 +351,16 @@ func (d *Document) GetCursorRightPosition(count int) int {
 	return counter
 }
 
+// Get the current cursor position.
+func (d *Document) GetCursorPosition(columns int) Position {
+	return positionAtEndOfString(d.TextBeforeCursor(), columns)
+}
+
+// Get the position of the end of the current text.
+func (d *Document) GetEndOfTextPosition(columns int) Position {
+	return positionAtEndOfString(d.Text, columns)
+}
+
 // GetCursorUpPosition return the relative cursor position (character index) where we would be
 // if the user pressed the arrow-up button.
 func (d *Document) GetCursorUpPosition(count int, preferredColumn int) int {

@@ -117,6 +117,15 @@ func (p *Prompt) Run() {
 	}
 }
 
+// func Log(format string, a ...any) {
+// 	f, err := os.OpenFile("log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+// 	if err != nil {
+// 		log.Fatalf("error opening file: %v", err)
+// 	}
+// 	defer f.Close()
+// 	fmt.Fprintf(f, format, a...)
+// }
+
 func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	key := GetKey(b)
 	p.buf.lastKeyStroke = key
@@ -138,18 +147,35 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		p.buf = NewBuffer()
 		p.history.Clear()
 	case Up, ControlP:
-		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
-			if newBuf, changed := p.history.Older(p.buf); changed {
-				p.buf = newBuf
-			}
+		cursor := p.buf.Document().GetCursorPosition(int(p.renderer.col))
+		if cursor.Y != 0 {
+			p.buf.CursorUp(1)
+			break
 		}
+		if completing {
+			break
+		}
+
+		if newBuf, changed := p.history.Older(p.buf); changed {
+			p.buf = newBuf
+		}
+
 	case Down, ControlN:
-		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
-			if newBuf, changed := p.history.Newer(p.buf); changed {
-				p.buf = newBuf
-			}
-			return
+		endOfTextCursor := p.buf.Document().GetEndOfTextPosition(int(p.renderer.col))
+		cursor := p.buf.Document().GetCursorPosition(int(p.renderer.col))
+		if endOfTextCursor.Y > cursor.Y {
+			p.buf.CursorDown(1)
+			break
 		}
+
+		if completing {
+			break
+		}
+
+		if newBuf, changed := p.history.Newer(p.buf); changed {
+			p.buf = newBuf
+		}
+		return
 	case ControlD:
 		if p.buf.Text() == "" {
 			shouldExit = true

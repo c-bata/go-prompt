@@ -8,12 +8,11 @@ import (
 
 // Buffer emulates the console buffer.
 type Buffer struct {
-	workingLines    []string // The working lines. Similar to history
-	workingIndex    int
-	cursorPosition  int
-	cacheDocument   *Document
-	preferredColumn int // Remember the original column for the next up/down movement.
-	lastKeyStroke   Key
+	workingLines   []string // The working lines. Similar to history
+	workingIndex   int
+	cursorPosition int
+	cacheDocument  *Document
+	lastKeyStroke  Key
 }
 
 // Text returns string of the current line.
@@ -103,27 +102,15 @@ func (b *Buffer) CursorRight(count int) {
 // CursorUp move cursor to the previous line.
 // (for multi-line edit).
 func (b *Buffer) CursorUp(count int) {
-	orig := b.preferredColumn
-	if b.preferredColumn == -1 { // -1 means nil
-		orig = b.Document().CursorPositionCol()
-	}
+	orig := b.Document().CursorPositionCol()
 	b.cursorPosition += b.Document().GetCursorUpPosition(count, orig)
-
-	// Remember the original column for the next up/down movement.
-	b.preferredColumn = orig
 }
 
 // CursorDown move cursor to the next line.
 // (for multi-line edit).
 func (b *Buffer) CursorDown(count int) {
-	orig := b.preferredColumn
-	if b.preferredColumn == -1 { // -1 means nil
-		orig = b.Document().CursorPositionCol()
-	}
+	orig := b.Document().CursorPositionCol()
 	b.cursorPosition += b.Document().GetCursorDownPosition(count, orig)
-
-	// Remember the original column for the next up/down movement.
-	b.preferredColumn = orig
 }
 
 // DeleteBeforeCursor delete specified number of characters before cursor and return the deleted text.
@@ -186,9 +173,8 @@ func (b *Buffer) SwapCharactersBeforeCursor() {
 // NewBuffer is constructor of Buffer struct.
 func NewBuffer() (b *Buffer) {
 	b = &Buffer{
-		workingLines:    []string{""},
-		workingIndex:    0,
-		preferredColumn: -1, // -1 means nil
+		workingLines: []string{""},
+		workingIndex: 0,
 	}
 	return
 }
