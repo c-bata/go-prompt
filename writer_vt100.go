@@ -2,6 +2,7 @@ package prompt
 
 import (
 	"bytes"
+	"io"
 	"strconv"
 )
 
@@ -10,24 +11,28 @@ type VT100Writer struct {
 	buffer []byte
 }
 
+var _ io.Writer = &VT100Writer{}
+var _ io.StringWriter = &VT100Writer{}
+
+// Write to write safety byte array by removing control sequences.
+func (w *VT100Writer) Write(data []byte) (int, error) {
+	w.WriteRaw(bytes.Replace(data, []byte{0x1b}, []byte{'?'}, -1))
+	return len(data), nil
+}
+
 // WriteRaw to write raw byte array
 func (w *VT100Writer) WriteRaw(data []byte) {
 	w.buffer = append(w.buffer, data...)
 }
 
-// Write to write safety byte array by removing control sequences.
-func (w *VT100Writer) Write(data []byte) {
-	w.WriteRaw(bytes.Replace(data, []byte{0x1b}, []byte{'?'}, -1))
+// WriteString to write safety string by removing control sequences.
+func (w *VT100Writer) WriteString(data string) (int, error) {
+	return w.Write([]byte(data))
 }
 
-// WriteRawStr to write raw string
-func (w *VT100Writer) WriteRawStr(data string) {
+// WriteRawString to write raw string
+func (w *VT100Writer) WriteRawString(data string) {
 	w.WriteRaw([]byte(data))
-}
-
-// WriteStr to write safety string by removing control sequences.
-func (w *VT100Writer) WriteStr(data string) {
-	w.Write([]byte(data))
 }
 
 /* Erase */

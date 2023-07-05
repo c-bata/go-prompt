@@ -4,18 +4,18 @@ package prompt
 // prompt.New accepts any number of options (this is functional option pattern).
 type Option func(prompt *Prompt) error
 
-// OptionParser to set a custom ConsoleParser object. An argument should implement ConsoleParser interface.
-func OptionParser(x ConsoleParser) Option {
+// OptionParser to set a custom Reader object. An argument should implement Reader interface.
+func OptionParser(x Reader) Option {
 	return func(p *Prompt) error {
 		p.in = x
 		return nil
 	}
 }
 
-// OptionWriter to set a custom ConsoleWriter object. An argument should implement ConsoleWriter interface.
-func OptionWriter(x ConsoleWriter) Option {
+// OptionWriter to set a custom Writer object. An argument should implement Writer interface.
+func OptionWriter(x Writer) Option {
 	return func(p *Prompt) error {
-		registerConsoleWriter(x)
+		registerWriter(x)
 		p.renderer.out = x
 		return nil
 	}
@@ -277,10 +277,10 @@ func OptionSetLexer(lex Lexer) Option {
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 	defaultWriter := NewStdoutWriter()
-	registerConsoleWriter(defaultWriter)
+	registerWriter(defaultWriter)
 
 	pt := &Prompt{
-		in: NewStandardInputParser(),
+		in: NewStdinReader(),
 		renderer: &Render{
 			prefix:                       "> ",
 			out:                          defaultWriter,

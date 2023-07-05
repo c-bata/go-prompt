@@ -11,15 +11,13 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const maxReadBytes = 1024
-
-// PosixParser is a ConsoleParser implementation for POSIX environment.
-type PosixParser struct {
+// PosixReader is a Reader implementation for the POSIX environment.
+type PosixReader struct {
 	fd int
 }
 
-// Setup should be called before starting input
-func (t *PosixParser) Setup() error {
+// Open should be called before starting input
+func (t *PosixReader) Open() error {
 	in, err := syscall.Open("/dev/tty", syscall.O_RDONLY, 0)
 	if os.IsNotExist(err) {
 		in = syscall.Stdin
@@ -37,8 +35,8 @@ func (t *PosixParser) Setup() error {
 	return nil
 }
 
-// TearDown should be called after stopping input
-func (t *PosixParser) TearDown() error {
+// Close should be called after stopping input
+func (t *PosixReader) Close() error {
 	if err := syscall.Close(t.fd); err != nil {
 		return err
 	}
@@ -49,17 +47,12 @@ func (t *PosixParser) TearDown() error {
 }
 
 // Read returns byte array.
-func (t *PosixParser) Read() ([]byte, error) {
-	buf := make([]byte, maxReadBytes)
-	n, err := syscall.Read(t.fd, buf)
-	if err != nil {
-		return []byte{}, err
-	}
-	return buf[:n], nil
+func (t *PosixReader) Read(buff []byte) (int, error) {
+	return syscall.Read(t.fd, buff)
 }
 
 // GetWinSize returns WinSize object to represent width and height of terminal.
-func (t *PosixParser) GetWinSize() *WinSize {
+func (t *PosixReader) GetWinSize() *WinSize {
 	ws, err := unix.IoctlGetWinsize(t.fd, unix.TIOCGWINSZ)
 	if err != nil {
 		// If this errors, we simply return the default window size as
@@ -75,9 +68,9 @@ func (t *PosixParser) GetWinSize() *WinSize {
 	}
 }
 
-var _ ConsoleParser = &PosixParser{}
+var _ Reader = &PosixReader{}
 
-// NewStandardInputParser returns ConsoleParser object to read from stdin.
-func NewStandardInputParser() *PosixParser {
-	return &PosixParser{}
+// NewStdinReader returns Reader object to read from stdin.
+func NewStdinReader() *PosixReader {
+	return &PosixReader{}
 }

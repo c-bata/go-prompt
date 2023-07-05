@@ -1,6 +1,9 @@
 package prompt
 
-import "bytes"
+import (
+	"bytes"
+	"io"
+)
 
 // WinSize represents the width and height of terminal.
 type WinSize struct {
@@ -8,16 +11,13 @@ type WinSize struct {
 	Col uint16
 }
 
-// ConsoleParser is an interface to abstract input layer.
-type ConsoleParser interface {
-	// Setup should be called before starting input
-	Setup() error
-	// TearDown should be called after stopping input
-	TearDown() error
+// Reader is an interface to abstract input layer.
+type Reader interface {
+	// Open should be called before starting reading
+	Open() error
 	// GetWinSize returns WinSize object to represent width and height of terminal.
 	GetWinSize() *WinSize
-	// Read returns byte array.
-	Read() ([]byte, error)
+	io.ReadCloser
 }
 
 // GetKey returns Key correspond to input byte codes.

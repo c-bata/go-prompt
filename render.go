@@ -10,7 +10,7 @@ import (
 
 // Render to render prompt information from state of Buffer.
 type Render struct {
-	out                ConsoleWriter
+	out                Writer
 	prefix             string
 	livePrefixCallback func() (prefix string, useLivePrefix bool)
 	breakLineCallback  func(*Document)
@@ -58,13 +58,13 @@ func (r *Render) getCurrentPrefix() string {
 
 func (r *Render) renderPrefix() {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
-	r.out.WriteStr("\r")
-	r.out.WriteStr(r.getCurrentPrefix())
+	r.out.WriteString("\r")
+	r.out.WriteString(r.getCurrentPrefix())
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
-// TearDown to clear title and erasing.
-func (r *Render) TearDown() {
+// Close to clear title and erasing.
+func (r *Render) Close() {
 	r.out.ClearTitle()
 	r.out.EraseDown()
 	debug.AssertNoError(r.out.Flush())
@@ -89,7 +89,7 @@ func (r *Render) renderWindowTooSmall() {
 	r.out.CursorGoTo(0, 0)
 	r.out.EraseScreen()
 	r.out.SetColor(DarkRed, White, false)
-	r.out.WriteStr("Your console window is too small...")
+	r.out.WriteString("Your console window is too small...")
 }
 
 func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
@@ -142,21 +142,21 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 		} else {
 			r.out.SetColor(r.suggestionTextColor, r.suggestionBGColor, false)
 		}
-		r.out.WriteStr(formatted[i].Text)
+		r.out.WriteString(formatted[i].Text)
 
 		if i == selected {
 			r.out.SetColor(r.selectedDescriptionTextColor, r.selectedDescriptionBGColor, false)
 		} else {
 			r.out.SetColor(r.descriptionTextColor, r.descriptionBGColor, false)
 		}
-		r.out.WriteStr(formatted[i].Description)
+		r.out.WriteString(formatted[i].Description)
 
 		if isScrollThumb(i) {
 			r.out.SetColor(DefaultColor, r.scrollbarThumbColor, false)
 		} else {
 			r.out.SetColor(DefaultColor, r.scrollbarBGColor, false)
 		}
-		r.out.WriteStr(" ")
+		r.out.WriteString(" ")
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
 		c := cursor.Add(Position{X: width})
@@ -206,7 +206,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 		r.lex(lexer, line)
 	} else {
 		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-		r.out.WriteStr(line)
+		r.out.WriteString(line)
 	}
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
@@ -224,7 +224,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 		cursor = r.backward(cursor, runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
 
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
-		r.out.WriteStr(suggest.Text)
+		r.out.WriteString(suggest.Text)
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 		cursor.X += runewidth.StringWidth(suggest.Text)
 		endOfSuggestionPos := cursor
@@ -234,7 +234,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 		if lexer != nil {
 			r.lex(lexer, rest)
 		} else {
-			r.out.WriteStr(rest)
+			r.out.WriteString(rest)
 		}
 
 		r.out.SetColor(DefaultColor, DefaultColor, false)
@@ -264,7 +264,7 @@ func (r *Render) lex(lexer Lexer, input string) {
 		s = strings.TrimPrefix(s, a[0])
 
 		r.out.SetColor(token.Color(), r.inputBGColor, false)
-		r.out.WriteStr(a[0])
+		r.out.WriteString(a[0])
 	}
 }
 
@@ -280,7 +280,7 @@ func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 		r.lex(lexer, buffer.Document().Text+"\n")
 	} else {
 		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-		r.out.WriteStr(buffer.Document().Text + "\n")
+		r.out.WriteString(buffer.Document().Text + "\n")
 	}
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
@@ -336,6 +336,6 @@ func clamp(high, low, x float64) float64 {
 
 func alignNextLine(r *Render, col int) {
 	r.out.CursorDown(1)
-	r.out.WriteStr("\r")
+	r.out.WriteString("\r")
 	r.out.CursorForward(col)
 }

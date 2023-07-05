@@ -17,12 +17,15 @@ func completer(in prompt.Document) []prompt.Suggest {
 }
 
 func main() {
-	in := prompt.Input(">>> ", completer,
+	in := prompt.Input(
+		">>> ",
+		completer,
 		prompt.OptionTitle("sql-prompt"),
 		prompt.OptionHistory([]string{"SELECT * FROM users;"}),
 		prompt.OptionPrefixTextColor(prompt.Yellow),
 		prompt.OptionPreviewSuggestionTextColor(prompt.Blue),
 		prompt.OptionSelectedSuggestionBGColor(prompt.LightGray),
-		prompt.OptionSuggestionBGColor(prompt.DarkGray))
+		prompt.OptionSuggestionBGColor(prompt.DarkGray),
+	)
 	fmt.Println("Your input: " + in)
 }

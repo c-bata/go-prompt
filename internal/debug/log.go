@@ -28,8 +28,8 @@ func init() {
 	logger = log.New(ioutil.Discard, "", log.Llongfile)
 }
 
-// Teardown to close logfile
-func Teardown() {
+// Close to close logfile
+func Close() {
 	if logfile == nil {
 		return
 	}

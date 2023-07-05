@@ -10,6 +10,8 @@ import (
 	"github.com/elk-language/go-prompt/internal/debug"
 )
 
+const inputBufferSize = 1024
+
 // Executor is called when the user
 // inputs a line of text.
 type Executor func(string)
@@ -27,7 +29,7 @@ type Completer func(Document) []Suggest
 
 // Prompt is a core struct of go-prompt.
 type Prompt struct {
-	in                ConsoleParser
+	in                Reader
 	buf               *Buffer
 	renderer          *Render
 	executor          Executor
@@ -39,21 +41,21 @@ type Prompt struct {
 	keyBindMode       KeyBindMode
 	completionOnDown  bool
 	exitChecker       ExitChecker
-	skipTearDown      bool
+	skipClose         bool
 }
 
-// Exec is the struct that contains the user input context.
-type Exec struct {
+// UserInput is the struct that contains the user input context.
+type UserInput struct {
 	input string
 }
 
 // Run starts the prompt.
 func (p *Prompt) Run() {
-	p.skipTearDown = false
-	defer debug.Teardown()
+	p.skipClose = false
+	defer debug.Close()
 	debug.Log("start prompt")
-	p.setUp()
-	defer p.tearDown()
+	p.setup()
+	defer p.Close()
 
 	if p.completion.showAtStart {
 		p.completion.Update(*p.buf.Document())
@@ -85,7 +87,7 @@ func (p *Prompt) Run() {
 
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
-				debug.AssertNoError(p.in.TearDown())
+				debug.AssertNoError(p.in.Close())
 				p.executor(e.input)
 
 				p.completion.Update(*p.buf.Document())
@@ -93,11 +95,11 @@ func (p *Prompt) Run() {
 				p.renderer.Render(p.buf, p.completion, p.lexer)
 
 				if p.exitChecker != nil && p.exitChecker(e.input, true) {
-					p.skipTearDown = true
+					p.skipClose = true
 					return
 				}
 				// Set raw mode
-				debug.AssertNoError(p.in.Setup())
+				debug.AssertNoError(p.in.Open())
 				go p.readBuffer(bufCh, stopReadBufCh)
 				go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 			} else {
@@ -109,7 +111,7 @@ func (p *Prompt) Run() {
 			p.renderer.Render(p.buf, p.completion, p.lexer)
 		case code := <-exitCh:
 			p.renderer.BreakLine(p.buf, p.lexer)
-			p.tearDown()
+			p.Close()
 			os.Exit(code)
 		default:
 			time.Sleep(10 * time.Millisecond)
@@ -126,7 +128,7 @@ func (p *Prompt) Run() {
 // 	fmt.Fprintf(f, format, a...)
 // }
 
-func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
+func (p *Prompt) feed(b []byte) (shouldExit bool, userInput *UserInput) {
 	key := GetKey(b)
 	p.buf.lastKeyStroke = key
 	// completion
@@ -137,10 +139,10 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 	case Enter, ControlJ, ControlM:
 		p.renderer.BreakLine(p.buf, p.lexer)
 
-		exec = &Exec{input: p.buf.Text()}
+		userInput = &UserInput{input: p.buf.Text()}
 		p.buf = NewBuffer()
-		if exec.input != "" {
-			p.history.Add(exec.input)
+		if userInput.input != "" {
+			p.history.Add(userInput.input)
 		}
 	case ControlC:
 		p.renderer.BreakLine(p.buf, p.lexer)
@@ -268,10 +270,10 @@ func (p *Prompt) handleASCIICodeBinding(b []byte) bool {
 // Input starts the prompt, lets the user
 // input a single line and returns this line as a string.
 func (p *Prompt) Input() string {
-	defer debug.Teardown()
+	defer debug.Close()
 	debug.Log("start prompt")
-	p.setUp()
-	defer p.tearDown()
+	p.setup()
+	defer p.Close()
 
 	if p.completion.showAtStart {
 		p.completion.Update(*p.buf.Document())
@@ -311,8 +313,13 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 			debug.Log("stop reading buffer")
 			return
 		default:
-			if bytes, err := p.in.Read(); err == nil && !(len(bytes) == 1 && bytes[0] == 0) {
-				// bufCh <- bytes
+			bytes := make([]byte, inputBufferSize)
+			n, err := p.in.Read(bytes)
+			if err != nil {
+				break
+			}
+			bytes = bytes[:n]
+			if len(bytes) != 1 || bytes[0] != 0 {
 				newBytes := make([]byte, len(bytes))
 				for i, byt := range bytes {
 					// translate raw mode \r into \n
@@ -332,15 +339,15 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	}
 }
 
-func (p *Prompt) setUp() {
-	debug.AssertNoError(p.in.Setup())
+func (p *Prompt) setup() {
+	debug.AssertNoError(p.in.Open())
 	p.renderer.Setup()
 	p.renderer.UpdateWinSize(p.in.GetWinSize())
 }
 
-func (p *Prompt) tearDown() {
-	if !p.skipTearDown {
-		debug.AssertNoError(p.in.TearDown())
+func (p *Prompt) Close() {
+	if !p.skipClose {
+		debug.AssertNoError(p.in.Close())
 	}
-	p.renderer.TearDown()
+	p.renderer.Close()
 }
