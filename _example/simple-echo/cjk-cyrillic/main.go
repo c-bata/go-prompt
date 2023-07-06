@@ -24,8 +24,8 @@ func main() {
 	p := prompt.New(
 		executor,
 		completer,
-		prompt.OptionPrefix(">>> "),
-		prompt.OptionTitle("sql-prompt for multi width characters"),
+		prompt.WithPrefix(">>> "),
+		prompt.WithTitle("sql-prompt for multi width characters"),
 	)
 	p.Run()
 }

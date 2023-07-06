@@ -36,8 +36,8 @@ func main() {
 	p := prompt.New(
 		executor,
 		completerFunc,
-		prompt.OptionPrefix(">>> "),
-		prompt.OptionCompletionWordSeparator(completer.FilePathCompletionSeparator),
+		prompt.WithPrefix(">>> "),
+		prompt.WithCompletionWordSeparator(completer.FilePathCompletionSeparator),
 	)
 	p.Run()
 }

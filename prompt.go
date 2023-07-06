@@ -29,7 +29,7 @@ type Completer func(Document) []Suggest
 
 // Prompt is a core struct of go-prompt.
 type Prompt struct {
-	in                Reader
+	reader            Reader
 	buf               *Buffer
 	renderer          *Render
 	executor          Executor
@@ -87,7 +87,7 @@ func (p *Prompt) Run() {
 
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
-				debug.AssertNoError(p.in.Close())
+				debug.AssertNoError(p.reader.Close())
 				p.executor(e.input)
 
 				p.completion.Update(*p.buf.Document())
@@ -99,7 +99,7 @@ func (p *Prompt) Run() {
 					return
 				}
 				// Set raw mode
-				debug.AssertNoError(p.in.Open())
+				debug.AssertNoError(p.reader.Open())
 				go p.readBuffer(bufCh, stopReadBufCh)
 				go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 			} else {
@@ -314,7 +314,7 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 			return
 		default:
 			bytes := make([]byte, inputBufferSize)
-			n, err := p.in.Read(bytes)
+			n, err := p.reader.Read(bytes)
 			if err != nil {
 				break
 			}
@@ -340,14 +340,14 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 }
 
 func (p *Prompt) setup() {
-	debug.AssertNoError(p.in.Open())
+	debug.AssertNoError(p.reader.Open())
 	p.renderer.Setup()
-	p.renderer.UpdateWinSize(p.in.GetWinSize())
+	p.renderer.UpdateWinSize(p.reader.GetWinSize())
 }
 
 func (p *Prompt) Close() {
 	if !p.skipClose {
-		debug.AssertNoError(p.in.Close())
+		debug.AssertNoError(p.reader.Close())
 	}
 	p.renderer.Close()
 }

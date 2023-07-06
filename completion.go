@@ -180,15 +180,30 @@ func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width int) {
 	return new, leftWidth + rightWidth
 }
 
-// NewCompletionManager returns an initialized CompletionManager object.
-func NewCompletionManager(completer Completer, max uint16) *CompletionManager {
-	return &CompletionManager{
-		selected:  -1,
-		max:       max,
-		completer: completer,
+// Constructor option for CompletionManager.
+type CompletionManagerOption func(*CompletionManager)
 
+// Set a custom completer.
+func CompletionManagerWithCompleter(completer Completer) CompletionManagerOption {
+	return func(c *CompletionManager) {
+		c.completer = completer
+	}
+}
+
+// NewCompletionManager returns an initialized CompletionManager object.
+func NewCompletionManager(max uint16, opts ...CompletionManagerOption) *CompletionManager {
+	c := &CompletionManager{
+		selected:       -1,
+		max:            max,
+		completer:      NoopCompleter,
 		verticalScroll: 0,
 	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
 }
 
 var _ Completer = NoopCompleter

@@ -12,7 +12,7 @@ import (
 )
 
 func (p *Prompt) handleSignals(exitCh chan int, winSizeCh chan *WinSize, stop chan struct{}) {
-	in := p.in
+	in := p.reader
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(
 		sigCh,

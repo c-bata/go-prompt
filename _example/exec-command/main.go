@@ -27,7 +27,7 @@ func completer(t prompt.Document) []prompt.Suggest {
 func main() {
 	p := prompt.New(
 		executor,
-		completer,
+		prompt.WithCompleter(completer)
 	)
 	p.Run()
 }

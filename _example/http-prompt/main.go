@@ -183,10 +183,10 @@ func main() {
 
 	p := prompt.New(
 		executor,
-		completer,
-		prompt.OptionPrefix(u.String()+"> "),
-		prompt.OptionLivePrefix(livePrefix),
-		prompt.OptionTitle("http-prompt"),
+		prompt.WithPrefix(u.String()+"> "),
+		prompt.WithLivePrefix(livePrefix),
+		prompt.WithTitle("http-prompt"),
+		prompt.WithCompleter(completer),
 	)
 	p.Run()
 }

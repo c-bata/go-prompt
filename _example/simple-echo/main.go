@@ -19,13 +19,13 @@ func completer(in prompt.Document) []prompt.Suggest {
 func main() {
 	in := prompt.Input(
 		">>> ",
-		completer,
-		prompt.OptionTitle("sql-prompt"),
-		prompt.OptionHistory([]string{"SELECT * FROM users;"}),
-		prompt.OptionPrefixTextColor(prompt.Yellow),
-		prompt.OptionPreviewSuggestionTextColor(prompt.Blue),
-		prompt.OptionSelectedSuggestionBGColor(prompt.LightGray),
-		prompt.OptionSuggestionBGColor(prompt.DarkGray),
+		prompt.WithTitle("sql-prompt"),
+		prompt.WithHistory([]string{"SELECT * FROM users;"}),
+		prompt.WithPrefixTextColor(prompt.Yellow),
+		prompt.WithPreviewSuggestionTextColor(prompt.Blue),
+		prompt.WithSelectedSuggestionBGColor(prompt.LightGray),
+		prompt.WithSuggestionBGColor(prompt.DarkGray),
+		prompt.WithCompleter(completer),
 	)
 	fmt.Println("Your input: " + in)
 }

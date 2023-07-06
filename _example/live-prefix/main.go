@@ -39,10 +39,10 @@ func changeLivePrefix() (string, bool) {
 func main() {
 	p := prompt.New(
 		executor,
-		completer,
-		prompt.OptionPrefix(">>> "),
-		prompt.OptionLivePrefix(changeLivePrefix),
-		prompt.OptionTitle("live-prefix-example"),
+		prompt.WithPrefix(">>> "),
+		prompt.WithLivePrefix(changeLivePrefix),
+		prompt.WithTitle("live-prefix-example"),
+		prompt.WithCompleter(completer),
 	)
 	p.Run()
 }
