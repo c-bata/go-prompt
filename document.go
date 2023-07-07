@@ -296,7 +296,7 @@ func (d *Document) CurrentLine() string {
 	return d.CurrentLineBeforeCursor() + d.CurrentLineAfterCursor()
 }
 
-// Array pointing to the start indexes of all the lines.
+// Array pointing to the start indices of all the lines.
 func (d *Document) lineStartIndexes() []int {
 	// TODO: Cache, because this is often reused.
 	// (If it is used, it's often used many times.
@@ -308,26 +308,26 @@ func (d *Document) lineStartIndexes() []int {
 	}
 
 	// Calculate cumulative sums.
-	indexes := make([]int, lc+1)
-	indexes[0] = 0 // https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/prompt_toolkit/document.py#L189
+	indices := make([]int, lc+1)
+	indices[0] = 0 // https://github.com/jonathanslenders/python-prompt-toolkit/blob/master/prompt_toolkit/document.py#L189
 	pos := 0
 	for i, l := range lengths {
 		pos += l + 1
-		indexes[i+1] = pos
+		indices[i+1] = pos
 	}
 	if lc > 1 {
 		// Pop the last item. (This is not a new line.)
-		indexes = indexes[:lc]
+		indices = indices[:lc]
 	}
-	return indexes
+	return indices
 }
 
 // For the index of a character at a certain line, calculate the index of
 // the first character on that line.
 func (d *Document) findLineStartIndex(index int) (pos int, lineStartIndex int) {
-	indexes := d.lineStartIndexes()
-	pos = bisect.Right(indexes, index) - 1
-	lineStartIndex = indexes[pos]
+	indices := d.lineStartIndexes()
+	pos = bisect.Right(indices, index) - 1
+	lineStartIndex = indices[pos]
 	return
 }
 
@@ -443,13 +443,13 @@ func (d *Document) TranslateIndexToPosition(index int) (row int, col int) {
 // TranslateRowColToIndex given a (row, col), return the corresponding index.
 // (Row and col params are 0-based.)
 func (d *Document) TranslateRowColToIndex(row int, column int) (index int) {
-	indexes := d.lineStartIndexes()
+	indices := d.lineStartIndexes()
 	if row < 0 {
 		row = 0
-	} else if row > len(indexes) {
-		row = len(indexes) - 1
+	} else if row > len(indices) {
+		row = len(indices) - 1
 	}
-	index = indexes[row]
+	index = indices[row]
 	line := []rune(d.Lines()[row])
 
 	// python) result += max(0, min(col, len(line)))
