@@ -304,7 +304,7 @@ func (d *Document) lineStartIndexes() []int {
 	lc := d.LineCount()
 	lengths := make([]int, lc)
 	for i, l := range d.Lines() {
-		lengths[i] = len(l)
+		lengths[i] = len([]rune(l))
 	}
 
 	// Calculate cumulative sums.
@@ -339,8 +339,6 @@ func (d *Document) CursorPositionRow() (row int) {
 
 // CursorPositionCol returns the current column. (0-based.)
 func (d *Document) CursorPositionCol() (col int) {
-	// Don't use self.text_before_cursor to calculate this. Creating substrings
-	// and splitting is too expensive for getting the cursor position.
 	_, index := d.findLineStartIndex(d.cursorPosition)
 	col = d.cursorPosition - index
 	return
@@ -452,7 +450,7 @@ func (d *Document) TranslateRowColToIndex(row int, column int) (index int) {
 		row = len(indexes) - 1
 	}
 	index = indexes[row]
-	line := d.Lines()[row]
+	line := []rune(d.Lines()[row])
 
 	// python) result += max(0, min(col, len(line)))
 	if column > 0 || len(line) > 0 {
@@ -463,11 +461,12 @@ func (d *Document) TranslateRowColToIndex(row int, column int) (index int) {
 		}
 	}
 
+	text := []rune(d.Text)
 	// Keep in range. (len(self.text) is included, because the cursor can be
 	// right after the end of the text as well.)
 	// python) result = max(0, min(result, len(self.text)))
-	if index > len(d.Text) {
-		index = len(d.Text)
+	if index > len(text) {
+		index = len(text)
 	}
 	if index < 0 {
 		index = 0
