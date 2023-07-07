@@ -73,11 +73,10 @@ func TestFormatCompletion(t *testing.T) {
 func TestBreakLineCallback(t *testing.T) {
 	var i int
 	r := &Render{
-		prefix: "> ",
 		out: &PosixWriter{
 			fd: syscall.Stdin, // "write" to stdin just so we don't mess with the output of the tests
 		},
-		livePrefixCallback:           func() (string, bool) { return "", false },
+		prefixCallback:               DefaultPrefixCallback,
 		prefixTextColor:              Blue,
 		prefixBGColor:                DefaultColor,
 		inputTextColor:               DefaultColor,

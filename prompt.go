@@ -23,25 +23,33 @@ type Executor func(string)
 // Exit means exit go-prompt (not the overall Go program)
 type ExitChecker func(in string, breakline bool) bool
 
+// ExecuteOnEnterCallback is a function that receives
+// user input after Enter has been pressed
+// and determines whether the input should be executed.
+// If this function returns true, the Executor callback will be called
+// otherwise a newline will be added to the buffer containing user input.
+type ExecuteOnEnterCallback func(input string) bool
+
 // Completer is a function that returns
 // a slice of suggestions for the given Document.
 type Completer func(Document) []Suggest
 
 // Prompt is a core struct of go-prompt.
 type Prompt struct {
-	reader            Reader
-	buf               *Buffer
-	renderer          *Render
-	executor          Executor
-	history           *History
-	lexer             Lexer
-	completion        *CompletionManager
-	keyBindings       []KeyBind
-	ASCIICodeBindings []ASCIICodeBind
-	keyBindMode       KeyBindMode
-	completionOnDown  bool
-	exitChecker       ExitChecker
-	skipClose         bool
+	reader                 Reader
+	buf                    *Buffer
+	renderer               *Render
+	executor               Executor
+	history                *History
+	lexer                  Lexer
+	completion             *CompletionManager
+	keyBindings            []KeyBind
+	ASCIICodeBindings      []ASCIICodeBind
+	keyBindMode            KeyBindMode
+	completionOnDown       bool
+	exitChecker            ExitChecker
+	executeOnEnterCallback ExecuteOnEnterCallback
+	skipClose              bool
 }
 
 // UserInput is the struct that contains the user input context.
@@ -137,8 +145,12 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, userInput *UserInput) {
 
 	switch key {
 	case Enter, ControlJ, ControlM:
-		p.renderer.BreakLine(p.buf, p.lexer)
+		if !p.executeOnEnterCallback(p.buf.Text()) {
+			p.buf.NewLine(false)
+			break
+		}
 
+		p.renderer.BreakLine(p.buf, p.lexer)
 		userInput = &UserInput{input: p.buf.Text()}
 		p.buf = NewBuffer()
 		if userInput.input != "" {

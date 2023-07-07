@@ -6,20 +6,15 @@ import (
 	prompt "github.com/elk-language/go-prompt"
 )
 
-var LivePrefixState struct {
-	LivePrefix string
-	IsEnable   bool
-}
+var LivePrefix string = ">>> "
 
 func executor(in string) {
 	fmt.Println("Your input: " + in)
 	if in == "" {
-		LivePrefixState.IsEnable = false
-		LivePrefixState.LivePrefix = in
+		LivePrefix = ">>> "
 		return
 	}
-	LivePrefixState.LivePrefix = in + "> "
-	LivePrefixState.IsEnable = true
+	LivePrefix = in + "> "
 }
 
 func completer(in prompt.Document) []prompt.Suggest {
@@ -32,15 +27,14 @@ func completer(in prompt.Document) []prompt.Suggest {
 	return prompt.FilterHasPrefix(s, in.GetWordBeforeCursor(), true)
 }
 
-func changeLivePrefix() (string, bool) {
-	return LivePrefixState.LivePrefix, LivePrefixState.IsEnable
+func changeLivePrefix() string {
+	return LivePrefix
 }
 
 func main() {
 	p := prompt.New(
 		executor,
-		prompt.WithPrefix(">>> "),
-		prompt.WithLivePrefix(changeLivePrefix),
+		prompt.WithPrefixCallback(changeLivePrefix),
 		prompt.WithTitle("live-prefix-example"),
 		prompt.WithCompleter(completer),
 	)

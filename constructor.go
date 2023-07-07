@@ -4,6 +4,9 @@ package prompt
 // prompt.New accepts any number of options (this is functional option pattern).
 type Option func(prompt *Prompt) error
 
+// Callback function that returns a prompt prefix.
+type PrefixCallback func() (prefix string)
+
 // WithCompleter is an option that sets a custom Completer object.
 func WithCompleter(c Completer) Option {
 	return func(p *Prompt) error {
@@ -12,59 +15,59 @@ func WithCompleter(c Completer) Option {
 	}
 }
 
-// WithReader to set a custom Reader object. An argument should implement Reader interface.
-func WithReader(x Reader) Option {
+// WithReader can be used to set a custom Reader object.
+func WithReader(r Reader) Option {
 	return func(p *Prompt) error {
-		p.reader = x
+		p.reader = r
 		return nil
 	}
 }
 
-// WithWriter to set a custom Writer object. An argument should implement Writer interface.
-func WithWriter(x Writer) Option {
+// WithWriter can be used to set a custom Writer object.
+func WithWriter(w Writer) Option {
 	return func(p *Prompt) error {
-		registerWriter(x)
-		p.renderer.out = x
+		registerWriter(w)
+		p.renderer.out = w
 		return nil
 	}
 }
 
-// WithTitle to set title displayed at the header bar of terminal.
-func WithTitle(x string) Option {
+// WithTitle can be used to set the title displayed at the header bar of the terminal.
+func WithTitle(t string) Option {
 	return func(p *Prompt) error {
-		p.renderer.title = x
+		p.renderer.title = t
 		return nil
 	}
 }
 
-// WithPrefix to set prefix string.
-func WithPrefix(x string) Option {
+// WithPrefix can be used to set a prefix string for the prompt.
+func WithPrefix(prefix string) Option {
 	return func(p *Prompt) error {
-		p.renderer.prefix = x
+		p.renderer.prefixCallback = func() string { return prefix }
 		return nil
 	}
 }
 
-// WithInitialBufferText to set the initial buffer text
-func WithInitialBufferText(x string) Option {
+// WithInitialText can be used to set the initial buffer text.
+func WithInitialText(text string) Option {
 	return func(p *Prompt) error {
-		p.buf.InsertText(x, false, true)
+		p.buf.InsertText(text, false, true)
 		return nil
 	}
 }
 
-// WithCompletionWordSeparator to set word separators. Enable only ' ' if empty.
-func WithCompletionWordSeparator(x string) Option {
+// WithCompletionWordSeparator can be used to set word separators. Enable only ' ' if empty.
+func WithCompletionWordSeparator(sep string) Option {
 	return func(p *Prompt) error {
-		p.completion.wordSeparator = x
+		p.completion.wordSeparator = sep
 		return nil
 	}
 }
 
-// WithLivePrefix to change the prefix dynamically by callback function
-func WithLivePrefix(f func() (prefix string, useLivePrefix bool)) Option {
+// WithPrefixCallback can be used to change the prefix dynamically by a callback function.
+func WithPrefixCallback(f PrefixCallback) Option {
 	return func(p *Prompt) error {
-		p.renderer.livePrefixCallback = f
+		p.renderer.prefixCallback = f
 		return nil
 	}
 }
@@ -282,6 +285,24 @@ func WithLexer(lex Lexer) Option {
 	}
 }
 
+// WithExecuteOnEnterCallback can be used to set
+// a custom callback function that determines whether an Enter key
+// should trigger the Executor or add a newline to the user input buffer.
+func WithExecuteOnEnterCallback(fn ExecuteOnEnterCallback) Option {
+	return func(p *Prompt) error {
+		p.executeOnEnterCallback = fn
+		return nil
+	}
+}
+
+func DefaultExecuteOnEnterCallback(input string) bool {
+	return true
+}
+
+func DefaultPrefixCallback() string {
+	return "> "
+}
+
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, opts ...Option) *Prompt {
 	defaultWriter := NewStdoutWriter()
@@ -290,9 +311,8 @@ func New(executor Executor, opts ...Option) *Prompt {
 	pt := &Prompt{
 		reader: NewStdinReader(),
 		renderer: &Render{
-			prefix:                       "> ",
 			out:                          defaultWriter,
-			livePrefixCallback:           func() (string, bool) { return "", false },
+			prefixCallback:               DefaultPrefixCallback,
 			prefixTextColor:              Blue,
 			prefixBGColor:                DefaultColor,
 			inputTextColor:               DefaultColor,
@@ -310,11 +330,12 @@ func New(executor Executor, opts ...Option) *Prompt {
 			scrollbarThumbColor:          DarkGray,
 			scrollbarBGColor:             Cyan,
 		},
-		buf:         NewBuffer(),
-		executor:    executor,
-		history:     NewHistory(),
-		completion:  NewCompletionManager(6),
-		keyBindMode: EmacsKeyBind, // All the above assume that bash is running in the default Emacs setting
+		buf:                    NewBuffer(),
+		executor:               executor,
+		history:                NewHistory(),
+		completion:             NewCompletionManager(6),
+		executeOnEnterCallback: DefaultExecuteOnEnterCallback,
+		keyBindMode:            EmacsKeyBind, // All the above assume that bash is running in the default Emacs setting
 	}
 
 	for _, opt := range opts {

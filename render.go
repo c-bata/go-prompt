@@ -10,13 +10,12 @@ import (
 
 // Render to render prompt information from state of Buffer.
 type Render struct {
-	out                Writer
-	prefix             string
-	livePrefixCallback func() (prefix string, useLivePrefix bool)
-	breakLineCallback  func(*Document)
-	title              string
-	row                uint16
-	col                uint16
+	out               Writer
+	prefixCallback    PrefixCallback
+	breakLineCallback func(*Document)
+	title             string
+	row               uint16
+	col               uint16
 
 	previousCursor Position
 
@@ -50,10 +49,7 @@ func (r *Render) Setup() {
 // getCurrentPrefix to get current prefix.
 // If live-prefix is enabled, return live-prefix.
 func (r *Render) getCurrentPrefix() string {
-	if prefix, ok := r.livePrefixCallback(); ok {
-		return prefix
-	}
-	return r.prefix
+	return r.prefixCallback()
 }
 
 func (r *Render) renderPrefix() {

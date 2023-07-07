@@ -92,11 +92,13 @@ var suggestions = []prompt.Suggest{
 	{"X-XSRF-TOKEN", "Prevent cross-site request forgery"},
 }
 
-func livePrefix() (string, bool) {
-	if ctx.url.Path == "/" {
-		return "", false
+func livePrefix(defaultPrefix string) prompt.PrefixCallback {
+	return func() string {
+		if ctx.url.Path == "/" {
+			return defaultPrefix
+		}
+		return ctx.url.String() + "> "
 	}
-	return ctx.url.String() + "> ", true
 }
 
 func executor(in string) {
@@ -183,8 +185,7 @@ func main() {
 
 	p := prompt.New(
 		executor,
-		prompt.WithPrefix(u.String()+"> "),
-		prompt.WithLivePrefix(livePrefix),
+		prompt.WithPrefixCallback(livePrefix(u.String()+"> ")),
 		prompt.WithTitle("http-prompt"),
 		prompt.WithCompleter(completer),
 	)
