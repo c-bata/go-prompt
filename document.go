@@ -6,6 +6,7 @@ import (
 
 	"github.com/elk-language/go-prompt/internal/bisect"
 	istrings "github.com/elk-language/go-prompt/internal/strings"
+	runewidth "github.com/mattn/go-runewidth"
 	"golang.org/x/exp/utf8string"
 )
 
@@ -132,6 +133,13 @@ func (d *Document) FindStartOfPreviousWord() int {
 	return 0
 }
 
+// Returns the string width (as visible in the terminal)
+// of the text before the cursor until the start of the previous word.
+func (d *Document) FindStringWidthUntilStartOfPreviousWord() int {
+	x := d.TextBeforeCursor()
+	return runewidth.StringWidth(x[d.FindStartOfPreviousWordWithSpace():])
+}
+
 // FindStartOfPreviousWordWithSpace is almost the same as FindStartOfPreviousWord.
 // The only difference is to ignore contiguous spaces.
 func (d *Document) FindStartOfPreviousWordWithSpace() int {
@@ -209,6 +217,29 @@ func (d *Document) FindEndOfCurrentWordWithSpace() int {
 	}
 
 	return start + end
+}
+
+// Returns the string width (as visible in the terminal)
+// of the text after the cursor until the end of the current word.
+func (d *Document) FindStringWidthUntilEndOfCurrentWord() int {
+	t := d.TextAfterCursor()
+	width := 0
+	nonSpaceCharSeen := false
+	for _, char := range t {
+		if !nonSpaceCharSeen && char == ' ' {
+			width += 1
+			continue
+		}
+
+		if nonSpaceCharSeen && char == ' ' {
+			break
+		}
+
+		nonSpaceCharSeen = true
+		width += runewidth.RuneWidth(char)
+	}
+
+	return width
 }
 
 // FindEndOfCurrentWordUntilSeparator is almost the same as FindEndOfCurrentWord.
