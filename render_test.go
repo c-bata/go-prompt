@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"syscall"
 	"testing"
+
+	istrings "github.com/elk-language/go-prompt/internal/strings"
 )
 
 func TestFormatCompletion(t *testing.T) {
@@ -17,7 +19,7 @@ func TestFormatCompletion(t *testing.T) {
 		suffix        string
 		expected      []Suggest
 		maxWidth      int
-		expectedWidth int
+		expectedWidth istrings.StringWidth
 	}{
 		{
 			scenario: "",

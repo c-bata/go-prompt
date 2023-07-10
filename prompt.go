@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elk-language/go-prompt/internal/debug"
+	istrings "github.com/elk-language/go-prompt/internal/strings"
 )
 
 const inputBufferSize = 1024
@@ -161,7 +162,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, userInput *UserInput) {
 		p.buf = NewBuffer()
 		p.history.Clear()
 	case Up, ControlP:
-		cursor := p.buf.Document().GetCursorPosition(int(p.renderer.col))
+		cursor := p.buf.Document().GetCursorPosition(p.renderer.col)
 		if cursor.Y != 0 {
 			p.buf.CursorUp(1)
 			break
@@ -175,8 +176,8 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, userInput *UserInput) {
 		}
 
 	case Down, ControlN:
-		endOfTextCursor := p.buf.Document().GetEndOfTextPosition(int(p.renderer.col))
-		cursor := p.buf.Document().GetCursorPosition(int(p.renderer.col))
+		endOfTextCursor := p.buf.Document().GetEndOfTextPosition(p.renderer.col)
+		cursor := p.buf.Document().GetCursorPosition(p.renderer.col)
 		if endOfTextCursor.Y > cursor.Y {
 			p.buf.CursorDown(1)
 			break
@@ -229,7 +230,7 @@ func (p *Prompt) handleCompletionKeyBinding(key Key, completing bool) {
 		if s, ok := p.completion.GetSelectedSuggestion(); ok {
 			w := p.buf.Document().GetWordBeforeCursorUntilSeparator(p.completion.wordSeparator)
 			if w != "" {
-				p.buf.DeleteBeforeCursor(len([]rune(w)))
+				p.buf.DeleteBeforeCursor(istrings.RuneCount(len([]rune(w))))
 			}
 			p.buf.InsertText(s.Text, false, true)
 		}

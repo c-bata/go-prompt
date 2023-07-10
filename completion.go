@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/elk-language/go-prompt/internal/debug"
+	istrings "github.com/elk-language/go-prompt/internal/strings"
 	runewidth "github.com/mattn/go-runewidth"
 )
 
@@ -155,7 +156,7 @@ func formatTexts(o []string, max int, prefix, suffix string) (new []string, widt
 	return n, lenPrefix + width + lenSuffix
 }
 
-func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width int) {
+func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width istrings.StringWidth) {
 	num := len(suggests)
 	new = make([]Suggest, num)
 
@@ -177,7 +178,7 @@ func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width int) {
 	for i := 0; i < num; i++ {
 		new[i] = Suggest{Text: left[i], Description: right[i]}
 	}
-	return new, leftWidth + rightWidth
+	return new, istrings.StringWidth(leftWidth + rightWidth)
 }
 
 // Constructor option for CompletionManager.

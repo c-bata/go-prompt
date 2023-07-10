@@ -4,6 +4,7 @@ import (
 	"io"
 	"strings"
 
+	istrings "github.com/elk-language/go-prompt/internal/strings"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -13,7 +14,8 @@ import (
 // (0, 0) represents the top-left corner of the prompt,
 // while (n, n) the bottom-right corner.
 type Position struct {
-	X, Y int
+	X istrings.StringWidth
+	Y int
 }
 
 // Join two positions and return a new position.
@@ -45,16 +47,16 @@ func (p Position) Subtract(other Position) Position {
 
 // positionAtEndOfString calculates the position of the
 // p at the end of the given string.
-func positionAtEndOfString(str string, columns int) Position {
-	// fmt.Printf("%q\n", str)
+func positionAtEndOfString(str string, columns istrings.StringWidth) Position {
 	pos := positionAtEndOfReader(strings.NewReader(str), columns)
 	return pos
 }
 
 // positionAtEndOfReader calculates the position of the
 // p at the end of the given io.Reader.
-func positionAtEndOfReader(reader io.RuneReader, columns int) Position {
-	var down, right int
+func positionAtEndOfReader(reader io.RuneReader, columns istrings.StringWidth) Position {
+	var down int
+	var right istrings.StringWidth
 
 charLoop:
 	for {
@@ -78,7 +80,7 @@ charLoop:
 			down++
 			right = 0
 		default:
-			right += runewidth.RuneWidth(char)
+			right += istrings.StringWidth(runewidth.RuneWidth(char))
 			if right == columns {
 				right = 0
 				down++

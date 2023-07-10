@@ -4,13 +4,14 @@ import (
 	"strings"
 
 	"github.com/elk-language/go-prompt/internal/debug"
+	istrings "github.com/elk-language/go-prompt/internal/strings"
 )
 
 // Buffer emulates the console buffer.
 type Buffer struct {
 	workingLines   []string // The working lines. Similar to history
-	workingIndex   int
-	cursorPosition int
+	workingIndex   int      // index of the current line
+	cursorPosition istrings.RuneIndex
 	cacheDocument  *Document
 	lastKeyStroke  Key
 }
@@ -36,44 +37,43 @@ func (b *Buffer) Document() (d *Document) {
 
 // DisplayCursorPosition returns the cursor position on rendered text on terminal emulators.
 // So if Document is "日本(cursor)語", DisplayedCursorPosition returns 4 because '日' and '本' are double width characters.
-func (b *Buffer) DisplayCursorPosition(columns int) Position {
+func (b *Buffer) DisplayCursorPosition(columns istrings.StringWidth) Position {
 	return b.Document().DisplayCursorPosition(columns)
 }
 
 // InsertText insert string from current line.
-func (b *Buffer) InsertText(v string, overwrite bool, moveCursor bool) {
-	or := []rune(b.Text())
-	oc := b.cursorPosition
+func (b *Buffer) InsertText(text string, overwrite bool, moveCursor bool) {
+	currentTextRunes := []rune(b.Text())
+	cursor := b.cursorPosition
 
 	if overwrite {
-		overwritten := string(or[oc:])
-		if len(overwritten) >= oc+len(v) {
-			overwritten = string(or[oc : oc+len(v)])
+		overwritten := string(currentTextRunes[cursor:])
+		if len(overwritten) >= int(cursor)+len(text) {
+			overwritten = string(currentTextRunes[cursor : cursor+istrings.RuneLen(text)])
 		}
-		if strings.Contains(overwritten, "\n") {
-			i := strings.IndexAny(overwritten, "\n")
+		if i := strings.IndexAny(overwritten, "\n"); i != -1 {
 			overwritten = overwritten[:i]
 		}
-		b.setText(string(or[:oc]) + v + string(or[oc+len(overwritten):]))
+		b.setText(string(currentTextRunes[:cursor]) + text + string(currentTextRunes[cursor+istrings.RuneLen(overwritten):]))
 	} else {
-		b.setText(string(or[:oc]) + v + string(or[oc:]))
+		b.setText(string(currentTextRunes[:cursor]) + text + string(currentTextRunes[cursor:]))
 	}
 
 	if moveCursor {
-		b.cursorPosition += len([]rune(v))
+		b.cursorPosition += istrings.RuneLen(text)
 	}
 }
 
 // SetText method to set text and update cursorPosition.
 // (When doing this, make sure that the cursor_position is valid for this text.
 // text/cursor_position should be consistent at any time, otherwise set a Document instead.)
-func (b *Buffer) setText(v string) {
-	debug.Assert(b.cursorPosition <= len([]rune(v)), "length of input should be shorter than cursor position")
-	b.workingLines[b.workingIndex] = v
+func (b *Buffer) setText(text string) {
+	debug.Assert(b.cursorPosition <= istrings.RuneLen(text), "length of input should be shorter than cursor position")
+	b.workingLines[b.workingIndex] = text
 }
 
 // Set cursor position. Return whether it changed.
-func (b *Buffer) setCursorPosition(p int) {
+func (b *Buffer) setCursorPosition(p istrings.RuneIndex) {
 	if p > 0 {
 		b.cursorPosition = p
 	} else {
@@ -88,13 +88,13 @@ func (b *Buffer) setDocument(d *Document) {
 }
 
 // CursorLeft move to left on the current line.
-func (b *Buffer) CursorLeft(count int) {
+func (b *Buffer) CursorLeft(count istrings.RuneCount) {
 	l := b.Document().GetCursorLeftPosition(count)
 	b.cursorPosition += l
 }
 
 // CursorRight move to right on the current line.
-func (b *Buffer) CursorRight(count int) {
+func (b *Buffer) CursorRight(count istrings.RuneCount) {
 	l := b.Document().GetCursorRightPosition(count)
 	b.cursorPosition += l
 }
@@ -114,7 +114,7 @@ func (b *Buffer) CursorDown(count int) {
 }
 
 // DeleteBeforeCursor delete specified number of characters before cursor and return the deleted text.
-func (b *Buffer) DeleteBeforeCursor(count int) (deleted string) {
+func (b *Buffer) DeleteBeforeCursor(count istrings.RuneCount) (deleted string) {
 	debug.Assert(count >= 0, "count should be positive")
 	r := []rune(b.Text())
 
@@ -126,7 +126,7 @@ func (b *Buffer) DeleteBeforeCursor(count int) (deleted string) {
 		deleted = string(r[start:b.cursorPosition])
 		b.setDocument(&Document{
 			Text:           string(r[:start]) + string(r[b.cursorPosition:]),
-			cursorPosition: b.cursorPosition - len([]rune(deleted)),
+			cursorPosition: b.cursorPosition - istrings.RuneIndex(len([]rune(deleted))),
 		})
 	}
 	return
@@ -142,13 +142,19 @@ func (b *Buffer) NewLine(copyMargin bool) {
 }
 
 // Delete specified number of characters and Return the deleted text.
-func (b *Buffer) Delete(count int) (deleted string) {
+func (b *Buffer) Delete(count istrings.RuneCount) string {
 	r := []rune(b.Text())
-	if b.cursorPosition < len(r) {
-		deleted = b.Document().TextAfterCursor()[:count]
-		b.setText(string(r[:b.cursorPosition]) + string(r[b.cursorPosition+len(deleted):]))
+	if b.cursorPosition < istrings.RuneIndex(len(r)) {
+		textAfterCursor := b.Document().TextAfterCursor()
+		textAfterCursorRunes := []rune(textAfterCursor)
+		deletedRunes := textAfterCursorRunes[:count]
+		b.setText(string(r[:b.cursorPosition]) + string(r[b.cursorPosition+istrings.RuneCount(len(deletedRunes)):]))
+
+		deleted := string(deletedRunes)
+		return deleted
 	}
-	return
+
+	return ""
 }
 
 // JoinNextLine joins the next line to the current one by deleting the line ending after the current line.

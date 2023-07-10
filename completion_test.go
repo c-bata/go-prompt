@@ -3,6 +3,8 @@ package prompt
 import (
 	"reflect"
 	"testing"
+
+	istrings "github.com/elk-language/go-prompt/internal/strings"
 )
 
 func TestFormatShortSuggestion(t *testing.T) {
@@ -10,7 +12,7 @@ func TestFormatShortSuggestion(t *testing.T) {
 		in       []Suggest
 		expected []Suggest
 		max      int
-		exWidth  int
+		exWidth  istrings.StringWidth
 	}{
 		{
 			in: []Suggest{
@@ -38,7 +40,7 @@ func TestFormatShortSuggestion(t *testing.T) {
 				{Text: " coconut ", Description: " This is coconut. "},
 			},
 			max:     100,
-			exWidth: len(" apple   " + " This is apple.   "),
+			exWidth: istrings.StringWidth(len(" apple   " + " This is apple.   ")),
 		},
 		{
 			in: []Suggest{
@@ -82,7 +84,7 @@ func TestFormatShortSuggestion(t *testing.T) {
 				{Text: " --include-extended-apis       ", Description: " --------------... "},
 			},
 			max:     50,
-			exWidth: len(" --include-extended-apis       " + " ---------------..."),
+			exWidth: istrings.StringWidth(len(" --include-extended-apis       " + " ---------------...")),
 		},
 		{
 			in: []Suggest{
@@ -102,7 +104,7 @@ func TestFormatShortSuggestion(t *testing.T) {
 				{Text: " --include-extended-apis       ", Description: " If true, include definitions of new APIs via calls to the API server. [default true]                                                            "},
 			},
 			max:     500,
-			exWidth: len(" --include-extended-apis       " + " If true, include definitions of new APIs via calls to the API server. [default true]                                                            "),
+			exWidth: istrings.StringWidth(len(" --include-extended-apis       " + " If true, include definitions of new APIs via calls to the API server. [default true]                                                            ")),
 		},
 	}
 

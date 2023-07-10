@@ -6,13 +6,14 @@ package prompt
 import (
 	"testing"
 
+	istrings "github.com/elk-language/go-prompt/internal/strings"
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestPositionAtEndOfString(t *testing.T) {
 	tests := map[string]struct {
 		input   string
-		columns int
+		columns istrings.StringWidth
 		want    Position
 	}{
 		"empty": {

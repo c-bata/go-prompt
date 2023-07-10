@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/elk-language/go-prompt/internal/debug"
+	istrings "github.com/elk-language/go-prompt/internal/strings"
 	runewidth "github.com/mattn/go-runewidth"
 )
 
@@ -15,7 +16,7 @@ type Render struct {
 	breakLineCallback func(*Document)
 	title             string
 	row               uint16
-	col               uint16
+	col               istrings.StringWidth
 
 	previousCursor Position
 
@@ -78,7 +79,7 @@ func (r *Render) prepareArea(lines int) {
 // UpdateWinSize called when window size is changed.
 func (r *Render) UpdateWinSize(ws *WinSize) {
 	r.row = ws.Row
-	r.col = ws.Col
+	r.col = istrings.StringWidth(ws.Col)
 }
 
 func (r *Render) renderWindowTooSmall() {
@@ -108,10 +109,10 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
 	r.prepareArea(windowHeight)
 
-	cursor := positionAtEndOfString(prefix+buf.Document().TextBeforeCursor(), int(r.col))
+	cursor := positionAtEndOfString(prefix+buf.Document().TextBeforeCursor(), r.col)
 	x := cursor.X
-	if x+width >= int(r.col) {
-		cursor = r.backward(cursor, x+width-int(r.col))
+	if x+width >= r.col {
+		cursor = r.backward(cursor, x+width-r.col)
 	}
 
 	contentHeight := len(completions.tmp)
@@ -160,8 +161,8 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 		r.backward(c, width)
 	}
 
-	if x+width >= int(r.col) {
-		r.out.CursorForward(x + width - int(r.col))
+	if x+width >= r.col {
+		r.out.CursorForward(int(x + width - r.col))
 	}
 
 	r.out.CursorUp(windowHeight)
@@ -180,8 +181,8 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
-	prefixWidth := runewidth.StringWidth(prefix)
-	cursor := positionAtEndOfString(prefix+line, int(r.col))
+	prefixWidth := istrings.StringWidth(runewidth.StringWidth(prefix))
+	cursor := positionAtEndOfString(prefix+line, r.col)
 
 	// prepare area
 	y := cursor.Y
@@ -209,7 +210,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 
 	r.lineWrap(&cursor)
 
-	targetCursor := buffer.DisplayCursorPosition(int(r.col))
+	targetCursor := buffer.DisplayCursorPosition(r.col)
 	if targetCursor.Y == 0 {
 		targetCursor.X += prefixWidth
 	}
@@ -217,12 +218,12 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 
 	r.renderCompletion(buffer, completion)
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
-		cursor = r.backward(cursor, runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
+		cursor = r.backward(cursor, istrings.StringWidth(runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator))))
 
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
 		r.out.WriteString(suggest.Text)
 		r.out.SetColor(DefaultColor, DefaultColor, false)
-		cursor.X += runewidth.StringWidth(suggest.Text)
+		cursor.X += istrings.StringWidth(runewidth.StringWidth(suggest.Text))
 		endOfSuggestionPos := cursor
 
 		rest := buffer.Document().TextAfterCursor()
@@ -235,7 +236,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
-		cursor = cursor.Join(positionAtEndOfString(rest, int(r.col)))
+		cursor = cursor.Join(positionAtEndOfString(rest, r.col))
 
 		r.lineWrap(&cursor)
 
@@ -267,7 +268,7 @@ func (r *Render) lex(lexer Lexer, input string) {
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 	// Erasing and Render
-	cursor := positionAtEndOfString(buffer.Document().TextBeforeCursor()+r.getCurrentPrefix(), int(r.col))
+	cursor := positionAtEndOfString(buffer.Document().TextBeforeCursor()+r.getCurrentPrefix(), r.col)
 	r.clear(cursor)
 
 	r.renderPrefix()
@@ -298,7 +299,7 @@ func (r *Render) clear(cursor Position) {
 
 // backward moves cursor to backward from a current cursor position
 // regardless there is a line break.
-func (r *Render) backward(from Position, n int) Position {
+func (r *Render) backward(from Position, n istrings.StringWidth) Position {
 	return r.move(from, Position{X: from.X - n, Y: from.Y})
 }
 
@@ -307,12 +308,12 @@ func (r *Render) backward(from Position, n int) Position {
 func (r *Render) move(from, to Position) Position {
 	newPosition := from.Subtract(to)
 	r.out.CursorUp(newPosition.Y)
-	r.out.CursorBackward(newPosition.X)
+	r.out.CursorBackward(int(newPosition.X))
 	return to
 }
 
 func (r *Render) lineWrap(cursor *Position) {
-	if runtime.GOOS != "windows" && cursor.X > 0 && cursor.X%int(r.col) == 0 {
+	if runtime.GOOS != "windows" && cursor.X > 0 && cursor.X%r.col == 0 {
 		cursor.X = 0
 		cursor.Y += 1
 		r.out.WriteRaw([]byte{'\n'})
@@ -330,8 +331,8 @@ func clamp(high, low, x float64) float64 {
 	}
 }
 
-func alignNextLine(r *Render, col int) {
+func alignNextLine(r *Render, col istrings.StringWidth) {
 	r.out.CursorDown(1)
 	r.out.WriteString("\r")
-	r.out.CursorForward(col)
+	r.out.CursorForward(int(col))
 }
