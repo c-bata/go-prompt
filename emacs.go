@@ -101,7 +101,7 @@ var emacsKeyBindings = []KeyBind{
 	{
 		Key: AltRight,
 		Fn: func(buf *Buffer) {
-			buf.CursorRight(istrings.RuneIndex(buf.Document().FindStringWidthUntilEndOfCurrentWord())) // WARN
+			buf.CursorRight(buf.Document().FindRuneCountUntilEndOfCurrentWord())
 		},
 	},
 	// Left allow: Backward one character
@@ -115,20 +115,20 @@ var emacsKeyBindings = []KeyBind{
 	{
 		Key: AltLeft,
 		Fn: func(buf *Buffer) {
-			buf.CursorLeft(istrings.RuneIndex(buf.Document().FindStringWidthUntilStartOfPreviousWord())) // WARN
+			buf.CursorLeft(buf.Document().FindRuneCountUntilStartOfPreviousWord())
 		},
 	},
 	// Cut the Word before the cursor.
 	{
 		Key: ControlW,
 		Fn: func(buf *Buffer) {
-			buf.DeleteBeforeCursor(istrings.RuneIndex(len([]rune(buf.Document().GetWordBeforeCursorWithSpace()))))
+			buf.DeleteBeforeCursor(istrings.RuneLen(buf.Document().GetWordBeforeCursorWithSpace()))
 		},
 	},
 	{
 		Key: AltBackspace,
 		Fn: func(buf *Buffer) {
-			buf.DeleteBeforeCursor(istrings.RuneIndex(len([]rune(buf.Document().GetWordBeforeCursorWithSpace()))))
+			buf.DeleteBeforeCursor(istrings.RuneLen(buf.Document().GetWordBeforeCursorWithSpace()))
 		},
 	},
 	// Clear the Screen, similar to the clear command

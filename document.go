@@ -6,7 +6,6 @@ import (
 
 	"github.com/elk-language/go-prompt/internal/bisect"
 	istrings "github.com/elk-language/go-prompt/internal/strings"
-	runewidth "github.com/mattn/go-runewidth"
 	"golang.org/x/exp/utf8string"
 )
 
@@ -133,11 +132,11 @@ func (d *Document) FindStartOfPreviousWord() istrings.ByteIndex {
 	return 0
 }
 
-// Returns the string width (as visible in the terminal)
+// Returns the rune count
 // of the text before the cursor until the start of the previous word.
-func (d *Document) FindStringWidthUntilStartOfPreviousWord() int {
+func (d *Document) FindRuneCountUntilStartOfPreviousWord() istrings.RuneCount {
 	x := d.TextBeforeCursor()
-	return runewidth.StringWidth(x[d.FindStartOfPreviousWordWithSpace():])
+	return istrings.RuneLen(x[d.FindStartOfPreviousWordWithSpace():])
 }
 
 // FindStartOfPreviousWordWithSpace is almost the same as FindStartOfPreviousWord.
@@ -219,15 +218,15 @@ func (d *Document) FindEndOfCurrentWordWithSpace() istrings.ByteIndex {
 	return start + end
 }
 
-// Returns the string width (as visible in the terminal)
+// Returns the number of runes
 // of the text after the cursor until the end of the current word.
-func (d *Document) FindStringWidthUntilEndOfCurrentWord() istrings.StringWidth {
+func (d *Document) FindRuneCountUntilEndOfCurrentWord() istrings.RuneCount {
 	t := d.TextAfterCursor()
-	var width istrings.StringWidth
+	var count istrings.RuneCount
 	nonSpaceCharSeen := false
 	for _, char := range t {
 		if !nonSpaceCharSeen && char == ' ' {
-			width += 1
+			count += 1
 			continue
 		}
 
@@ -236,10 +235,10 @@ func (d *Document) FindStringWidthUntilEndOfCurrentWord() istrings.StringWidth {
 		}
 
 		nonSpaceCharSeen = true
-		width += istrings.StringWidth(runewidth.RuneWidth(char))
+		count += 1
 	}
 
-	return width
+	return count
 }
 
 // FindEndOfCurrentWordUntilSeparator is almost the same as FindEndOfCurrentWord.
