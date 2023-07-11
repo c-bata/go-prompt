@@ -333,16 +333,20 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 			}
 			bytes = bytes[:n]
 			if len(bytes) != 1 || bytes[0] != 0 {
-				newBytes := make([]byte, len(bytes))
-				for i, byt := range bytes {
+				newBytes := make([]byte, 0, len(bytes))
+				for _, byt := range bytes {
+					switch byt {
 					// translate raw mode \r into \n
 					// to make pasting multiline text
 					// work properly
-					switch byt {
 					case '\r':
-						newBytes[i] = '\n'
+						newBytes = append(newBytes, '\n')
+					// translate \t into two spaces
+					// to avoid problems with cursor positions
+					case '\t':
+						newBytes = append(newBytes, ' ', ' ')
 					default:
-						newBytes[i] = byt
+						newBytes = append(newBytes, byt)
 					}
 				}
 				bufCh <- newBytes
