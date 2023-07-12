@@ -2,6 +2,7 @@ package prompt
 
 import (
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/elk-language/go-prompt/internal/bisect"
@@ -479,8 +480,36 @@ func (d *Document) OnLastLine() bool {
 }
 
 // GetEndOfLinePosition returns relative position for the end of this line.
-func (d *Document) GetEndOfLinePosition() istrings.RuneIndex {
-	return istrings.RuneIndex(len([]rune(d.CurrentLineAfterCursor())))
+func (d *Document) GetEndOfLinePosition() istrings.RuneCount {
+	return istrings.RuneLen(d.CurrentLineAfterCursor())
+}
+
+// GetStartOfLinePosition returns relative position for the start of this line.
+func (d *Document) GetStartOfLinePosition() istrings.RuneCount {
+	return istrings.RuneLen(d.CurrentLineBeforeCursor())
+}
+
+// GetStartOfLinePosition returns relative position for the start of this line.
+func (d *Document) FindStartOfFirstWordOfLine() istrings.RuneCount {
+	line := d.CurrentLineBeforeCursor()
+	var counter istrings.RuneCount
+	var nonSpaceCharSeen bool
+	for _, char := range line {
+		if !nonSpaceCharSeen && unicode.IsSpace(char) {
+			continue
+		}
+
+		if !nonSpaceCharSeen {
+			nonSpaceCharSeen = true
+		}
+		counter++
+	}
+
+	if counter == 0 {
+		return istrings.RuneLen(line)
+	}
+
+	return counter
 }
 
 func (d *Document) leadingWhitespaceInCurrentLine() (margin string) {

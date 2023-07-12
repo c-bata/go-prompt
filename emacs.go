@@ -46,32 +46,28 @@ var emacsKeyBindings = []KeyBind{
 	{
 		Key: ControlE,
 		Fn: func(buf *Buffer) {
-			x := []rune(buf.Document().TextAfterCursor())
-			buf.CursorRight(istrings.RuneCount(len(x)))
+			buf.CursorRight(istrings.RuneLen(buf.Document().CurrentLineAfterCursor()))
 		},
 	},
 	// Go to the beginning of the line
 	{
 		Key: ControlA,
 		Fn: func(buf *Buffer) {
-			x := []rune(buf.Document().TextBeforeCursor())
-			buf.CursorLeft(istrings.RuneCount(len(x)))
+			buf.CursorLeft(buf.Document().FindStartOfFirstWordOfLine())
 		},
 	},
 	// Cut the Line after the cursor
 	{
 		Key: ControlK,
 		Fn: func(buf *Buffer) {
-			x := []rune(buf.Document().TextAfterCursor())
-			buf.Delete(istrings.RuneCount(len(x)))
+			buf.Delete(istrings.RuneLen(buf.Document().CurrentLineAfterCursor()))
 		},
 	},
 	// Cut/delete the Line before the cursor
 	{
 		Key: ControlU,
 		Fn: func(buf *Buffer) {
-			x := []rune(buf.Document().TextBeforeCursor())
-			buf.DeleteBeforeCursor(istrings.RuneCount(len(x)))
+			buf.DeleteBeforeCursor(istrings.RuneLen(buf.Document().CurrentLineBeforeCursor()))
 		},
 	},
 	// Delete character under the cursor
