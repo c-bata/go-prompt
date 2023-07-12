@@ -3,6 +3,7 @@ package prompt
 import (
 	"bytes"
 	"os"
+	"strings"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -28,8 +29,9 @@ type ExitChecker func(in string, breakline bool) bool
 // user input after Enter has been pressed
 // and determines whether the input should be executed.
 // If this function returns true, the Executor callback will be called
-// otherwise a newline will be added to the buffer containing user input.
-type ExecuteOnEnterCallback func(input string) bool
+// otherwise a newline will be added to the buffer containing user input
+// and optionally indentation made up of `indentSize * indent` spaces.
+type ExecuteOnEnterCallback func(input string, indentSize int) (indent int, execute bool)
 
 // Completer is a function that returns
 // a slice of suggestions for the given Document.
@@ -48,6 +50,7 @@ type Prompt struct {
 	ASCIICodeBindings      []ASCIICodeBind
 	keyBindMode            KeyBindMode
 	completionOnDown       bool
+	indentSize             int // How many spaces constitute a single indentation level
 	exitChecker            ExitChecker
 	executeOnEnterCallback ExecuteOnEnterCallback
 	skipClose              bool
@@ -146,8 +149,15 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, userInput *UserInput) {
 
 	switch key {
 	case Enter, ControlJ, ControlM:
-		if !p.executeOnEnterCallback(p.buf.Text()) {
+		indent, execute := p.executeOnEnterCallback(p.buf.Text(), p.indentSize)
+		if !execute {
 			p.buf.NewLine(false)
+			var indentStrBuilder strings.Builder
+			indentUnitCount := indent * p.indentSize
+			for i := 0; i < indentUnitCount; i++ {
+				indentStrBuilder.WriteRune(IndentUnit)
+			}
+			p.buf.InsertText(indentStrBuilder.String(), false, true)
 			break
 		}
 
@@ -319,6 +329,9 @@ func (p *Prompt) Input() string {
 	}
 }
 
+const IndentUnit = ' '
+const IndentUnitString = string(IndentUnit)
+
 func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	debug.Log("start reading buffer")
 	for {
@@ -345,7 +358,9 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 					// translate \t into two spaces
 					// to avoid problems with cursor positions
 					case '\t':
-						newBytes = append(newBytes, ' ', ' ')
+						for i := 0; i < p.indentSize; i++ {
+							newBytes = append(newBytes, IndentUnit)
+						}
 					default:
 						newBytes = append(newBytes, byt)
 					}

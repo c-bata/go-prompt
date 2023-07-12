@@ -16,9 +16,9 @@ func main() {
 	p.Run()
 }
 
-func ExecuteOnEnter(input string) bool {
+func ExecuteOnEnter(input string, indentSize int) (int, bool) {
 	char, _ := utf8.DecodeLastRuneInString(input)
-	return char == '!'
+	return 1, char == '!'
 }
 
 func executor(s string) {

@@ -7,6 +7,17 @@ type Option func(prompt *Prompt) error
 // Callback function that returns a prompt prefix.
 type PrefixCallback func() (prefix string)
 
+const DefaultIndentSize = 2
+
+// WithIndentSize is an option that sets the amount of spaces
+// that constitute a single indentation level.
+func WithIndentSize(i int) Option {
+	return func(p *Prompt) error {
+		p.indentSize = i
+		return nil
+	}
+}
+
 // WithCompleter is an option that sets a custom Completer object.
 func WithCompleter(c Completer) Option {
 	return func(p *Prompt) error {
@@ -295,8 +306,8 @@ func WithExecuteOnEnterCallback(fn ExecuteOnEnterCallback) Option {
 	}
 }
 
-func DefaultExecuteOnEnterCallback(input string) bool {
-	return true
+func DefaultExecuteOnEnterCallback(input string, indentSize int) (int, bool) {
+	return 0, true
 }
 
 func DefaultPrefixCallback() string {
@@ -335,6 +346,7 @@ func New(executor Executor, opts ...Option) *Prompt {
 		history:                NewHistory(),
 		completion:             NewCompletionManager(6),
 		executeOnEnterCallback: DefaultExecuteOnEnterCallback,
+		indentSize:             DefaultIndentSize,
 		keyBindMode:            EmacsKeyBind, // All the above assume that bash is running in the default Emacs setting
 	}
 
