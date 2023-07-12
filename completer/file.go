@@ -8,7 +8,7 @@ import (
 	"runtime"
 
 	prompt "github.com/elk-language/go-prompt"
-	"github.com/elk-language/go-prompt/internal/debug"
+	"github.com/elk-language/go-prompt/debug"
 )
 
 var (

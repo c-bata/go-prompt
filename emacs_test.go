@@ -3,13 +3,13 @@ package prompt
 import (
 	"testing"
 
-	istrings "github.com/elk-language/go-prompt/internal/strings"
+	istrings "github.com/elk-language/go-prompt/strings"
 )
 
 func TestEmacsKeyBindings(t *testing.T) {
 	buf := NewBuffer()
 	buf.InsertText("abcde", false, true)
-	if buf.cursorPosition != istrings.RuneIndex(len("abcde")) {
+	if buf.cursorPosition != istrings.RuneNumber(len("abcde")) {
 		t.Errorf("Want %d, but got %d", len("abcde"), buf.cursorPosition)
 	}
 
@@ -21,7 +21,7 @@ func TestEmacsKeyBindings(t *testing.T) {
 
 	// Go to the end of the line
 	applyEmacsKeyBind(buf, ControlE)
-	if buf.cursorPosition != istrings.RuneIndex(len("abcde")) {
+	if buf.cursorPosition != istrings.RuneNumber(len("abcde")) {
 		t.Errorf("Want %d, but got %d", len("abcde"), buf.cursorPosition)
 	}
 }

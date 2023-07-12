@@ -4,7 +4,7 @@ import (
 	"io"
 	"strings"
 
-	istrings "github.com/elk-language/go-prompt/internal/strings"
+	istrings "github.com/elk-language/go-prompt/strings"
 	"github.com/mattn/go-runewidth"
 )
 

@@ -7,8 +7,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elk-language/go-prompt/internal/debug"
-	istrings "github.com/elk-language/go-prompt/internal/strings"
+	"github.com/elk-language/go-prompt/debug"
+	istrings "github.com/elk-language/go-prompt/strings"
 )
 
 const inputBufferSize = 1024
@@ -230,7 +230,7 @@ func (p *Prompt) handleCompletionKeyBinding(key Key, completing bool) {
 		if s, ok := p.completion.GetSelectedSuggestion(); ok {
 			w := p.buf.Document().GetWordBeforeCursorUntilSeparator(p.completion.wordSeparator)
 			if w != "" {
-				p.buf.DeleteBeforeCursor(istrings.RuneCount(len([]rune(w))))
+				p.buf.DeleteBeforeCursor(istrings.RuneNumber(len([]rune(w))))
 			}
 			p.buf.InsertText(s.Text, false, true)
 		}

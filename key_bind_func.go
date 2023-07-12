@@ -1,19 +1,19 @@
 package prompt
 
 import (
-	istrings "github.com/elk-language/go-prompt/internal/strings"
+	istrings "github.com/elk-language/go-prompt/strings"
 )
 
 // GoLineEnd Go to the End of the line
 func GoLineEnd(buf *Buffer) {
 	x := []rune(buf.Document().TextAfterCursor())
-	buf.CursorRight(istrings.RuneCount(len(x)))
+	buf.CursorRight(istrings.RuneNumber(len(x)))
 }
 
 // GoLineBeginning Go to the beginning of the line
 func GoLineBeginning(buf *Buffer) {
 	x := []rune(buf.Document().TextBeforeCursor())
-	buf.CursorLeft(istrings.RuneCount(len(x)))
+	buf.CursorLeft(istrings.RuneNumber(len(x)))
 }
 
 // DeleteChar Delete character under the cursor
