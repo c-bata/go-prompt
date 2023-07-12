@@ -247,7 +247,8 @@ func (p *Prompt) handleKeyBinding(key Key) bool {
 		}
 	}
 
-	if p.keyBindMode == EmacsKeyBind {
+	switch p.keyBindMode {
+	case EmacsKeyBind:
 		for i := range emacsKeyBindings {
 			kb := emacsKeyBindings[i]
 			if kb.Key == key {

@@ -16,13 +16,13 @@ type ASCIICodeBind struct {
 }
 
 // KeyBindMode to switch a key binding flexibly.
-type KeyBindMode string
+type KeyBindMode uint8
 
 const (
 	// CommonKeyBind is a mode without any keyboard shortcut
-	CommonKeyBind KeyBindMode = "common"
+	CommonKeyBind KeyBindMode = iota
 	// EmacsKeyBind is a mode to use emacs-like keyboard shortcut
-	EmacsKeyBind KeyBindMode = "emacs"
+	EmacsKeyBind
 )
 
 var commonKeyBindings = []KeyBind{
