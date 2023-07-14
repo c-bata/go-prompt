@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0]
 
+[Diff](https://github.com/elk-language/go-prompt/compare/v0.2.6...elk-language:go-prompt:v1.0.0)
+
 This release contains a major refactoring of the codebase.
 It's the first release of the [elk-language/go-prompt](https://github.com/elk-language/go-prompt) fork.
 
@@ -80,7 +82,10 @@ This release aims to make the code a bit cleaner, fix a couple of bugs and provi
 
 - `prompt.SwitchKeyBindMode`
 
+
 ## [0.2.6] - 2021-03-03
+
+[Diff](https://github.com/elk-language/go-prompt/compare/v0.2.5...elk-language:go-prompt:v0.2.6)
 
 ### Changed
 
@@ -89,6 +94,8 @@ This release aims to make the code a bit cleaner, fix a couple of bugs and provi
 
 ## [0.2.5] - 2020-09-19
 
+[Diff](https://github.com/elk-language/go-prompt/compare/v0.2.4...elk-language:go-prompt:v0.2.5)
+
 ### Changed
 
 - Upgrade all dependencies to latest
@@ -96,12 +103,16 @@ This release aims to make the code a bit cleaner, fix a couple of bugs and provi
 
 ## [0.2.4] - 2020-09-18
 
+[Diff](https://github.com/elk-language/go-prompt/compare/v0.2.3...elk-language:go-prompt:v0.2.4)
+
 ### Changed
 
 - Update pkg/term module to latest and use unix.Termios
 
 
 ## [0.2.3] - 2018-10-25
+
+[Diff](https://github.com/elk-language/go-prompt/compare/v0.2.2...elk-language:go-prompt:v0.2.3)
 
 ### Added
 
@@ -122,6 +133,8 @@ This release aims to make the code a bit cleaner, fix a couple of bugs and provi
 
 ## [0.2.2] - 2018-06-28
 
+[Diff](https://github.com/elk-language/go-prompt/compare/v0.2.1...elk-language:go-prompt:v0.2.2)
+
 ### Added
 
 * Support CJK (Chinese, Japanese and Korean) and Cyrillic characters.
@@ -138,6 +151,8 @@ This release aims to make the code a bit cleaner, fix a couple of bugs and provi
 
 ## [0.2.1] - 2018-02-14
 
+[Diff](https://github.com/elk-language/go-prompt/compare/v0.2.0...elk-language:go-prompt:v0.2.1)
+
 ### Added
 
 * ~~It seems that windows support is almost perfect.~~
@@ -150,6 +165,8 @@ This release aims to make the code a bit cleaner, fix a couple of bugs and provi
 
 
 ## [0.2.0] - 2018-02-13
+
+[Diff](https://github.com/elk-language/go-prompt/compare/v0.1.0...elk-language:go-prompt:v0.2.0)
 
 ### Added
 
