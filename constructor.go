@@ -18,6 +18,24 @@ func WithIndentSize(i int) Option {
 	}
 }
 
+// WithLexer set lexer function and enable it.
+func WithLexer(lex Lexer) Option {
+	return func(p *Prompt) error {
+		p.lexer = lex
+		return nil
+	}
+}
+
+// WithExecuteOnEnterCallback can be used to set
+// a custom callback function that determines whether an Enter key
+// should trigger the Executor or add a newline to the user input buffer.
+func WithExecuteOnEnterCallback(fn ExecuteOnEnterCallback) Option {
+	return func(p *Prompt) error {
+		p.executeOnEnterCallback = fn
+		return nil
+	}
+}
+
 // WithCompleter is an option that sets a custom Completer object.
 func WithCompleter(c Completer) Option {
 	return func(p *Prompt) error {
@@ -228,8 +246,8 @@ func WithHistory(x []string) Option {
 	}
 }
 
-// WithSwitchKeyBindMode set a key bind mode.
-func WithSwitchKeyBindMode(m KeyBindMode) Option {
+// WithKeyBindMode set a key bind mode.
+func WithKeyBindMode(m KeyBindMode) Option {
 	return func(p *Prompt) error {
 		p.keyBindMode = m
 		return nil
@@ -244,20 +262,16 @@ func WithCompletionOnDown() Option {
 	}
 }
 
-// SwitchKeyBindMode to set a key bind mode.
-// Deprecated: Please use WithSwitchKeyBindMode.
-var SwitchKeyBindMode = WithSwitchKeyBindMode
-
-// WithAddKeyBind to set a custom key bind.
-func WithAddKeyBind(b ...KeyBind) Option {
+// WithKeyBind to set a custom key bind.
+func WithKeyBind(b ...KeyBind) Option {
 	return func(p *Prompt) error {
 		p.keyBindings = append(p.keyBindings, b...)
 		return nil
 	}
 }
 
-// WithAddASCIICodeBind to set a custom key bind.
-func WithAddASCIICodeBind(b ...ASCIICodeBind) Option {
+// WithASCIICodeBind to set a custom key bind.
+func WithASCIICodeBind(b ...ASCIICodeBind) Option {
 	return func(p *Prompt) error {
 		p.ASCIICodeBindings = append(p.ASCIICodeBindings, b...)
 		return nil
@@ -284,24 +298,6 @@ func WithBreakLineCallback(fn func(*Document)) Option {
 func WithExitChecker(fn ExitChecker) Option {
 	return func(p *Prompt) error {
 		p.exitChecker = fn
-		return nil
-	}
-}
-
-// WithLexer set lexer function and enable it.
-func WithLexer(lex Lexer) Option {
-	return func(p *Prompt) error {
-		p.lexer = lex
-		return nil
-	}
-}
-
-// WithExecuteOnEnterCallback can be used to set
-// a custom callback function that determines whether an Enter key
-// should trigger the Executor or add a newline to the user input buffer.
-func WithExecuteOnEnterCallback(fn ExecuteOnEnterCallback) Option {
-	return func(p *Prompt) error {
-		p.executeOnEnterCallback = fn
 		return nil
 	}
 }
