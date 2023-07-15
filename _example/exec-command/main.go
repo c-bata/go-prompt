@@ -8,14 +8,15 @@ import (
 )
 
 func executor(t string) {
-	if t == "bash" {
-		cmd := exec.Command("bash")
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Run()
+	if t != "bash" {
+		return
 	}
-	return
+
+	cmd := exec.Command("bash")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
 }
 
 func completer(t prompt.Document) []prompt.Suggest {
@@ -27,7 +28,7 @@ func completer(t prompt.Document) []prompt.Suggest {
 func main() {
 	p := prompt.New(
 		executor,
-		completer,
+		prompt.WithCompleter(completer),
 	)
 	p.Run()
 }

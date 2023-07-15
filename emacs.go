@@ -1,6 +1,9 @@
 package prompt
 
-import "github.com/elk-language/go-prompt/internal/debug"
+import (
+	"github.com/elk-language/go-prompt/debug"
+	istrings "github.com/elk-language/go-prompt/strings"
+)
 
 /*
 
@@ -43,32 +46,28 @@ var emacsKeyBindings = []KeyBind{
 	{
 		Key: ControlE,
 		Fn: func(buf *Buffer) {
-			x := []rune(buf.Document().TextAfterCursor())
-			buf.CursorRight(len(x))
+			buf.CursorRight(istrings.RuneCount(buf.Document().CurrentLineAfterCursor()))
 		},
 	},
 	// Go to the beginning of the line
 	{
 		Key: ControlA,
 		Fn: func(buf *Buffer) {
-			x := []rune(buf.Document().TextBeforeCursor())
-			buf.CursorLeft(len(x))
+			buf.CursorLeft(buf.Document().FindStartOfFirstWordOfLine())
 		},
 	},
 	// Cut the Line after the cursor
 	{
 		Key: ControlK,
 		Fn: func(buf *Buffer) {
-			x := []rune(buf.Document().TextAfterCursor())
-			buf.Delete(len(x))
+			buf.Delete(istrings.RuneCount(buf.Document().CurrentLineAfterCursor()))
 		},
 	},
 	// Cut/delete the Line before the cursor
 	{
 		Key: ControlU,
 		Fn: func(buf *Buffer) {
-			x := []rune(buf.Document().TextBeforeCursor())
-			buf.DeleteBeforeCursor(len(x))
+			buf.DeleteBeforeCursor(istrings.RuneCount(buf.Document().CurrentLineBeforeCursor()))
 		},
 	},
 	// Delete character under the cursor
@@ -98,7 +97,7 @@ var emacsKeyBindings = []KeyBind{
 	{
 		Key: AltRight,
 		Fn: func(buf *Buffer) {
-			buf.CursorRight(buf.Document().FindEndOfCurrentWordWithSpace())
+			buf.CursorRight(buf.Document().FindRuneNumberUntilEndOfCurrentWord())
 		},
 	},
 	// Left allow: Backward one character
@@ -112,20 +111,20 @@ var emacsKeyBindings = []KeyBind{
 	{
 		Key: AltLeft,
 		Fn: func(buf *Buffer) {
-			buf.CursorLeft(len([]rune(buf.Document().TextBeforeCursor())) - buf.Document().FindStartOfPreviousWordWithSpace())
+			buf.CursorLeft(buf.Document().FindRuneNumberUntilStartOfPreviousWord())
 		},
 	},
 	// Cut the Word before the cursor.
 	{
 		Key: ControlW,
 		Fn: func(buf *Buffer) {
-			buf.DeleteBeforeCursor(len([]rune(buf.Document().GetWordBeforeCursorWithSpace())))
+			buf.DeleteBeforeCursor(istrings.RuneCount(buf.Document().GetWordBeforeCursorWithSpace()))
 		},
 	},
 	{
 		Key: AltBackspace,
 		Fn: func(buf *Buffer) {
-			buf.DeleteBeforeCursor(len([]rune(buf.Document().GetWordBeforeCursorWithSpace())))
+			buf.DeleteBeforeCursor(istrings.RuneCount(buf.Document().GetWordBeforeCursorWithSpace()))
 		},
 	},
 	// Clear the Screen, similar to the clear command

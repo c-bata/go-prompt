@@ -1,14 +1,13 @@
 package completer
 
 import (
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
 	"runtime"
 
 	prompt "github.com/elk-language/go-prompt"
-	"github.com/elk-language/go-prompt/internal/debug"
+	"github.com/elk-language/go-prompt/debug"
 )
 
 var (
@@ -17,7 +16,7 @@ var (
 )
 
 // FilePathCompleter is a completer for your local file system.
-// Please caution that you need to set OptionCompletionWordSeparator(completer.FilePathCompletionSeparator)
+// Please caution that you need to set WithCompletionWordSeparator(completer.FilePathCompletionSeparator)
 // when you use this completer.
 type FilePathCompleter struct {
 	Filter        func(fi os.FileInfo) bool
@@ -70,7 +69,7 @@ func (c *FilePathCompleter) Complete(d prompt.Document) []prompt.Suggest {
 		return prompt.FilterHasPrefix(cached, base, c.IgnoreCase)
 	}
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil && os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
@@ -80,7 +79,11 @@ func (c *FilePathCompleter) Complete(d prompt.Document) []prompt.Suggest {
 
 	suggests := make([]prompt.Suggest, 0, len(files))
 	for _, f := range files {
-		if c.Filter != nil && !c.Filter(f) {
+		fileInfo, err := f.Info()
+		if err != nil {
+			panic(err)
+		}
+		if c.Filter != nil && !c.Filter(fileInfo) {
 			continue
 		}
 		suggests = append(suggests, prompt.Suggest{Text: f.Name()})

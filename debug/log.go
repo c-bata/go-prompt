@@ -1,7 +1,7 @@
 package debug
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 )
@@ -25,11 +25,11 @@ func init() {
 			return
 		}
 	}
-	logger = log.New(ioutil.Discard, "", log.Llongfile)
+	logger = log.New(io.Discard, "", log.Llongfile)
 }
 
-// Teardown to close logfile
-func Teardown() {
+// Close to close logfile
+func Close() {
 	if logfile == nil {
 		return
 	}

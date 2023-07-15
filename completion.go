@@ -3,7 +3,8 @@ package prompt
 import (
 	"strings"
 
-	"github.com/elk-language/go-prompt/internal/debug"
+	"github.com/elk-language/go-prompt/debug"
+	istrings "github.com/elk-language/go-prompt/strings"
 	runewidth "github.com/mattn/go-runewidth"
 )
 
@@ -155,7 +156,7 @@ func formatTexts(o []string, max int, prefix, suffix string) (new []string, widt
 	return n, lenPrefix + width + lenSuffix
 }
 
-func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width int) {
+func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width istrings.StringWidth) {
 	num := len(suggests)
 	new = make([]Suggest, num)
 
@@ -177,18 +178,33 @@ func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width int) {
 	for i := 0; i < num; i++ {
 		new[i] = Suggest{Text: left[i], Description: right[i]}
 	}
-	return new, leftWidth + rightWidth
+	return new, istrings.StringWidth(leftWidth + rightWidth)
+}
+
+// Constructor option for CompletionManager.
+type CompletionManagerOption func(*CompletionManager)
+
+// Set a custom completer.
+func CompletionManagerWithCompleter(completer Completer) CompletionManagerOption {
+	return func(c *CompletionManager) {
+		c.completer = completer
+	}
 }
 
 // NewCompletionManager returns an initialized CompletionManager object.
-func NewCompletionManager(completer Completer, max uint16) *CompletionManager {
-	return &CompletionManager{
-		selected:  -1,
-		max:       max,
-		completer: completer,
-
+func NewCompletionManager(max uint16, opts ...CompletionManagerOption) *CompletionManager {
+	c := &CompletionManager{
+		selected:       -1,
+		max:            max,
+		completer:      NoopCompleter,
 		verticalScroll: 0,
 	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
 }
 
 var _ Completer = NoopCompleter

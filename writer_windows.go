@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package prompt
@@ -8,7 +9,7 @@ import (
 	colorable "github.com/mattn/go-colorable"
 )
 
-// WindowsWriter is a ConsoleWriter implementation for Win32 console.
+// WindowsWriter is a Writer implementation for Win32 console.
 // Output is converted from VT100 escape sequences by mattn/go-colorable.
 type WindowsWriter struct {
 	VT100Writer
@@ -25,24 +26,24 @@ func (w *WindowsWriter) Flush() error {
 	return nil
 }
 
-var _ ConsoleWriter = &WindowsWriter{}
+var _ Writer = &WindowsWriter{}
 
 var (
 	// NewStandardOutputWriter is Deprecated: Please use NewStdoutWriter
 	NewStandardOutputWriter = NewStdoutWriter
 )
 
-// NewStdoutWriter returns ConsoleWriter object to write to stdout.
+// NewStdoutWriter returns Writer object to write to stdout.
 // This generates win32 control sequences.
-func NewStdoutWriter() ConsoleWriter {
+func NewStdoutWriter() Writer {
 	return &WindowsWriter{
 		out: colorable.NewColorableStdout(),
 	}
 }
 
-// NewStderrWriter returns ConsoleWriter object to write to stderr.
+// NewStderrWriter returns Writer object to write to stderr.
 // This generates win32 control sequences.
-func NewStderrWriter() ConsoleWriter {
+func NewStderrWriter() Writer {
 	return &WindowsWriter{
 		out: colorable.NewColorableStderr(),
 	}

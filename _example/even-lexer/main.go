@@ -10,8 +10,7 @@ import (
 func main() {
 	p := prompt.New(
 		executor,
-		completer,
-		prompt.OptionSetLexer(prompt.NewEagerLexer(lexer)),
+		prompt.WithLexer(prompt.NewEagerLexer(lexer)),
 	)
 
 	p.Run()
@@ -36,10 +35,6 @@ func lexer(line string) []prompt.Token {
 	}
 
 	return elements
-}
-
-func completer(in prompt.Document) []prompt.Suggest {
-	return []prompt.Suggest{}
 }
 
 func executor(s string) {

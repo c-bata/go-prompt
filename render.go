@@ -4,21 +4,21 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/elk-language/go-prompt/internal/debug"
+	"github.com/elk-language/go-prompt/debug"
+	istrings "github.com/elk-language/go-prompt/strings"
 	runewidth "github.com/mattn/go-runewidth"
 )
 
 // Render to render prompt information from state of Buffer.
 type Render struct {
-	out                ConsoleWriter
-	prefix             string
-	livePrefixCallback func() (prefix string, useLivePrefix bool)
-	breakLineCallback  func(*Document)
-	title              string
-	row                uint16
-	col                uint16
+	out               Writer
+	prefixCallback    PrefixCallback
+	breakLineCallback func(*Document)
+	title             string
+	row               uint16
+	col               istrings.StringWidth
 
-	previousCursor int
+	previousCursor Position
 
 	// colors,
 	prefixTextColor              Color
@@ -50,21 +50,22 @@ func (r *Render) Setup() {
 // getCurrentPrefix to get current prefix.
 // If live-prefix is enabled, return live-prefix.
 func (r *Render) getCurrentPrefix() string {
-	if prefix, ok := r.livePrefixCallback(); ok {
-		return prefix
-	}
-	return r.prefix
+	return r.prefixCallback()
 }
 
 func (r *Render) renderPrefix() {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
-	r.out.WriteStr("\r")
-	r.out.WriteStr(r.getCurrentPrefix())
+	if _, err := r.out.WriteString("\r"); err != nil {
+		panic(err)
+	}
+	if _, err := r.out.WriteString(r.getCurrentPrefix()); err != nil {
+		panic(err)
+	}
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
-// TearDown to clear title and erasing.
-func (r *Render) TearDown() {
+// Close to clear title and erasing.
+func (r *Render) Close() {
 	r.out.ClearTitle()
 	r.out.EraseDown()
 	debug.AssertNoError(r.out.Flush())
@@ -82,19 +83,21 @@ func (r *Render) prepareArea(lines int) {
 // UpdateWinSize called when window size is changed.
 func (r *Render) UpdateWinSize(ws *WinSize) {
 	r.row = ws.Row
-	r.col = ws.Col
+	r.col = istrings.StringWidth(ws.Col)
 }
 
 func (r *Render) renderWindowTooSmall() {
 	r.out.CursorGoTo(0, 0)
 	r.out.EraseScreen()
 	r.out.SetColor(DarkRed, White, false)
-	r.out.WriteStr("Your console window is too small...")
+	if _, err := r.out.WriteString("Your console window is too small..."); err != nil {
+		panic(err)
+	}
 }
 
 func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	suggestions := completions.GetSuggestions()
-	if len(completions.GetSuggestions()) == 0 {
+	if len(suggestions) == 0 {
 		return
 	}
 	prefix := r.getCurrentPrefix()
@@ -112,10 +115,10 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
 	r.prepareArea(windowHeight)
 
-	cursor := runewidth.StringWidth(prefix) + runewidth.StringWidth(buf.Document().TextBeforeCursor())
-	x, _ := r.toPos(cursor)
-	if x+width >= int(r.col) {
-		cursor = r.backward(cursor, x+width-int(r.col))
+	cursor := positionAtEndOfString(prefix+buf.Document().TextBeforeCursor(), r.col)
+	x := cursor.X
+	if x+width >= r.col {
+		cursor = r.backward(cursor, x+width-r.col)
 	}
 
 	contentHeight := len(completions.tmp)
@@ -135,36 +138,43 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 
 	r.out.SetColor(White, Cyan, false)
 	for i := 0; i < windowHeight; i++ {
-		alignNextLine(r, cursorColumnSpacing)
+		alignNextLine(r, cursorColumnSpacing.X)
 
 		if i == selected {
 			r.out.SetColor(r.selectedSuggestionTextColor, r.selectedSuggestionBGColor, true)
 		} else {
 			r.out.SetColor(r.suggestionTextColor, r.suggestionBGColor, false)
 		}
-		r.out.WriteStr(formatted[i].Text)
+		if _, err := r.out.WriteString(formatted[i].Text); err != nil {
+			panic(err)
+		}
 
 		if i == selected {
 			r.out.SetColor(r.selectedDescriptionTextColor, r.selectedDescriptionBGColor, false)
 		} else {
 			r.out.SetColor(r.descriptionTextColor, r.descriptionBGColor, false)
 		}
-		r.out.WriteStr(formatted[i].Description)
+		if _, err := r.out.WriteString(formatted[i].Description); err != nil {
+			panic(err)
+		}
 
 		if isScrollThumb(i) {
 			r.out.SetColor(DefaultColor, r.scrollbarThumbColor, false)
 		} else {
 			r.out.SetColor(DefaultColor, r.scrollbarBGColor, false)
 		}
-		r.out.WriteStr(" ")
+		if _, err := r.out.WriteString(" "); err != nil {
+			panic(err)
+		}
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
-		r.lineWrap(cursor + width)
-		r.backward(cursor+width, width)
+		c := cursor.Add(Position{X: width})
+		r.lineWrap(&c)
+		r.backward(c, width)
 	}
 
-	if x+width >= int(r.col) {
-		r.out.CursorForward(x + width - int(r.col))
+	if x+width >= r.col {
+		r.out.CursorForward(int(x + width - r.col))
 	}
 
 	r.out.CursorUp(windowHeight)
@@ -179,14 +189,15 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 		return
 	}
 	defer func() { debug.AssertNoError(r.out.Flush()) }()
-	r.move(r.previousCursor, 0)
+	r.clear(r.previousCursor)
 
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
-	cursor := runewidth.StringWidth(prefix) + runewidth.StringWidth(line)
+	prefixWidth := istrings.StringWidth(runewidth.StringWidth(prefix))
+	cursor := positionAtEndOfString(prefix+line, r.col)
 
 	// prepare area
-	_, y := r.toPos(cursor)
+	y := cursor.Y
 
 	h := y + 1 + int(completion.max)
 	if h > int(r.row) || completionMargin > int(r.col) {
@@ -204,40 +215,50 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 		r.lex(lexer, line)
 	} else {
 		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-		r.out.WriteStr(line)
+		if _, err := r.out.WriteString(line); err != nil {
+			panic(err)
+		}
 	}
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 
-	r.lineWrap(cursor)
+	r.lineWrap(&cursor)
 
-	r.out.EraseDown()
-
-	cursor = r.backward(cursor, runewidth.StringWidth(line)-buffer.DisplayCursorPosition())
+	targetCursor := buffer.DisplayCursorPosition(r.col)
+	if targetCursor.Y == 0 {
+		targetCursor.X += prefixWidth
+	}
+	cursor = r.move(cursor, targetCursor)
 
 	r.renderCompletion(buffer, completion)
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
-		cursor = r.backward(cursor, runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
+		cursor = r.backward(cursor, istrings.StringWidth(runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator))))
 
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
-		r.out.WriteStr(suggest.Text)
+		if _, err := r.out.WriteString(suggest.Text); err != nil {
+			panic(err)
+		}
 		r.out.SetColor(DefaultColor, DefaultColor, false)
-		cursor += runewidth.StringWidth(suggest.Text)
+		cursor.X += istrings.StringWidth(runewidth.StringWidth(suggest.Text))
+		endOfSuggestionPos := cursor
 
 		rest := buffer.Document().TextAfterCursor()
 
 		if lexer != nil {
 			r.lex(lexer, rest)
 		} else {
-			r.out.WriteStr(rest)
+			if _, err := r.out.WriteString(rest); err != nil {
+				panic(err)
+			}
 		}
 
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
-		cursor += runewidth.StringWidth(rest)
-		r.lineWrap(cursor)
+		cursor = cursor.Join(positionAtEndOfString(rest, r.col))
 
-		cursor = r.backward(cursor, runewidth.StringWidth(rest))
+		r.lineWrap(&cursor)
+
+		cursor = r.move(cursor, endOfSuggestionPos)
 	}
 	r.previousCursor = cursor
 }
@@ -258,14 +279,16 @@ func (r *Render) lex(lexer Lexer, input string) {
 		s = strings.TrimPrefix(s, a[0])
 
 		r.out.SetColor(token.Color(), r.inputBGColor, false)
-		r.out.WriteStr(a[0])
+		if _, err := r.out.WriteString(a[0]); err != nil {
+			panic(err)
+		}
 	}
 }
 
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 	// Erasing and Render
-	cursor := runewidth.StringWidth(buffer.Document().TextBeforeCursor()) + runewidth.StringWidth(r.getCurrentPrefix())
+	cursor := positionAtEndOfString(buffer.Document().TextBeforeCursor()+r.getCurrentPrefix(), r.col)
 	r.clear(cursor)
 
 	r.renderPrefix()
@@ -274,7 +297,9 @@ func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 		r.lex(lexer, buffer.Document().Text+"\n")
 	} else {
 		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-		r.out.WriteStr(buffer.Document().Text + "\n")
+		if _, err := r.out.WriteString(buffer.Document().Text + "\n"); err != nil {
+			panic(err)
+		}
 	}
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
@@ -284,41 +309,35 @@ func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 		r.breakLineCallback(buffer.Document())
 	}
 
-	r.previousCursor = 0
+	r.previousCursor = Position{}
 }
 
 // clear erases the screen from a beginning of input
 // even if there is line break which means input length exceeds a window's width.
-func (r *Render) clear(cursor int) {
-	r.move(cursor, 0)
+func (r *Render) clear(cursor Position) {
+	r.move(cursor, Position{})
 	r.out.EraseDown()
 }
 
 // backward moves cursor to backward from a current cursor position
 // regardless there is a line break.
-func (r *Render) backward(from, n int) int {
-	return r.move(from, from-n)
+func (r *Render) backward(from Position, n istrings.StringWidth) Position {
+	return r.move(from, Position{X: from.X - n, Y: from.Y})
 }
 
 // move moves cursor to specified position from the beginning of input
 // even if there is a line break.
-func (r *Render) move(from, to int) int {
-	fromX, fromY := r.toPos(from)
-	toX, toY := r.toPos(to)
-
-	r.out.CursorUp(fromY - toY)
-	r.out.CursorBackward(fromX - toX)
+func (r *Render) move(from, to Position) Position {
+	newPosition := from.Subtract(to)
+	r.out.CursorUp(newPosition.Y)
+	r.out.CursorBackward(int(newPosition.X))
 	return to
 }
 
-// toPos returns the relative position from the beginning of the string.
-func (r *Render) toPos(cursor int) (x, y int) {
-	col := int(r.col)
-	return cursor % col, cursor / col
-}
-
-func (r *Render) lineWrap(cursor int) {
-	if runtime.GOOS != "windows" && cursor > 0 && cursor%int(r.col) == 0 {
+func (r *Render) lineWrap(cursor *Position) {
+	if runtime.GOOS != "windows" && cursor.X > 0 && cursor.X%r.col == 0 {
+		cursor.X = 0
+		cursor.Y += 1
 		r.out.WriteRaw([]byte{'\n'})
 	}
 }
@@ -334,8 +353,10 @@ func clamp(high, low, x float64) float64 {
 	}
 }
 
-func alignNextLine(r *Render, col int) {
+func alignNextLine(r *Render, col istrings.StringWidth) {
 	r.out.CursorDown(1)
-	r.out.WriteStr("\r")
-	r.out.CursorForward(col)
+	if _, err := r.out.WriteString("\r"); err != nil {
+		panic(err)
+	}
+	r.out.CursorForward(int(col))
 }

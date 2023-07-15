@@ -3,12 +3,16 @@ package prompt
 import (
 	"bytes"
 	"os"
+	"strings"
 	"time"
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elk-language/go-prompt/internal/debug"
+	"github.com/elk-language/go-prompt/debug"
+	istrings "github.com/elk-language/go-prompt/strings"
 )
+
+const inputBufferSize = 1024
 
 // Executor is called when the user
 // inputs a line of text.
@@ -21,39 +25,49 @@ type Executor func(string)
 // Exit means exit go-prompt (not the overall Go program)
 type ExitChecker func(in string, breakline bool) bool
 
+// ExecuteOnEnterCallback is a function that receives
+// user input after Enter has been pressed
+// and determines whether the input should be executed.
+// If this function returns true, the Executor callback will be called
+// otherwise a newline will be added to the buffer containing user input
+// and optionally indentation made up of `indentSize * indent` spaces.
+type ExecuteOnEnterCallback func(input string, indentSize int) (indent int, execute bool)
+
 // Completer is a function that returns
 // a slice of suggestions for the given Document.
 type Completer func(Document) []Suggest
 
 // Prompt is a core struct of go-prompt.
 type Prompt struct {
-	in                ConsoleParser
-	buf               *Buffer
-	renderer          *Render
-	executor          Executor
-	history           *History
-	lexer             Lexer
-	completion        *CompletionManager
-	keyBindings       []KeyBind
-	ASCIICodeBindings []ASCIICodeBind
-	keyBindMode       KeyBindMode
-	completionOnDown  bool
-	exitChecker       ExitChecker
-	skipTearDown      bool
+	reader                 Reader
+	buf                    *Buffer
+	renderer               *Render
+	executor               Executor
+	history                *History
+	lexer                  Lexer
+	completion             *CompletionManager
+	keyBindings            []KeyBind
+	ASCIICodeBindings      []ASCIICodeBind
+	keyBindMode            KeyBindMode
+	completionOnDown       bool
+	indentSize             int // How many spaces constitute a single indentation level
+	exitChecker            ExitChecker
+	executeOnEnterCallback ExecuteOnEnterCallback
+	skipClose              bool
 }
 
-// Exec is the struct that contains the user input context.
-type Exec struct {
+// UserInput is the struct that contains the user input context.
+type UserInput struct {
 	input string
 }
 
 // Run starts the prompt.
 func (p *Prompt) Run() {
-	p.skipTearDown = false
-	defer debug.Teardown()
+	p.skipClose = false
+	defer debug.Close()
 	debug.Log("start prompt")
-	p.setUp()
-	defer p.tearDown()
+	p.setup()
+	defer p.Close()
 
 	if p.completion.showAtStart {
 		p.completion.Update(*p.buf.Document())
@@ -85,7 +99,7 @@ func (p *Prompt) Run() {
 
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
-				debug.AssertNoError(p.in.TearDown())
+				debug.AssertNoError(p.reader.Close())
 				p.executor(e.input)
 
 				p.completion.Update(*p.buf.Document())
@@ -93,11 +107,11 @@ func (p *Prompt) Run() {
 				p.renderer.Render(p.buf, p.completion, p.lexer)
 
 				if p.exitChecker != nil && p.exitChecker(e.input, true) {
-					p.skipTearDown = true
+					p.skipClose = true
 					return
 				}
 				// Set raw mode
-				debug.AssertNoError(p.in.Setup())
+				debug.AssertNoError(p.reader.Open())
 				go p.readBuffer(bufCh, stopReadBufCh)
 				go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 			} else {
@@ -109,7 +123,7 @@ func (p *Prompt) Run() {
 			p.renderer.Render(p.buf, p.completion, p.lexer)
 		case code := <-exitCh:
 			p.renderer.BreakLine(p.buf, p.lexer)
-			p.tearDown()
+			p.Close()
 			os.Exit(code)
 		default:
 			time.Sleep(10 * time.Millisecond)
@@ -117,39 +131,111 @@ func (p *Prompt) Run() {
 	}
 }
 
-func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
+// func Log(format string, a ...any) {
+// 	f, err := os.OpenFile("log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+// 	if err != nil {
+// 		log.Fatalf("error opening file: %v", err)
+// 	}
+// 	defer f.Close()
+// 	fmt.Fprintf(f, format, a...)
+// }
+
+func (p *Prompt) feed(b []byte) (shouldExit bool, userInput *UserInput) {
 	key := GetKey(b)
 	p.buf.lastKeyStroke = key
 	// completion
 	completing := p.completion.Completing()
 	p.handleCompletionKeyBinding(key, completing)
 
+keySwitch:
 	switch key {
 	case Enter, ControlJ, ControlM:
-		p.renderer.BreakLine(p.buf, p.lexer)
-
-		exec = &Exec{input: p.buf.Text()}
-		p.buf = NewBuffer()
-		if exec.input != "" {
-			p.history.Add(exec.input)
+		indent, execute := p.executeOnEnterCallback(p.buf.Text(), p.indentSize)
+		if !execute {
+			p.buf.NewLine(false)
+			var indentStrBuilder strings.Builder
+			indentUnitCount := indent * p.indentSize
+			for i := 0; i < indentUnitCount; i++ {
+				indentStrBuilder.WriteRune(IndentUnit)
+			}
+			p.buf.InsertText(indentStrBuilder.String(), false, true)
+			break
 		}
+
+		p.renderer.BreakLine(p.buf, p.lexer)
+		userInput = &UserInput{input: p.buf.Text()}
+		p.buf = NewBuffer()
+		if userInput.input != "" {
+			p.history.Add(userInput.input)
+		}
+	case Tab:
+		if len(p.completion.GetSuggestions()) > 0 {
+			// If there are any suggestions, select the next one
+			p.completion.Next()
+			break
+		}
+
+		// if there are no suggestions insert indentation
+		newBytes := make([]byte, 0, len(b))
+		for _, byt := range b {
+			switch byt {
+			case '\t':
+				for i := 0; i < p.indentSize; i++ {
+					newBytes = append(newBytes, IndentUnit)
+				}
+			default:
+				newBytes = append(newBytes, byt)
+			}
+		}
+		p.buf.InsertText(string(newBytes), false, true)
+	case BackTab:
+		if len(p.completion.GetSuggestions()) > 0 {
+			// If there are any suggestions, select the previous one
+			p.completion.Previous()
+			break
+		}
+
+		text := p.buf.Document().CurrentLineBeforeCursor()
+		for _, char := range text {
+			if char != IndentUnit {
+				break keySwitch
+			}
+		}
+		p.buf.DeleteBeforeCursor(istrings.RuneNumber(p.indentSize))
 	case ControlC:
 		p.renderer.BreakLine(p.buf, p.lexer)
 		p.buf = NewBuffer()
 		p.history.Clear()
 	case Up, ControlP:
-		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
-			if newBuf, changed := p.history.Older(p.buf); changed {
-				p.buf = newBuf
-			}
+		cursor := p.buf.Document().GetCursorPosition(p.renderer.col)
+		if cursor.Y != 0 {
+			p.buf.CursorUp(1)
+			break
 		}
+		if completing {
+			break
+		}
+
+		if newBuf, changed := p.history.Older(p.buf); changed {
+			p.buf = newBuf
+		}
+
 	case Down, ControlN:
-		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
-			if newBuf, changed := p.history.Newer(p.buf); changed {
-				p.buf = newBuf
-			}
-			return
+		endOfTextCursor := p.buf.Document().GetEndOfTextPosition(p.renderer.col)
+		cursor := p.buf.Document().GetCursorPosition(p.renderer.col)
+		if endOfTextCursor.Y > cursor.Y {
+			p.buf.CursorDown(1)
+			break
 		}
+
+		if completing {
+			break
+		}
+
+		if newBuf, changed := p.history.Newer(p.buf); changed {
+			p.buf = newBuf
+		}
+		return
 	case ControlD:
 		if p.buf.Text() == "" {
 			shouldExit = true
@@ -177,19 +263,17 @@ func (p *Prompt) handleCompletionKeyBinding(key Key, completing bool) {
 		if completing || p.completionOnDown {
 			p.completion.Next()
 		}
-	case Tab, ControlI:
+	case ControlI:
 		p.completion.Next()
 	case Up:
 		if completing {
 			p.completion.Previous()
 		}
-	case BackTab:
-		p.completion.Previous()
 	default:
 		if s, ok := p.completion.GetSelectedSuggestion(); ok {
 			w := p.buf.Document().GetWordBeforeCursorUntilSeparator(p.completion.wordSeparator)
 			if w != "" {
-				p.buf.DeleteBeforeCursor(len([]rune(w)))
+				p.buf.DeleteBeforeCursor(istrings.RuneNumber(len([]rune(w))))
 			}
 			p.buf.InsertText(s.Text, false, true)
 		}
@@ -206,7 +290,8 @@ func (p *Prompt) handleKeyBinding(key Key) bool {
 		}
 	}
 
-	if p.keyBindMode == EmacsKeyBind {
+	switch p.keyBindMode {
+	case EmacsKeyBind:
 		for i := range emacsKeyBindings {
 			kb := emacsKeyBindings[i]
 			if kb.Key == key {
@@ -242,10 +327,10 @@ func (p *Prompt) handleASCIICodeBinding(b []byte) bool {
 // Input starts the prompt, lets the user
 // input a single line and returns this line as a string.
 func (p *Prompt) Input() string {
-	defer debug.Teardown()
+	defer debug.Close()
 	debug.Log("start prompt")
-	p.setUp()
-	defer p.tearDown()
+	p.setup()
+	defer p.Close()
 
 	if p.completion.showAtStart {
 		p.completion.Update(*p.buf.Document())
@@ -277,6 +362,9 @@ func (p *Prompt) Input() string {
 	}
 }
 
+const IndentUnit = ' '
+const IndentUnitString = string(IndentUnit)
+
 func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	debug.Log("start reading buffer")
 	for {
@@ -285,18 +373,33 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 			debug.Log("stop reading buffer")
 			return
 		default:
-			if bytes, err := p.in.Read(); err == nil && !(len(bytes) == 1 && bytes[0] == 0) {
-				// bufCh <- bytes
-				newBytes := make([]byte, len(bytes))
-				for i, byt := range bytes {
+			bytes := make([]byte, inputBufferSize)
+			n, err := p.reader.Read(bytes)
+			if err != nil {
+				break
+			}
+			bytes = bytes[:n]
+			if len(bytes) == 1 && bytes[0] == '\t' {
+				// if only a single Tab key has been pressed
+				// handle it as a keybind
+				bufCh <- bytes
+			} else if len(bytes) != 1 || bytes[0] != 0 {
+				newBytes := make([]byte, 0, len(bytes))
+				for _, byt := range bytes {
+					switch byt {
 					// translate raw mode \r into \n
 					// to make pasting multiline text
 					// work properly
-					switch byt {
 					case '\r':
-						newBytes[i] = '\n'
+						newBytes = append(newBytes, '\n')
+					// translate \t into two spaces
+					// to avoid problems with cursor positions
+					case '\t':
+						for i := 0; i < p.indentSize; i++ {
+							newBytes = append(newBytes, IndentUnit)
+						}
 					default:
-						newBytes[i] = byt
+						newBytes = append(newBytes, byt)
 					}
 				}
 				bufCh <- newBytes
@@ -306,15 +409,15 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	}
 }
 
-func (p *Prompt) setUp() {
-	debug.AssertNoError(p.in.Setup())
+func (p *Prompt) setup() {
+	debug.AssertNoError(p.reader.Open())
 	p.renderer.Setup()
-	p.renderer.UpdateWinSize(p.in.GetWinSize())
+	p.renderer.UpdateWinSize(p.reader.GetWinSize())
 }
 
-func (p *Prompt) tearDown() {
-	if !p.skipTearDown {
-		debug.AssertNoError(p.in.TearDown())
+func (p *Prompt) Close() {
+	if !p.skipClose {
+		debug.AssertNoError(p.reader.Close())
 	}
-	p.renderer.TearDown()
+	p.renderer.Close()
 }

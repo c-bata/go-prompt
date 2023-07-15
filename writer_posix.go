@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package prompt
@@ -8,7 +9,7 @@ import (
 
 const flushMaxRetryCount = 3
 
-// PosixWriter is a ConsoleWriter implementation for POSIX environment.
+// PosixWriter is a Writer implementation for POSIX environment.
 // To control terminal emulator, this outputs VT100 escape sequences.
 type PosixWriter struct {
 	VT100Writer
@@ -38,29 +39,29 @@ func (w *PosixWriter) Flush() error {
 	return nil
 }
 
-var _ ConsoleWriter = &PosixWriter{}
+var _ Writer = &PosixWriter{}
 
 var (
-	// NewStandardOutputWriter returns ConsoleWriter object to write to stdout.
+	// NewStandardOutputWriter returns Writer object to write to stdout.
 	// This generates VT100 escape sequences because almost terminal emulators
 	// in POSIX OS built on top of a VT100 specification.
 	// Deprecated: Please use NewStdoutWriter
 	NewStandardOutputWriter = NewStdoutWriter
 )
 
-// NewStdoutWriter returns ConsoleWriter object to write to stdout.
+// NewStdoutWriter returns Writer object to write to stdout.
 // This generates VT100 escape sequences because almost terminal emulators
 // in POSIX OS built on top of a VT100 specification.
-func NewStdoutWriter() ConsoleWriter {
+func NewStdoutWriter() Writer {
 	return &PosixWriter{
 		fd: syscall.Stdout,
 	}
 }
 
-// NewStderrWriter returns ConsoleWriter object to write to stderr.
+// NewStderrWriter returns Writer object to write to stderr.
 // This generates VT100 escape sequences because almost terminal emulators
 // in POSIX OS built on top of a VT100 specification.
-func NewStderrWriter() ConsoleWriter {
+func NewStderrWriter() Writer {
 	return &PosixWriter{
 		fd: syscall.Stderr,
 	}

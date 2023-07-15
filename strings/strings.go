@@ -1,23 +1,35 @@
 package strings
 
-import "unicode/utf8"
+import (
+	"unicode/utf8"
+)
+
+// Get the length of the string in bytes.
+func Len(s string) ByteNumber {
+	return ByteNumber(len(s))
+}
+
+// Get the length of the string in runes.
+func RuneCount(s string) RuneNumber {
+	return RuneNumber(utf8.RuneCountInString(s))
+}
 
 // IndexNotByte is similar with strings.IndexByte but showing the opposite behavior.
-func IndexNotByte(s string, c byte) int {
+func IndexNotByte(s string, c byte) ByteNumber {
 	n := len(s)
 	for i := 0; i < n; i++ {
 		if s[i] != c {
-			return i
+			return ByteNumber(i)
 		}
 	}
 	return -1
 }
 
 // LastIndexNotByte is similar with strings.LastIndexByte but showing the opposite behavior.
-func LastIndexNotByte(s string, c byte) int {
+func LastIndexNotByte(s string, c byte) ByteNumber {
 	for i := len(s) - 1; i >= 0; i-- {
 		if s[i] != c {
-			return i
+			return ByteNumber(i)
 		}
 	}
 	return -1
@@ -41,13 +53,13 @@ func makeASCIISet(chars string) (as asciiSet, ok bool) {
 }
 
 // IndexNotAny is similar with strings.IndexAny but showing the opposite behavior.
-func IndexNotAny(s, chars string) int {
+func IndexNotAny(s, chars string) ByteNumber {
 	if len(chars) > 0 {
 		if len(s) > 8 {
 			if as, isASCII := makeASCIISet(chars); isASCII {
 				for i := 0; i < len(s); i++ {
 					if as.notContains(s[i]) {
-						return i
+						return ByteNumber(i)
 					}
 				}
 				return -1
@@ -58,7 +70,7 @@ func IndexNotAny(s, chars string) int {
 		for i, c := range s {
 			for j, m := range chars {
 				if c != m && j == len(chars)-1 {
-					return i
+					return ByteNumber(i)
 				} else if c != m {
 					continue
 				} else {
@@ -71,13 +83,13 @@ func IndexNotAny(s, chars string) int {
 }
 
 // LastIndexNotAny is similar with strings.LastIndexAny but showing the opposite behavior.
-func LastIndexNotAny(s, chars string) int {
+func LastIndexNotAny(s, chars string) ByteNumber {
 	if len(chars) > 0 {
 		if len(s) > 8 {
 			if as, isASCII := makeASCIISet(chars); isASCII {
 				for i := len(s) - 1; i >= 0; i-- {
 					if as.notContains(s[i]) {
-						return i
+						return ByteNumber(i)
 					}
 				}
 				return -1
@@ -89,7 +101,7 @@ func LastIndexNotAny(s, chars string) int {
 			i -= size
 			for j, m := range chars {
 				if r != m && j == len(chars)-1 {
-					return i
+					return ByteNumber(i)
 				} else if r != m {
 					continue
 				} else {

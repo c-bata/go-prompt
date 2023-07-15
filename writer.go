@@ -1,13 +1,16 @@
 package prompt
 
-import "sync"
+import (
+	"io"
+	"sync"
+)
 
 var (
 	consoleWriterMu sync.Mutex
-	consoleWriter   ConsoleWriter
+	consoleWriter   Writer
 )
 
-func registerConsoleWriter(f ConsoleWriter) {
+func registerWriter(f Writer) {
 	consoleWriterMu.Lock()
 	defer consoleWriterMu.Unlock()
 	consoleWriter = f
@@ -87,18 +90,16 @@ const (
 	White
 )
 
-// ConsoleWriter is an interface to abstract output layer.
-type ConsoleWriter interface {
+// Writer is an interface to abstract the output layer.
+type Writer interface {
 	/* Write */
 
+	io.Writer
+	io.StringWriter
 	// WriteRaw to write raw byte array.
 	WriteRaw(data []byte)
-	// Write to write safety byte array by removing control sequences.
-	Write(data []byte)
-	// WriteStr to write raw string.
-	WriteRawStr(data string)
-	// WriteStr to write safety string by removing control sequences.
-	WriteStr(data string)
+	// WriteString to write raw string.
+	WriteRawString(data string)
 	// Flush to flush buffer.
 	Flush() error
 

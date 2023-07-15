@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	prompt "github.com/elk-language/go-prompt"
-	"github.com/elk-language/go-prompt/internal/term"
+	"github.com/elk-language/go-prompt/term"
 )
 
 func main() {
