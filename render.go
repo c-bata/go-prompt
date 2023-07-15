@@ -55,8 +55,12 @@ func (r *Render) getCurrentPrefix() string {
 
 func (r *Render) renderPrefix() {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
-	r.out.WriteString("\r")
-	r.out.WriteString(r.getCurrentPrefix())
+	if _, err := r.out.WriteString("\r"); err != nil {
+		panic(err)
+	}
+	if _, err := r.out.WriteString(r.getCurrentPrefix()); err != nil {
+		panic(err)
+	}
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
@@ -86,7 +90,9 @@ func (r *Render) renderWindowTooSmall() {
 	r.out.CursorGoTo(0, 0)
 	r.out.EraseScreen()
 	r.out.SetColor(DarkRed, White, false)
-	r.out.WriteString("Your console window is too small...")
+	if _, err := r.out.WriteString("Your console window is too small..."); err != nil {
+		panic(err)
+	}
 }
 
 func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
@@ -139,21 +145,27 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 		} else {
 			r.out.SetColor(r.suggestionTextColor, r.suggestionBGColor, false)
 		}
-		r.out.WriteString(formatted[i].Text)
+		if _, err := r.out.WriteString(formatted[i].Text); err != nil {
+			panic(err)
+		}
 
 		if i == selected {
 			r.out.SetColor(r.selectedDescriptionTextColor, r.selectedDescriptionBGColor, false)
 		} else {
 			r.out.SetColor(r.descriptionTextColor, r.descriptionBGColor, false)
 		}
-		r.out.WriteString(formatted[i].Description)
+		if _, err := r.out.WriteString(formatted[i].Description); err != nil {
+			panic(err)
+		}
 
 		if isScrollThumb(i) {
 			r.out.SetColor(DefaultColor, r.scrollbarThumbColor, false)
 		} else {
 			r.out.SetColor(DefaultColor, r.scrollbarBGColor, false)
 		}
-		r.out.WriteString(" ")
+		if _, err := r.out.WriteString(" "); err != nil {
+			panic(err)
+		}
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
 		c := cursor.Add(Position{X: width})
@@ -203,7 +215,9 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 		r.lex(lexer, line)
 	} else {
 		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-		r.out.WriteString(line)
+		if _, err := r.out.WriteString(line); err != nil {
+			panic(err)
+		}
 	}
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
@@ -221,7 +235,9 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 		cursor = r.backward(cursor, istrings.StringWidth(runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator))))
 
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
-		r.out.WriteString(suggest.Text)
+		if _, err := r.out.WriteString(suggest.Text); err != nil {
+			panic(err)
+		}
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 		cursor.X += istrings.StringWidth(runewidth.StringWidth(suggest.Text))
 		endOfSuggestionPos := cursor
@@ -231,7 +247,9 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 		if lexer != nil {
 			r.lex(lexer, rest)
 		} else {
-			r.out.WriteString(rest)
+			if _, err := r.out.WriteString(rest); err != nil {
+				panic(err)
+			}
 		}
 
 		r.out.SetColor(DefaultColor, DefaultColor, false)
@@ -261,7 +279,9 @@ func (r *Render) lex(lexer Lexer, input string) {
 		s = strings.TrimPrefix(s, a[0])
 
 		r.out.SetColor(token.Color(), r.inputBGColor, false)
-		r.out.WriteString(a[0])
+		if _, err := r.out.WriteString(a[0]); err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -277,7 +297,9 @@ func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 		r.lex(lexer, buffer.Document().Text+"\n")
 	} else {
 		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-		r.out.WriteString(buffer.Document().Text + "\n")
+		if _, err := r.out.WriteString(buffer.Document().Text + "\n"); err != nil {
+			panic(err)
+		}
 	}
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
@@ -333,6 +355,8 @@ func clamp(high, low, x float64) float64 {
 
 func alignNextLine(r *Render, col istrings.StringWidth) {
 	r.out.CursorDown(1)
-	r.out.WriteString("\r")
+	if _, err := r.out.WriteString("\r"); err != nil {
+		panic(err)
+	}
 	r.out.CursorForward(int(col))
 }

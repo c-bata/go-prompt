@@ -1,7 +1,6 @@
 package completer
 
 import (
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -70,7 +69,7 @@ func (c *FilePathCompleter) Complete(d prompt.Document) []prompt.Suggest {
 		return prompt.FilterHasPrefix(cached, base, c.IgnoreCase)
 	}
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil && os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
@@ -80,7 +79,11 @@ func (c *FilePathCompleter) Complete(d prompt.Document) []prompt.Suggest {
 
 	suggests := make([]prompt.Suggest, 0, len(files))
 	for _, f := range files {
-		if c.Filter != nil && !c.Filter(f) {
+		fileInfo, err := f.Info()
+		if err != nil {
+			panic(err)
+		}
+		if c.Filter != nil && !c.Filter(fileInfo) {
 			continue
 		}
 		suggests = append(suggests, prompt.Suggest{Text: f.Name()})
