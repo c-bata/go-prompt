@@ -46,18 +46,12 @@ func (r *Render) Setup() {
 	}
 }
 
-// getCurrentPrefix to get current prefix.
-// If live-prefix is enabled, return live-prefix.
-func (r *Render) getCurrentPrefix() string {
-	return r.prefixCallback()
-}
-
 func (r *Render) renderPrefix() {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
 	if _, err := r.out.WriteString("\r"); err != nil {
 		panic(err)
 	}
-	if _, err := r.out.WriteString(r.getCurrentPrefix()); err != nil {
+	if _, err := r.out.WriteString(r.prefixCallback()); err != nil {
 		panic(err)
 	}
 	r.out.SetColor(DefaultColor, DefaultColor, false)
@@ -99,7 +93,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	if len(suggestions) == 0 {
 		return
 	}
-	prefix := r.getCurrentPrefix()
+	prefix := r.prefixCallback()
 	formatted, width := formatSuggestions(
 		suggestions,
 		r.col-istrings.GetWidth(prefix)-1, // -1 means a width of scrollbar
@@ -191,7 +185,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 	r.clear(r.previousCursor)
 
 	line := buffer.Text()
-	prefix := r.getCurrentPrefix()
+	prefix := r.prefixCallback()
 	prefixWidth := istrings.GetWidth(prefix)
 	cursor := positionAtEndOfString(prefix+line, r.col)
 
@@ -287,7 +281,7 @@ func (r *Render) lex(lexer Lexer, input string) {
 // BreakLine to break line.
 func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 	// Erasing and Render
-	cursor := positionAtEndOfString(buffer.Document().TextBeforeCursor()+r.getCurrentPrefix(), r.col)
+	cursor := positionAtEndOfString(buffer.Document().TextBeforeCursor()+r.prefixCallback(), r.col)
 	r.clear(cursor)
 
 	r.renderPrefix()
