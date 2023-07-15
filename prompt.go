@@ -147,6 +147,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, userInput *UserInput) {
 	completing := p.completion.Completing()
 	p.handleCompletionKeyBinding(key, completing)
 
+keySwitch:
 	switch key {
 	case Enter, ControlJ, ControlM:
 		indent, execute := p.executeOnEnterCallback(p.buf.Text(), p.indentSize)
@@ -167,6 +168,40 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, userInput *UserInput) {
 		if userInput.input != "" {
 			p.history.Add(userInput.input)
 		}
+	case Tab:
+		if len(p.completion.GetSuggestions()) > 0 {
+			// If there are any suggestions, select the next one
+			p.completion.Next()
+			break
+		}
+
+		// if there are no suggestions insert indentation
+		newBytes := make([]byte, 0, len(b))
+		for _, byt := range b {
+			switch byt {
+			case '\t':
+				for i := 0; i < p.indentSize; i++ {
+					newBytes = append(newBytes, IndentUnit)
+				}
+			default:
+				newBytes = append(newBytes, byt)
+			}
+		}
+		p.buf.InsertText(string(newBytes), false, true)
+	case BackTab:
+		if len(p.completion.GetSuggestions()) > 0 {
+			// If there are any suggestions, select the previous one
+			p.completion.Previous()
+			break
+		}
+
+		text := p.buf.Document().CurrentLineBeforeCursor()
+		for _, char := range text {
+			if char != IndentUnit {
+				break keySwitch
+			}
+		}
+		p.buf.DeleteBeforeCursor(istrings.RuneNumber(p.indentSize))
 	case ControlC:
 		p.renderer.BreakLine(p.buf, p.lexer)
 		p.buf = NewBuffer()
@@ -228,14 +263,12 @@ func (p *Prompt) handleCompletionKeyBinding(key Key, completing bool) {
 		if completing || p.completionOnDown {
 			p.completion.Next()
 		}
-	case Tab, ControlI:
+	case ControlI:
 		p.completion.Next()
 	case Up:
 		if completing {
 			p.completion.Previous()
 		}
-	case BackTab:
-		p.completion.Previous()
 	default:
 		if s, ok := p.completion.GetSelectedSuggestion(); ok {
 			w := p.buf.Document().GetWordBeforeCursorUntilSeparator(p.completion.wordSeparator)
@@ -346,7 +379,11 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 				break
 			}
 			bytes = bytes[:n]
-			if len(bytes) != 1 || bytes[0] != 0 {
+			if len(bytes) == 1 && bytes[0] == '\t' {
+				// if only a single Tab key has been pressed
+				// handle it as a keybind
+				bufCh <- bytes
+			} else if len(bytes) != 1 || bytes[0] != 0 {
 				newBytes := make([]byte, 0, len(bytes))
 				for _, byt := range bytes {
 					switch byt {

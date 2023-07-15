@@ -18,7 +18,7 @@ func completer(in prompt.Document) []prompt.Suggest {
 
 func main() {
 	in := prompt.Input(
-		">>> ",
+		prompt.WithPrefix(">>> "),
 		prompt.WithTitle("sql-prompt"),
 		prompt.WithHistory([]string{"SELECT * FROM users;"}),
 		prompt.WithPrefixTextColor(prompt.Yellow),
