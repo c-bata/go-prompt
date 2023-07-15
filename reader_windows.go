@@ -58,7 +58,7 @@ func (p *WindowsReader) Read(buff []byte) (int, error) {
 		if err != nil {
 			break
 		}
-		n += utf8.EncodeRune(buf[n:], r)
+		n += utf8.EncodeRune(buff[n:], r)
 	}
 	return n, nil
 }
