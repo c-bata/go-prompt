@@ -29,17 +29,18 @@ This release aims to make the code a bit cleaner, fix a couple of bugs and provi
 - `prompt.Lexer`, `prompt.Token`, `prompt.SimpleToken`, `prompt.EagerLexer`, `prompt.LexerFunc` -- new syntax highlighting functionality
 - `prompt.ExecuteOnEnterCallback` -- new dynamic <kbd>Enter</kbd> functionality (decide whether to insert a newline and indent or execute the input)
 
-- `_example/bang-executor` -- a sample program which uses the new `ExecuteOnEnterCallback`. Pressing <kbd>Enter</kbd> will insert a newline unless the input ends with an exclamation point `!` (then it gets executed).
-- `_example/even-lexer` -- a sample program which shows how to use the new lexer feature. It implements a simple lexer which colours every character with an even index green.
+- examples:
+  - `_example/bang-executor` -- a sample program which uses the new `ExecuteOnEnterCallback`. Pressing <kbd>Enter</kbd> will insert a newline unless the input ends with an exclamation point `!` (then it gets executed).
+  - `_example/even-lexer` -- a sample program which shows how to use the new lexer feature. It implements a simple lexer which colours every character with an even index green.
 
 ### Changed
 
 - Update Go from 1.16 to 1.19
-- The cursor can move in 2D.
+- The cursor can move in 2D (left-right, up-down)
 - The Up arrow key will jump to the line above if the cursor is beyond the first line, but it will replace the input with the previous history entry if it's on the first line (like in Ruby's irb)
 - The Down arrow key will jump to the line below if the cursor is before the last line, but it will replace the input with the next history entry if it's on the last line (like in Ruby's irb)
 - <kbd>Tab</kbd> will insert a single indentation level when there are no suggestions
-- <kbd>Shift</kbd> + <kbd>Tab</kbd> will delete a single indentation level when there are no suggestions and the line before the cursors consists only of indentation (spaces)
+- <kbd>Shift</kbd> + <kbd>Tab</kbd> will delete a single indentation level when there are no suggestions and the line before the cursor consists only of indentation (spaces)
 - Make `Completer` optional when creating a new `prompt.Prompt`. Change the signature of `prompt.New` from `func New(Executor, Completer, ...Option) *Prompt` to `func New(Executor, ...Option) *Prompt`
 - Make `prefix` optional in `prompt.Input`. Change the signature of `prompt.Input` from `func Input(string, ...Option) string` to `func Input(...Option) string`.
 - Rename `prompt.ConsoleParser` to `prompt.Reader` and make it embed `io.ReadCloser`
@@ -77,9 +78,9 @@ This release aims to make the code a bit cleaner, fix a couple of bugs and provi
 ### Fixed
 
 - Make pasting multiline text work properly
-- Make pasting text with tabs work properly (tabs get replaced with spaces)
+- Make pasting text with tabs work properly (tabs get replaced with indentation -- spaces)
 - Introduce `strings.ByteNumber`, `strings.RuneNumber`, `strings.StringWidth` to reduce the ambiguity of when to use which of the three main units used by this library to measure string length and index parts of strings. Several subtle bugs (using the wrong unit) causing panics have been fixed this way.
-- Remove a `/dev/tty` leak in `PosixReader` (old `PosixParser`)
+- Remove a `/dev/tty` leak in `prompt.PosixReader` (old `prompt.PosixParser`)
 
 ### Removed
 
