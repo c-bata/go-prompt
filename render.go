@@ -6,7 +6,6 @@ import (
 
 	"github.com/elk-language/go-prompt/debug"
 	istrings "github.com/elk-language/go-prompt/strings"
-	runewidth "github.com/mattn/go-runewidth"
 )
 
 // Render to render prompt information from state of Buffer.
@@ -16,7 +15,7 @@ type Render struct {
 	breakLineCallback func(*Document)
 	title             string
 	row               uint16
-	col               istrings.StringWidth
+	col               istrings.Width
 
 	previousCursor Position
 
@@ -83,7 +82,7 @@ func (r *Render) prepareArea(lines int) {
 // UpdateWinSize called when window size is changed.
 func (r *Render) UpdateWinSize(ws *WinSize) {
 	r.row = ws.Row
-	r.col = istrings.StringWidth(ws.Col)
+	r.col = istrings.Width(ws.Col)
 }
 
 func (r *Render) renderWindowTooSmall() {
@@ -103,7 +102,7 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	prefix := r.getCurrentPrefix()
 	formatted, width := formatSuggestions(
 		suggestions,
-		int(r.col)-runewidth.StringWidth(prefix)-1, // -1 means a width of scrollbar
+		r.col-istrings.GetWidth(prefix)-1, // -1 means a width of scrollbar
 	)
 	// +1 means a width of scrollbar.
 	width++
@@ -193,14 +192,14 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 
 	line := buffer.Text()
 	prefix := r.getCurrentPrefix()
-	prefixWidth := istrings.StringWidth(runewidth.StringWidth(prefix))
+	prefixWidth := istrings.GetWidth(prefix)
 	cursor := positionAtEndOfString(prefix+line, r.col)
 
 	// prepare area
 	y := cursor.Y
 
 	h := y + 1 + int(completion.max)
-	if h > int(r.row) || completionMargin > int(r.col) {
+	if h > int(r.row) || completionMargin > r.col {
 		r.renderWindowTooSmall()
 		return
 	}
@@ -232,14 +231,14 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 
 	r.renderCompletion(buffer, completion)
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
-		cursor = r.backward(cursor, istrings.StringWidth(runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator))))
+		cursor = r.backward(cursor, istrings.GetWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
 
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
 		if _, err := r.out.WriteString(suggest.Text); err != nil {
 			panic(err)
 		}
 		r.out.SetColor(DefaultColor, DefaultColor, false)
-		cursor.X += istrings.StringWidth(runewidth.StringWidth(suggest.Text))
+		cursor.X += istrings.GetWidth(suggest.Text)
 		endOfSuggestionPos := cursor
 
 		rest := buffer.Document().TextAfterCursor()
@@ -321,7 +320,7 @@ func (r *Render) clear(cursor Position) {
 
 // backward moves cursor to backward from a current cursor position
 // regardless there is a line break.
-func (r *Render) backward(from Position, n istrings.StringWidth) Position {
+func (r *Render) backward(from Position, n istrings.Width) Position {
 	return r.move(from, Position{X: from.X - n, Y: from.Y})
 }
 
@@ -353,7 +352,7 @@ func clamp(high, low, x float64) float64 {
 	}
 }
 
-func alignNextLine(r *Render, col istrings.StringWidth) {
+func alignNextLine(r *Render, col istrings.Width) {
 	r.out.CursorDown(1)
 	if _, err := r.out.WriteString("\r"); err != nil {
 		panic(err)

@@ -18,8 +18,8 @@ func TestFormatCompletion(t *testing.T) {
 		prefix        string
 		suffix        string
 		expected      []Suggest
-		maxWidth      int
-		expectedWidth istrings.StringWidth
+		maxWidth      istrings.Width
+		expectedWidth istrings.Width
 	}{
 		{
 			scenario: "",

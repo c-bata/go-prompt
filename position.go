@@ -14,7 +14,7 @@ import (
 // (0, 0) represents the top-left corner of the prompt,
 // while (n, n) the bottom-right corner.
 type Position struct {
-	X istrings.StringWidth
+	X istrings.Width
 	Y int
 }
 
@@ -47,16 +47,16 @@ func (p Position) Subtract(other Position) Position {
 
 // positionAtEndOfString calculates the position of the
 // p at the end of the given string.
-func positionAtEndOfString(str string, columns istrings.StringWidth) Position {
+func positionAtEndOfString(str string, columns istrings.Width) Position {
 	pos := positionAtEndOfReader(strings.NewReader(str), columns)
 	return pos
 }
 
 // positionAtEndOfReader calculates the position of the
 // p at the end of the given io.Reader.
-func positionAtEndOfReader(reader io.RuneReader, columns istrings.StringWidth) Position {
+func positionAtEndOfReader(reader io.RuneReader, columns istrings.Width) Position {
 	var down int
-	var right istrings.StringWidth
+	var right istrings.Width
 
 charLoop:
 	for {
@@ -80,7 +80,7 @@ charLoop:
 			down++
 			right = 0
 		default:
-			right += istrings.StringWidth(runewidth.RuneWidth(char))
+			right += istrings.Width(runewidth.RuneWidth(char))
 			if right == columns {
 				right = 0
 				down++
