@@ -208,8 +208,8 @@ keySwitch:
 		p.buf = NewBuffer()
 		p.history.Clear()
 	case Up, ControlP:
-		cursor := p.buf.Document().GetCursorPosition(p.renderer.col)
-		if cursor.Y != 0 {
+		line := p.buf.Document().CursorPositionRow()
+		if line > 0 {
 			p.buf.CursorUp(1)
 			break
 		}
@@ -222,9 +222,9 @@ keySwitch:
 		}
 
 	case Down, ControlN:
-		endOfTextCursor := p.buf.Document().GetEndOfTextPosition(p.renderer.col)
-		cursor := p.buf.Document().GetCursorPosition(p.renderer.col)
-		if endOfTextCursor.Y > cursor.Y {
+		endOfTextRow := p.buf.Document().TextEndPositionRow()
+		row := p.buf.Document().CursorPositionRow()
+		if endOfTextRow > row {
 			p.buf.CursorDown(1)
 			break
 		}

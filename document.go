@@ -337,6 +337,16 @@ func (d *Document) CursorPositionRow() (row istrings.RuneNumber) {
 	return
 }
 
+// TextEndPositionRow returns the row of the end of the current text. (0-based.)
+func (d *Document) TextEndPositionRow() (row istrings.RuneNumber) {
+	textLength := istrings.RuneCount(d.Text)
+	if textLength == 0 {
+		return 0
+	}
+	row, _ = d.findLineStartIndex(textLength - 1)
+	return
+}
+
 // CursorPositionCol returns the current column. (0-based.)
 func (d *Document) CursorPositionCol() (col istrings.RuneNumber) {
 	_, index := d.findLineStartIndex(d.cursorPosition)

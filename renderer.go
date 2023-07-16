@@ -240,7 +240,7 @@ func (r *Renderer) Render(buffer *Buffer, completion *CompletionManager, lexer L
 
 	targetCursor := buffer.DisplayCursorPosition(r.col - prefixWidth)
 	targetCursor.X += prefixWidth
-	Log("col: %#v, targetCursor: %#v, cursor: %#v\n", r.col-prefixWidth, targetCursor, cursor)
+	// Log("col: %#v, targetCursor: %#v, cursor: %#v\n", r.col-prefixWidth, targetCursor, cursor)
 	cursor = r.move(cursor, targetCursor)
 
 	r.renderCompletion(buffer, completion)
@@ -290,6 +290,7 @@ func (r *Renderer) renderText(lexer Lexer, text string) {
 			lineBuffer.Reset()
 			if char != '\n' {
 				lineBuffer.WriteRune(char)
+				lineCharIndex += istrings.GetRuneWidth(char)
 			}
 			if firstIteration {
 				prefix = multilinePrefix
