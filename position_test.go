@@ -13,7 +13,7 @@ import (
 func TestPositionAtEndOfString(t *testing.T) {
 	tests := map[string]struct {
 		input   string
-		columns istrings.StringWidth
+		columns istrings.Width
 		want    Position
 	}{
 		"empty": {

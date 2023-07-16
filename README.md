@@ -34,7 +34,10 @@ func completer(d prompt.Document) []prompt.Suggest {
 
 func main() {
 	fmt.Println("Please select table.")
-	t := prompt.Input("> ", completer)
+	t := prompt.Input(
+		prompt.WithPrefix("> "),
+		prompt.WithCompleter(completer),
+	)
 	fmt.Println("You selected " + t)
 }
 ```

@@ -2,6 +2,8 @@ package strings
 
 import (
 	"unicode/utf8"
+
+	"github.com/mattn/go-runewidth"
 )
 
 // Get the length of the string in bytes.
@@ -12,6 +14,16 @@ func Len(s string) ByteNumber {
 // Get the length of the string in runes.
 func RuneCount(s string) RuneNumber {
 	return RuneNumber(utf8.RuneCountInString(s))
+}
+
+// Get the width of the string (how many columns it takes upt in the terminal).
+func GetWidth(s string) Width {
+	return Width(runewidth.StringWidth(s))
+}
+
+// Get the width of the rune (how many columns it takes upt in the terminal).
+func GetRuneWidth(char rune) Width {
+	return Width(runewidth.RuneWidth(char))
 }
 
 // IndexNotByte is similar with strings.IndexByte but showing the opposite behavior.

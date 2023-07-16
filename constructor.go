@@ -13,7 +13,7 @@ const DefaultIndentSize = 2
 // that constitute a single indentation level.
 func WithIndentSize(i int) Option {
 	return func(p *Prompt) error {
-		p.indentSize = i
+		p.renderer.indentSize = i
 		return nil
 	}
 }
@@ -312,37 +312,14 @@ func DefaultPrefixCallback() string {
 
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, opts ...Option) *Prompt {
-	defaultWriter := NewStdoutWriter()
-	registerWriter(defaultWriter)
-
 	pt := &Prompt{
-		reader: NewStdinReader(),
-		renderer: &Render{
-			out:                          defaultWriter,
-			prefixCallback:               DefaultPrefixCallback,
-			prefixTextColor:              Blue,
-			prefixBGColor:                DefaultColor,
-			inputTextColor:               DefaultColor,
-			inputBGColor:                 DefaultColor,
-			previewSuggestionTextColor:   Green,
-			previewSuggestionBGColor:     DefaultColor,
-			suggestionTextColor:          White,
-			suggestionBGColor:            Cyan,
-			selectedSuggestionTextColor:  Black,
-			selectedSuggestionBGColor:    Turquoise,
-			descriptionTextColor:         Black,
-			descriptionBGColor:           Turquoise,
-			selectedDescriptionTextColor: White,
-			selectedDescriptionBGColor:   Cyan,
-			scrollbarThumbColor:          DarkGray,
-			scrollbarBGColor:             Cyan,
-		},
+		reader:                 NewStdinReader(),
+		renderer:               NewRenderer(),
 		buf:                    NewBuffer(),
 		executor:               executor,
 		history:                NewHistory(),
 		completion:             NewCompletionManager(6),
 		executeOnEnterCallback: DefaultExecuteOnEnterCallback,
-		indentSize:             DefaultIndentSize,
 		keyBindMode:            EmacsKeyBind, // All the above assume that bash is running in the default Emacs setting
 	}
 

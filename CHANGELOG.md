@@ -42,9 +42,10 @@ This release aims to make the code a bit cleaner, fix a couple of bugs and provi
 - <kbd>Tab</kbd> will insert a single indentation level when there are no suggestions
 - <kbd>Shift</kbd> + <kbd>Tab</kbd> will delete a single indentation level when there are no suggestions and the line before the cursor consists only of indentation (spaces)
 - Make `Completer` optional when creating a new `prompt.Prompt`. Change the signature of `prompt.New` from `func New(Executor, Completer, ...Option) *Prompt` to `func New(Executor, ...Option) *Prompt`
-- Make `prefix` optional in `prompt.Input`. Change the signature of `prompt.Input` from `func Input(string, ...Option) string` to `func Input(...Option) string`.
+- Make `prefix` and `completer` optional in `prompt.Input`. Change the signature of `prompt.Input` from `func Input(string, Completer, ...Option) string` to `func Input(...Option) string`.
 - Rename `prompt.ConsoleParser` to `prompt.Reader` and make it embed `io.ReadCloser`
 - Rename `prompt.ConsoleWriter` to `prompt.Writer` and make it embed `io.Writer` and `io.StringWriter`
+- Rename `prompt.Render` to `prompt.Renderer`
 - Rename `prompt.OptionTitle` to `prompt.WithTitle`
 - Rename `prompt.OptionPrefix` to `prompt.WithPrefix`
 - Rename `prompt.OptionInitialBufferText` to `prompt.WithInitialText`
@@ -79,7 +80,7 @@ This release aims to make the code a bit cleaner, fix a couple of bugs and provi
 
 - Make pasting multiline text work properly
 - Make pasting text with tabs work properly (tabs get replaced with indentation -- spaces)
-- Introduce `strings.ByteNumber`, `strings.RuneNumber`, `strings.StringWidth` to reduce the ambiguity of when to use which of the three main units used by this library to measure string length and index parts of strings. Several subtle bugs (using the wrong unit) causing panics have been fixed this way.
+- Introduce `strings.ByteNumber`, `strings.RuneNumber`, `strings.Width` to reduce the ambiguity of when to use which of the three main units used by this library to measure string length and index parts of strings. Several subtle bugs (using the wrong unit) causing panics have been fixed this way.
 - Remove a `/dev/tty` leak in `prompt.PosixReader` (old `prompt.PosixParser`)
 
 ### Removed

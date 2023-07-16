@@ -17,8 +17,8 @@ const (
 )
 
 var (
-	leftMargin       = runewidth.StringWidth(leftPrefix + leftSuffix)
-	rightMargin      = runewidth.StringWidth(rightPrefix + rightSuffix)
+	leftMargin       = istrings.GetWidth(leftPrefix + leftSuffix)
+	rightMargin      = istrings.GetWidth(rightPrefix + rightSuffix)
 	completionMargin = leftMargin + rightMargin
 )
 
@@ -114,18 +114,18 @@ func deleteBreakLineCharacters(s string) string {
 	return s
 }
 
-func formatTexts(o []string, max int, prefix, suffix string) (new []string, width int) {
+func formatTexts(o []string, max istrings.Width, prefix, suffix string) (new []string, width istrings.Width) {
 	l := len(o)
 	n := make([]string, l)
 
-	lenPrefix := runewidth.StringWidth(prefix)
-	lenSuffix := runewidth.StringWidth(suffix)
-	lenShorten := runewidth.StringWidth(shortenSuffix)
+	lenPrefix := istrings.GetWidth(prefix)
+	lenSuffix := istrings.GetWidth(suffix)
+	lenShorten := istrings.GetWidth(shortenSuffix)
 	min := lenPrefix + lenSuffix + lenShorten
 	for i := 0; i < l; i++ {
 		o[i] = deleteBreakLineCharacters(o[i])
 
-		w := runewidth.StringWidth(o[i])
+		w := istrings.GetWidth(o[i])
 		if width < w {
 			width = w
 		}
@@ -142,21 +142,21 @@ func formatTexts(o []string, max int, prefix, suffix string) (new []string, widt
 	}
 
 	for i := 0; i < l; i++ {
-		x := runewidth.StringWidth(o[i])
+		x := istrings.GetWidth(o[i])
 		if x <= width {
-			spaces := strings.Repeat(" ", width-x)
+			spaces := strings.Repeat(" ", int(width-x))
 			n[i] = prefix + o[i] + spaces + suffix
 		} else if x > width {
-			x := runewidth.Truncate(o[i], width, shortenSuffix)
+			x := runewidth.Truncate(o[i], int(width), shortenSuffix)
 			// When calling runewidth.Truncate("您好xxx您好xxx", 11, "...") returns "您好xxx..."
 			// But the length of this result is 10. So we need fill right using runewidth.FillRight.
-			n[i] = prefix + runewidth.FillRight(x, width) + suffix
+			n[i] = prefix + runewidth.FillRight(x, int(width)) + suffix
 		}
 	}
 	return n, lenPrefix + width + lenSuffix
 }
 
-func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width istrings.StringWidth) {
+func formatSuggestions(suggests []Suggest, max istrings.Width) (new []Suggest, width istrings.Width) {
 	num := len(suggests)
 	new = make([]Suggest, num)
 
@@ -178,7 +178,7 @@ func formatSuggestions(suggests []Suggest, max int) (new []Suggest, width istrin
 	for i := 0; i < num; i++ {
 		new[i] = Suggest{Text: left[i], Description: right[i]}
 	}
-	return new, istrings.StringWidth(leftWidth + rightWidth)
+	return new, istrings.Width(leftWidth + rightWidth)
 }
 
 // Constructor option for CompletionManager.

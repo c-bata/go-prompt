@@ -3,20 +3,23 @@ package prompt
 import (
 	"runtime"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/elk-language/go-prompt/debug"
 	istrings "github.com/elk-language/go-prompt/strings"
-	runewidth "github.com/mattn/go-runewidth"
 )
 
-// Render to render prompt information from state of Buffer.
-type Render struct {
+const multilinePrefixCharacter = '.'
+
+// Renderer to render prompt information from state of Buffer.
+type Renderer struct {
 	out               Writer
 	prefixCallback    PrefixCallback
 	breakLineCallback func(*Document)
 	title             string
 	row               uint16
-	col               istrings.StringWidth
+	col               istrings.Width
+	indentSize        int // How many spaces constitute a single indentation level
 
 	previousCursor Position
 
@@ -39,39 +42,61 @@ type Render struct {
 	scrollbarBGColor             Color
 }
 
+// Build a new Renderer.
+func NewRenderer() *Renderer {
+	defaultWriter := NewStdoutWriter()
+	registerWriter(defaultWriter)
+
+	return &Renderer{
+		out:                          defaultWriter,
+		indentSize:                   DefaultIndentSize,
+		prefixCallback:               DefaultPrefixCallback,
+		prefixTextColor:              Blue,
+		prefixBGColor:                DefaultColor,
+		inputTextColor:               DefaultColor,
+		inputBGColor:                 DefaultColor,
+		previewSuggestionTextColor:   Green,
+		previewSuggestionBGColor:     DefaultColor,
+		suggestionTextColor:          White,
+		suggestionBGColor:            Cyan,
+		selectedSuggestionTextColor:  Black,
+		selectedSuggestionBGColor:    Turquoise,
+		descriptionTextColor:         Black,
+		descriptionBGColor:           Turquoise,
+		selectedDescriptionTextColor: White,
+		selectedDescriptionBGColor:   Cyan,
+		scrollbarThumbColor:          DarkGray,
+		scrollbarBGColor:             Cyan,
+	}
+}
+
 // Setup to initialize console output.
-func (r *Render) Setup() {
+func (r *Renderer) Setup() {
 	if r.title != "" {
 		r.out.SetTitle(r.title)
 		debug.AssertNoError(r.out.Flush())
 	}
 }
 
-// getCurrentPrefix to get current prefix.
-// If live-prefix is enabled, return live-prefix.
-func (r *Render) getCurrentPrefix() string {
-	return r.prefixCallback()
-}
-
-func (r *Render) renderPrefix() {
+func (r *Renderer) renderPrefix(prefix string) {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
 	if _, err := r.out.WriteString("\r"); err != nil {
 		panic(err)
 	}
-	if _, err := r.out.WriteString(r.getCurrentPrefix()); err != nil {
+	if _, err := r.out.WriteString(prefix); err != nil {
 		panic(err)
 	}
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
 // Close to clear title and erasing.
-func (r *Render) Close() {
+func (r *Renderer) Close() {
 	r.out.ClearTitle()
 	r.out.EraseDown()
 	debug.AssertNoError(r.out.Flush())
 }
 
-func (r *Render) prepareArea(lines int) {
+func (r *Renderer) prepareArea(lines int) {
 	for i := 0; i < lines; i++ {
 		r.out.ScrollDown()
 	}
@@ -81,12 +106,12 @@ func (r *Render) prepareArea(lines int) {
 }
 
 // UpdateWinSize called when window size is changed.
-func (r *Render) UpdateWinSize(ws *WinSize) {
+func (r *Renderer) UpdateWinSize(ws *WinSize) {
 	r.row = ws.Row
-	r.col = istrings.StringWidth(ws.Col)
+	r.col = istrings.Width(ws.Col)
 }
 
-func (r *Render) renderWindowTooSmall() {
+func (r *Renderer) renderWindowTooSmall() {
 	r.out.CursorGoTo(0, 0)
 	r.out.EraseScreen()
 	r.out.SetColor(DarkRed, White, false)
@@ -95,15 +120,15 @@ func (r *Render) renderWindowTooSmall() {
 	}
 }
 
-func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
+func (r *Renderer) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	suggestions := completions.GetSuggestions()
 	if len(suggestions) == 0 {
 		return
 	}
-	prefix := r.getCurrentPrefix()
+	prefix := r.prefixCallback()
 	formatted, width := formatSuggestions(
 		suggestions,
-		int(r.col)-runewidth.StringWidth(prefix)-1, // -1 means a width of scrollbar
+		r.col-istrings.GetWidth(prefix)-1, // -1 means a width of scrollbar
 	)
 	// +1 means a width of scrollbar.
 	width++
@@ -181,8 +206,8 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
-// Render renders to the console.
-func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lexer) {
+// Renderer renders to the console.
+func (r *Renderer) Renderer(buffer *Buffer, completion *CompletionManager, lexer Lexer) {
 	// In situations where a pseudo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col == 0 {
@@ -191,16 +216,17 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 	defer func() { debug.AssertNoError(r.out.Flush()) }()
 	r.clear(r.previousCursor)
 
-	line := buffer.Text()
-	prefix := r.getCurrentPrefix()
-	prefixWidth := istrings.StringWidth(runewidth.StringWidth(prefix))
-	cursor := positionAtEndOfString(prefix+line, r.col)
+	text := buffer.Text()
+	prefix := r.prefixCallback()
+	prefixWidth := istrings.GetWidth(prefix)
+	cursor := positionAtEndOfString(text, r.col)
+	cursor.X += prefixWidth
 
 	// prepare area
 	y := cursor.Y
 
 	h := y + 1 + int(completion.max)
-	if h > int(r.row) || completionMargin > int(r.col) {
+	if h > int(r.row) || completionMargin > r.col {
 		r.renderWindowTooSmall()
 		return
 	}
@@ -209,48 +235,31 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 	r.out.HideCursor()
 	defer r.out.ShowCursor()
 
-	r.renderPrefix()
-
-	if lexer != nil {
-		r.lex(lexer, line)
-	} else {
-		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-		if _, err := r.out.WriteString(line); err != nil {
-			panic(err)
-		}
-	}
+	r.renderText(lexer, text)
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 
 	r.lineWrap(&cursor)
 
 	targetCursor := buffer.DisplayCursorPosition(r.col)
-	if targetCursor.Y == 0 {
-		targetCursor.X += prefixWidth
-	}
+	targetCursor.X += prefixWidth
 	cursor = r.move(cursor, targetCursor)
 
 	r.renderCompletion(buffer, completion)
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
-		cursor = r.backward(cursor, istrings.StringWidth(runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator))))
+		cursor = r.backward(cursor, istrings.GetWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
 
 		r.out.SetColor(r.previewSuggestionTextColor, r.previewSuggestionBGColor, false)
 		if _, err := r.out.WriteString(suggest.Text); err != nil {
 			panic(err)
 		}
 		r.out.SetColor(DefaultColor, DefaultColor, false)
-		cursor.X += istrings.StringWidth(runewidth.StringWidth(suggest.Text))
+		cursor.X += istrings.GetWidth(suggest.Text)
 		endOfSuggestionPos := cursor
 
 		rest := buffer.Document().TextAfterCursor()
 
-		if lexer != nil {
-			r.lex(lexer, rest)
-		} else {
-			if _, err := r.out.WriteString(rest); err != nil {
-				panic(err)
-			}
-		}
+		r.renderText(lexer, text)
 
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
@@ -263,44 +272,121 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 	r.previousCursor = cursor
 }
 
+func (r *Renderer) renderText(lexer Lexer, text string) {
+	if lexer != nil {
+		r.lex(lexer, text)
+		return
+	}
+
+	prefix := r.prefixCallback()
+	multilinePrefix := r.getMultilinePrefix(prefix)
+	firstIteration := true
+	var lineBuffer strings.Builder
+	for _, char := range text {
+		lineBuffer.WriteRune(char)
+		if char != '\n' {
+			continue
+		}
+
+		r.renderLine(prefix, lineBuffer.String(), r.inputTextColor)
+		lineBuffer.Reset()
+		if firstIteration {
+			prefix = multilinePrefix
+			firstIteration = false
+		}
+	}
+
+	r.renderLine(prefix, lineBuffer.String(), r.inputTextColor)
+}
+
+func (r *Renderer) renderLine(prefix, line string, color Color) {
+	r.renderPrefix(prefix)
+	r.writeString(line, color)
+}
+
+func (r *Renderer) writeString(text string, color Color) {
+	r.out.SetColor(color, r.inputBGColor, false)
+	if _, err := r.out.WriteString(text); err != nil {
+		panic(err)
+	}
+}
+
+func (r *Renderer) getMultilinePrefix(prefix string) string {
+	var spaceCount int
+	var dotCount int
+	var nonSpaceCharSeen bool
+	for {
+		if len(prefix) == 0 {
+			break
+		}
+		char, size := utf8.DecodeLastRuneInString(prefix)
+		prefix = prefix[:len(prefix)-size]
+		charWidth := istrings.GetRuneWidth(char)
+		if nonSpaceCharSeen {
+			dotCount += int(charWidth)
+			continue
+		}
+		if char != ' ' {
+			nonSpaceCharSeen = true
+			dotCount += int(charWidth)
+			continue
+		}
+		spaceCount += int(charWidth)
+	}
+
+	var multilinePrefixBuilder strings.Builder
+
+	for i := 0; i < dotCount; i++ {
+		multilinePrefixBuilder.WriteByte(multilinePrefixCharacter)
+	}
+	for i := 0; i < spaceCount; i++ {
+		multilinePrefixBuilder.WriteByte(IndentUnit)
+	}
+
+	return multilinePrefixBuilder.String()
+}
+
 // lex processes the given input with the given lexer
 // and writes the result
-func (r *Render) lex(lexer Lexer, input string) {
+func (r *Renderer) lex(lexer Lexer, input string) {
 	lexer.Init(input)
 	s := input
 
+	prefix := r.prefixCallback()
+	r.renderPrefix(prefix)
+	multilinePrefix := r.getMultilinePrefix(prefix)
 	for {
 		token, ok := lexer.Next()
 		if !ok {
 			break
 		}
 
-		a := strings.SplitAfter(s, token.Lexeme())
-		s = strings.TrimPrefix(s, a[0])
+		text := strings.SplitAfter(s, token.Lexeme())[0]
+		s = strings.TrimPrefix(s, text)
 
-		r.out.SetColor(token.Color(), r.inputBGColor, false)
-		if _, err := r.out.WriteString(a[0]); err != nil {
-			panic(err)
+		var lineBuffer strings.Builder
+		for _, char := range text {
+			lineBuffer.WriteRune(char)
+			if char != '\n' {
+				continue
+			}
+
+			r.writeString(lineBuffer.String(), token.Color())
+			r.renderPrefix(multilinePrefix)
+			lineBuffer.Reset()
 		}
+		r.writeString(lineBuffer.String(), token.Color())
 	}
 }
 
 // BreakLine to break line.
-func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
-	// Erasing and Render
-	cursor := positionAtEndOfString(buffer.Document().TextBeforeCursor()+r.getCurrentPrefix(), r.col)
+func (r *Renderer) BreakLine(buffer *Buffer, lexer Lexer) {
+	// Erasing and Renderer
+	cursor := positionAtEndOfString(buffer.Document().TextBeforeCursor()+r.prefixCallback(), r.col)
 	r.clear(cursor)
 
-	r.renderPrefix()
-
-	if lexer != nil {
-		r.lex(lexer, buffer.Document().Text+"\n")
-	} else {
-		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-		if _, err := r.out.WriteString(buffer.Document().Text + "\n"); err != nil {
-			panic(err)
-		}
-	}
+	text := buffer.Document().Text + "\n"
+	r.renderText(lexer, text)
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 
@@ -314,27 +400,27 @@ func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 
 // clear erases the screen from a beginning of input
 // even if there is line break which means input length exceeds a window's width.
-func (r *Render) clear(cursor Position) {
+func (r *Renderer) clear(cursor Position) {
 	r.move(cursor, Position{})
 	r.out.EraseDown()
 }
 
 // backward moves cursor to backward from a current cursor position
 // regardless there is a line break.
-func (r *Render) backward(from Position, n istrings.StringWidth) Position {
+func (r *Renderer) backward(from Position, n istrings.Width) Position {
 	return r.move(from, Position{X: from.X - n, Y: from.Y})
 }
 
 // move moves cursor to specified position from the beginning of input
 // even if there is a line break.
-func (r *Render) move(from, to Position) Position {
+func (r *Renderer) move(from, to Position) Position {
 	newPosition := from.Subtract(to)
 	r.out.CursorUp(newPosition.Y)
 	r.out.CursorBackward(int(newPosition.X))
 	return to
 }
 
-func (r *Render) lineWrap(cursor *Position) {
+func (r *Renderer) lineWrap(cursor *Position) {
 	if runtime.GOOS != "windows" && cursor.X > 0 && cursor.X%r.col == 0 {
 		cursor.X = 0
 		cursor.Y += 1
@@ -353,7 +439,7 @@ func clamp(high, low, x float64) float64 {
 	}
 }
 
-func alignNextLine(r *Render, col istrings.StringWidth) {
+func alignNextLine(r *Renderer, col istrings.Width) {
 	r.out.CursorDown(1)
 	if _, err := r.out.WriteString("\r"); err != nil {
 		panic(err)

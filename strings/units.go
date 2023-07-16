@@ -10,4 +10,4 @@ type RuneNumber int
 
 // Numeric type that represents the visible
 // width of characters in a string as seen in a terminal emulator.
-type StringWidth int
+type Width int

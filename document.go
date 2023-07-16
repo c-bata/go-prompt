@@ -35,7 +35,7 @@ func (d *Document) LastKeyStroke() Key {
 
 // DisplayCursorPosition returns the cursor position on rendered text on terminal emulators.
 // So if Document is "日本(cursor)語", DisplayedCursorPosition returns 4 because '日' and '本' are double width characters.
-func (d *Document) DisplayCursorPosition(columns istrings.StringWidth) Position {
+func (d *Document) DisplayCursorPosition(columns istrings.Width) Position {
 	str := utf8string.NewString(d.Text).Slice(0, int(d.cursorPosition))
 	return positionAtEndOfString(str, columns)
 }
@@ -381,12 +381,12 @@ func (d *Document) GetCursorRightPosition(count istrings.RuneNumber) istrings.Ru
 }
 
 // Get the current cursor position.
-func (d *Document) GetCursorPosition(columns istrings.StringWidth) Position {
+func (d *Document) GetCursorPosition(columns istrings.Width) Position {
 	return positionAtEndOfString(d.TextBeforeCursor(), columns)
 }
 
 // Get the position of the end of the current text.
-func (d *Document) GetEndOfTextPosition(columns istrings.StringWidth) Position {
+func (d *Document) GetEndOfTextPosition(columns istrings.Width) Position {
 	return positionAtEndOfString(d.Text, columns)
 }
 
