@@ -1,7 +1,6 @@
 package prompt
 
 import (
-	"runtime"
 	"strings"
 	"unicode/utf8"
 
@@ -126,6 +125,7 @@ func (r *Renderer) renderCompletion(buf *Buffer, completions *CompletionManager)
 		return
 	}
 	prefix := r.prefixCallback()
+	prefixWidth := istrings.GetWidth(prefix)
 	formatted, width := formatSuggestions(
 		suggestions,
 		r.col-istrings.GetWidth(prefix)-1, // -1 means a width of scrollbar
@@ -140,7 +140,7 @@ func (r *Renderer) renderCompletion(buf *Buffer, completions *CompletionManager)
 	formatted = formatted[completions.verticalScroll : completions.verticalScroll+windowHeight]
 	r.prepareArea(windowHeight)
 
-	cursor := positionAtEndOfString(prefix+buf.Document().TextBeforeCursor(), r.col)
+	cursor := positionAtEndOfString(prefix+buf.Document().TextBeforeCursor(), r.col-prefixWidth)
 	x := cursor.X
 	if x+width >= r.col {
 		cursor = r.backward(cursor, x+width-r.col)
@@ -194,7 +194,6 @@ func (r *Renderer) renderCompletion(buf *Buffer, completions *CompletionManager)
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
 		c := cursor.Add(Position{X: width})
-		r.lineWrap(&c)
 		r.backward(c, width)
 	}
 
@@ -219,7 +218,7 @@ func (r *Renderer) Render(buffer *Buffer, completion *CompletionManager, lexer L
 	text := buffer.Text()
 	prefix := r.prefixCallback()
 	prefixWidth := istrings.GetWidth(prefix)
-	cursor := positionAtEndOfString(text, r.col)
+	cursor := positionAtEndOfString(text, r.col-prefixWidth)
 	cursor.X += prefixWidth
 
 	// prepare area
@@ -239,10 +238,9 @@ func (r *Renderer) Render(buffer *Buffer, completion *CompletionManager, lexer L
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 
-	r.lineWrap(&cursor)
-
-	targetCursor := buffer.DisplayCursorPosition(r.col)
+	targetCursor := buffer.DisplayCursorPosition(r.col - prefixWidth)
 	targetCursor.X += prefixWidth
+	Log("col: %#v, targetCursor: %#v, cursor: %#v\n", r.col-prefixWidth, targetCursor, cursor)
 	cursor = r.move(cursor, targetCursor)
 
 	r.renderCompletion(buffer, completion)
@@ -263,9 +261,7 @@ func (r *Renderer) Render(buffer *Buffer, completion *CompletionManager, lexer L
 
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
-		cursor = cursor.Join(positionAtEndOfString(rest, r.col))
-
-		r.lineWrap(&cursor)
+		cursor = cursor.Join(positionAtEndOfString(rest, r.col-prefixWidth))
 
 		cursor = r.move(cursor, endOfSuggestionPos)
 	}
@@ -279,21 +275,31 @@ func (r *Renderer) renderText(lexer Lexer, text string) {
 	}
 
 	prefix := r.prefixCallback()
+	prefixWidth := istrings.GetWidth(prefix)
+	col := r.col - prefixWidth
 	multilinePrefix := r.getMultilinePrefix(prefix)
 	firstIteration := true
 	var lineBuffer strings.Builder
+	var lineCharIndex istrings.Width
+
 	for _, char := range text {
-		lineBuffer.WriteRune(char)
-		if char != '\n' {
+		if lineCharIndex >= col || char == '\n' {
+			lineBuffer.WriteRune('\n')
+			r.renderLine(prefix, lineBuffer.String(), r.inputTextColor)
+			lineCharIndex = 0
+			lineBuffer.Reset()
+			if char != '\n' {
+				lineBuffer.WriteRune(char)
+			}
+			if firstIteration {
+				prefix = multilinePrefix
+				firstIteration = false
+			}
 			continue
 		}
 
-		r.renderLine(prefix, lineBuffer.String(), r.inputTextColor)
-		lineBuffer.Reset()
-		if firstIteration {
-			prefix = multilinePrefix
-			firstIteration = false
-		}
+		lineBuffer.WriteRune(char)
+		lineCharIndex += istrings.GetRuneWidth(char)
 	}
 
 	r.renderLine(prefix, lineBuffer.String(), r.inputTextColor)
@@ -382,7 +388,10 @@ func (r *Renderer) lex(lexer Lexer, input string) {
 // BreakLine to break line.
 func (r *Renderer) BreakLine(buffer *Buffer, lexer Lexer) {
 	// Erasing and Renderer
-	cursor := positionAtEndOfString(buffer.Document().TextBeforeCursor()+r.prefixCallback(), r.col)
+	prefix := r.prefixCallback()
+	prefixWidth := istrings.GetWidth(prefix)
+	cursor := positionAtEndOfString(buffer.Document().TextBeforeCursor(), r.col-prefixWidth)
+	cursor.X += prefixWidth
 	r.clear(cursor)
 
 	text := buffer.Document().Text + "\n"
@@ -418,14 +427,6 @@ func (r *Renderer) move(from, to Position) Position {
 	r.out.CursorUp(newPosition.Y)
 	r.out.CursorBackward(int(newPosition.X))
 	return to
-}
-
-func (r *Renderer) lineWrap(cursor *Position) {
-	if runtime.GOOS != "windows" && cursor.X > 0 && cursor.X%r.col == 0 {
-		cursor.X = 0
-		cursor.Y += 1
-		r.out.WriteRaw([]byte{'\n'})
-	}
 }
 
 func clamp(high, low, x float64) float64 {

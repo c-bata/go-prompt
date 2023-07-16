@@ -32,6 +32,14 @@ func TestPositionAtEndOfString(t *testing.T) {
 				Y: 0,
 			},
 		},
+		"one word": {
+			input:   "foo",
+			columns: 20,
+			want: Position{
+				X: 3,
+				Y: 0,
+			},
+		},
 		"one-line fits in columns": {
 			input:   "foo bar",
 			columns: 20,
@@ -43,6 +51,14 @@ func TestPositionAtEndOfString(t *testing.T) {
 		"multiline": {
 			input:   "foo\nbar\n",
 			columns: 20,
+			want: Position{
+				X: 0,
+				Y: 2,
+			},
+		},
+		"one-line wrapping": {
+			input:   "foobar",
+			columns: 3,
 			want: Position{
 				X: 0,
 				Y: 2,
