@@ -206,8 +206,8 @@ func (r *Renderer) renderCompletion(buf *Buffer, completions *CompletionManager)
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
-// Renderer renders to the console.
-func (r *Renderer) Renderer(buffer *Buffer, completion *CompletionManager, lexer Lexer) {
+// Render renders to the console.
+func (r *Renderer) Render(buffer *Buffer, completion *CompletionManager, lexer Lexer) {
 	// In situations where a pseudo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col == 0 {
