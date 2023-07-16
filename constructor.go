@@ -312,32 +312,9 @@ func DefaultPrefixCallback() string {
 
 // New returns a Prompt with powerful auto-completion.
 func New(executor Executor, opts ...Option) *Prompt {
-	defaultWriter := NewStdoutWriter()
-	registerWriter(defaultWriter)
-
 	pt := &Prompt{
-		reader: NewStdinReader(),
-		renderer: &Render{
-			out:                          defaultWriter,
-			indentSize:                   DefaultIndentSize,
-			prefixCallback:               DefaultPrefixCallback,
-			prefixTextColor:              Blue,
-			prefixBGColor:                DefaultColor,
-			inputTextColor:               DefaultColor,
-			inputBGColor:                 DefaultColor,
-			previewSuggestionTextColor:   Green,
-			previewSuggestionBGColor:     DefaultColor,
-			suggestionTextColor:          White,
-			suggestionBGColor:            Cyan,
-			selectedSuggestionTextColor:  Black,
-			selectedSuggestionBGColor:    Turquoise,
-			descriptionTextColor:         Black,
-			descriptionBGColor:           Turquoise,
-			selectedDescriptionTextColor: White,
-			selectedDescriptionBGColor:   Cyan,
-			scrollbarThumbColor:          DarkGray,
-			scrollbarBGColor:             Cyan,
-		},
+		reader:                 NewStdinReader(),
+		renderer:               NewRenderer(),
 		buf:                    NewBuffer(),
 		executor:               executor,
 		history:                NewHistory(),

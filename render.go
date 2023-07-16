@@ -11,8 +11,8 @@ import (
 
 const multilinePrefixCharacter = '.'
 
-// Render to render prompt information from state of Buffer.
-type Render struct {
+// Renderer to render prompt information from state of Buffer.
+type Renderer struct {
 	out               Writer
 	prefixCallback    PrefixCallback
 	breakLineCallback func(*Document)
@@ -42,15 +42,43 @@ type Render struct {
 	scrollbarBGColor             Color
 }
 
+// Build a new Renderer.
+func NewRenderer() *Renderer {
+	defaultWriter := NewStdoutWriter()
+	registerWriter(defaultWriter)
+
+	return &Renderer{
+		out:                          defaultWriter,
+		indentSize:                   DefaultIndentSize,
+		prefixCallback:               DefaultPrefixCallback,
+		prefixTextColor:              Blue,
+		prefixBGColor:                DefaultColor,
+		inputTextColor:               DefaultColor,
+		inputBGColor:                 DefaultColor,
+		previewSuggestionTextColor:   Green,
+		previewSuggestionBGColor:     DefaultColor,
+		suggestionTextColor:          White,
+		suggestionBGColor:            Cyan,
+		selectedSuggestionTextColor:  Black,
+		selectedSuggestionBGColor:    Turquoise,
+		descriptionTextColor:         Black,
+		descriptionBGColor:           Turquoise,
+		selectedDescriptionTextColor: White,
+		selectedDescriptionBGColor:   Cyan,
+		scrollbarThumbColor:          DarkGray,
+		scrollbarBGColor:             Cyan,
+	}
+}
+
 // Setup to initialize console output.
-func (r *Render) Setup() {
+func (r *Renderer) Setup() {
 	if r.title != "" {
 		r.out.SetTitle(r.title)
 		debug.AssertNoError(r.out.Flush())
 	}
 }
 
-func (r *Render) renderPrefix(prefix string) {
+func (r *Renderer) renderPrefix(prefix string) {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
 	if _, err := r.out.WriteString("\r"); err != nil {
 		panic(err)
@@ -62,13 +90,13 @@ func (r *Render) renderPrefix(prefix string) {
 }
 
 // Close to clear title and erasing.
-func (r *Render) Close() {
+func (r *Renderer) Close() {
 	r.out.ClearTitle()
 	r.out.EraseDown()
 	debug.AssertNoError(r.out.Flush())
 }
 
-func (r *Render) prepareArea(lines int) {
+func (r *Renderer) prepareArea(lines int) {
 	for i := 0; i < lines; i++ {
 		r.out.ScrollDown()
 	}
@@ -78,12 +106,12 @@ func (r *Render) prepareArea(lines int) {
 }
 
 // UpdateWinSize called when window size is changed.
-func (r *Render) UpdateWinSize(ws *WinSize) {
+func (r *Renderer) UpdateWinSize(ws *WinSize) {
 	r.row = ws.Row
 	r.col = istrings.Width(ws.Col)
 }
 
-func (r *Render) renderWindowTooSmall() {
+func (r *Renderer) renderWindowTooSmall() {
 	r.out.CursorGoTo(0, 0)
 	r.out.EraseScreen()
 	r.out.SetColor(DarkRed, White, false)
@@ -92,7 +120,7 @@ func (r *Render) renderWindowTooSmall() {
 	}
 }
 
-func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
+func (r *Renderer) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	suggestions := completions.GetSuggestions()
 	if len(suggestions) == 0 {
 		return
@@ -178,8 +206,8 @@ func (r *Render) renderCompletion(buf *Buffer, completions *CompletionManager) {
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 
-// Render renders to the console.
-func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lexer) {
+// Renderer renders to the console.
+func (r *Renderer) Renderer(buffer *Buffer, completion *CompletionManager, lexer Lexer) {
 	// In situations where a pseudo tty is allocated (e.g. within a docker container),
 	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
 	if r.col == 0 {
@@ -244,7 +272,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 	r.previousCursor = cursor
 }
 
-func (r *Render) renderText(lexer Lexer, text string) {
+func (r *Renderer) renderText(lexer Lexer, text string) {
 	if lexer != nil {
 		r.lex(lexer, text)
 		return
@@ -271,19 +299,19 @@ func (r *Render) renderText(lexer Lexer, text string) {
 	r.renderLine(prefix, lineBuffer.String(), r.inputTextColor)
 }
 
-func (r *Render) renderLine(prefix, line string, color Color) {
+func (r *Renderer) renderLine(prefix, line string, color Color) {
 	r.renderPrefix(prefix)
 	r.writeString(line, color)
 }
 
-func (r *Render) writeString(text string, color Color) {
+func (r *Renderer) writeString(text string, color Color) {
 	r.out.SetColor(color, r.inputBGColor, false)
 	if _, err := r.out.WriteString(text); err != nil {
 		panic(err)
 	}
 }
 
-func (r *Render) getMultilinePrefix(prefix string) string {
+func (r *Renderer) getMultilinePrefix(prefix string) string {
 	var spaceCount int
 	var dotCount int
 	var nonSpaceCharSeen bool
@@ -293,16 +321,17 @@ func (r *Render) getMultilinePrefix(prefix string) string {
 		}
 		char, size := utf8.DecodeLastRuneInString(prefix)
 		prefix = prefix[:len(prefix)-size]
+		charWidth := istrings.GetRuneWidth(char)
 		if nonSpaceCharSeen {
-			dotCount++
+			dotCount += int(charWidth)
 			continue
 		}
 		if char != ' ' {
 			nonSpaceCharSeen = true
-			dotCount++
+			dotCount += int(charWidth)
 			continue
 		}
-		spaceCount++
+		spaceCount += int(charWidth)
 	}
 
 	var multilinePrefixBuilder strings.Builder
@@ -319,7 +348,7 @@ func (r *Render) getMultilinePrefix(prefix string) string {
 
 // lex processes the given input with the given lexer
 // and writes the result
-func (r *Render) lex(lexer Lexer, input string) {
+func (r *Renderer) lex(lexer Lexer, input string) {
 	lexer.Init(input)
 	s := input
 
@@ -351,8 +380,8 @@ func (r *Render) lex(lexer Lexer, input string) {
 }
 
 // BreakLine to break line.
-func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
-	// Erasing and Render
+func (r *Renderer) BreakLine(buffer *Buffer, lexer Lexer) {
+	// Erasing and Renderer
 	cursor := positionAtEndOfString(buffer.Document().TextBeforeCursor()+r.prefixCallback(), r.col)
 	r.clear(cursor)
 
@@ -371,27 +400,27 @@ func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 
 // clear erases the screen from a beginning of input
 // even if there is line break which means input length exceeds a window's width.
-func (r *Render) clear(cursor Position) {
+func (r *Renderer) clear(cursor Position) {
 	r.move(cursor, Position{})
 	r.out.EraseDown()
 }
 
 // backward moves cursor to backward from a current cursor position
 // regardless there is a line break.
-func (r *Render) backward(from Position, n istrings.Width) Position {
+func (r *Renderer) backward(from Position, n istrings.Width) Position {
 	return r.move(from, Position{X: from.X - n, Y: from.Y})
 }
 
 // move moves cursor to specified position from the beginning of input
 // even if there is a line break.
-func (r *Render) move(from, to Position) Position {
+func (r *Renderer) move(from, to Position) Position {
 	newPosition := from.Subtract(to)
 	r.out.CursorUp(newPosition.Y)
 	r.out.CursorBackward(int(newPosition.X))
 	return to
 }
 
-func (r *Render) lineWrap(cursor *Position) {
+func (r *Renderer) lineWrap(cursor *Position) {
 	if runtime.GOOS != "windows" && cursor.X > 0 && cursor.X%r.col == 0 {
 		cursor.X = 0
 		cursor.Y += 1
@@ -410,7 +439,7 @@ func clamp(high, low, x float64) float64 {
 	}
 }
 
-func alignNextLine(r *Render, col istrings.Width) {
+func alignNextLine(r *Renderer, col istrings.Width) {
 	r.out.CursorDown(1)
 	if _, err := r.out.WriteString("\r"); err != nil {
 		panic(err)

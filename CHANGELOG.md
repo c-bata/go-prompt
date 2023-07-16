@@ -45,6 +45,7 @@ This release aims to make the code a bit cleaner, fix a couple of bugs and provi
 - Make `prefix` and `completer` optional in `prompt.Input`. Change the signature of `prompt.Input` from `func Input(string, Completer, ...Option) string` to `func Input(...Option) string`.
 - Rename `prompt.ConsoleParser` to `prompt.Reader` and make it embed `io.ReadCloser`
 - Rename `prompt.ConsoleWriter` to `prompt.Writer` and make it embed `io.Writer` and `io.StringWriter`
+- Rename `prompt.Render` to `prompt.Renderer`
 - Rename `prompt.OptionTitle` to `prompt.WithTitle`
 - Rename `prompt.OptionPrefix` to `prompt.WithPrefix`
 - Rename `prompt.OptionInitialBufferText` to `prompt.WithInitialText`

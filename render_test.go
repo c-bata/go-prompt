@@ -74,29 +74,11 @@ func TestFormatCompletion(t *testing.T) {
 
 func TestBreakLineCallback(t *testing.T) {
 	var i int
-	r := &Render{
-		out: &PosixWriter{
-			fd: syscall.Stdin, // "write" to stdin just so we don't mess with the output of the tests
-		},
-		prefixCallback:               DefaultPrefixCallback,
-		prefixTextColor:              Blue,
-		prefixBGColor:                DefaultColor,
-		inputTextColor:               DefaultColor,
-		inputBGColor:                 DefaultColor,
-		previewSuggestionTextColor:   Green,
-		previewSuggestionBGColor:     DefaultColor,
-		suggestionTextColor:          White,
-		suggestionBGColor:            Cyan,
-		selectedSuggestionTextColor:  Black,
-		selectedSuggestionBGColor:    Turquoise,
-		descriptionTextColor:         Black,
-		descriptionBGColor:           Turquoise,
-		selectedDescriptionTextColor: White,
-		selectedDescriptionBGColor:   Cyan,
-		scrollbarThumbColor:          DarkGray,
-		scrollbarBGColor:             Cyan,
-		col:                          1,
+	r := NewRenderer()
+	r.out = &PosixWriter{
+		fd: syscall.Stdin, // "write" to stdin just so we don't mess with the output of the tests
 	}
+	r.col = 1
 	b := NewBuffer()
 	r.BreakLine(b, nil)
 
@@ -113,5 +95,47 @@ func TestBreakLineCallback(t *testing.T) {
 
 	if i != 3 {
 		t.Errorf("BreakLine callback not called, i should be 3")
+	}
+}
+
+func TestGetMultilinePrefix(t *testing.T) {
+	tests := map[string]struct {
+		prefix string
+		want   string
+	}{
+		"single width chars": {
+			prefix: ">>",
+			want:   "..",
+		},
+		"double width chars": {
+			prefix: "本日",
+			want:   "....",
+		},
+		"trailing spaces and single width chars": {
+			prefix: ">!>   ",
+			want:   "...   ",
+		},
+		"trailing spaces and double width chars": {
+			prefix: "本日:   ",
+			want:   ".....   ",
+		},
+		"leading spaces and single width chars": {
+			prefix: "  ah:   ",
+			want:   ".....   ",
+		},
+		"leading spaces and double width chars": {
+			prefix: "  本日:   ",
+			want:   ".......   ",
+		},
+	}
+
+	r := NewRenderer()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := r.getMultilinePrefix(tc.prefix)
+			if tc.want != got {
+				t.Errorf("Expected %#v, but got %#v", tc.want, got)
+			}
+		})
 	}
 }

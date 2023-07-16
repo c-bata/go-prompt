@@ -21,6 +21,11 @@ func GetWidth(s string) Width {
 	return Width(runewidth.StringWidth(s))
 }
 
+// Get the width of the rune (how many columns it takes upt in the terminal).
+func GetRuneWidth(char rune) Width {
+	return Width(runewidth.RuneWidth(char))
+}
+
 // IndexNotByte is similar with strings.IndexByte but showing the opposite behavior.
 func IndexNotByte(s string, c byte) ByteNumber {
 	n := len(s)

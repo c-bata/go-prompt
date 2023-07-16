@@ -43,7 +43,7 @@ type Completer func(Document) []Suggest
 type Prompt struct {
 	reader                 Reader
 	buf                    *Buffer
-	renderer               *Render
+	renderer               *Renderer
 	executor               Executor
 	history                *History
 	lexer                  Lexer
@@ -74,7 +74,7 @@ func (p *Prompt) Run() {
 		p.completion.Update(*p.buf.Document())
 	}
 
-	p.renderer.Render(p.buf, p.completion, p.lexer)
+	p.renderer.Renderer(p.buf, p.completion, p.lexer)
 
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
@@ -105,7 +105,7 @@ func (p *Prompt) Run() {
 
 				p.completion.Update(*p.buf.Document())
 
-				p.renderer.Render(p.buf, p.completion, p.lexer)
+				p.renderer.Renderer(p.buf, p.completion, p.lexer)
 
 				if p.exitChecker != nil && p.exitChecker(e.input, true) {
 					p.skipClose = true
@@ -117,11 +117,11 @@ func (p *Prompt) Run() {
 				go p.handleSignals(exitCh, winSizeCh, stopHandleSignalCh)
 			} else {
 				p.completion.Update(*p.buf.Document())
-				p.renderer.Render(p.buf, p.completion, p.lexer)
+				p.renderer.Renderer(p.buf, p.completion, p.lexer)
 			}
 		case w := <-winSizeCh:
 			p.renderer.UpdateWinSize(w)
-			p.renderer.Render(p.buf, p.completion, p.lexer)
+			p.renderer.Renderer(p.buf, p.completion, p.lexer)
 		case code := <-exitCh:
 			p.renderer.BreakLine(p.buf, p.lexer)
 			p.Close()
@@ -337,7 +337,7 @@ func (p *Prompt) Input() string {
 		p.completion.Update(*p.buf.Document())
 	}
 
-	p.renderer.Render(p.buf, p.completion, p.lexer)
+	p.renderer.Renderer(p.buf, p.completion, p.lexer)
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
 	go p.readBuffer(bufCh, stopReadBufCh)
@@ -355,7 +355,7 @@ func (p *Prompt) Input() string {
 				return e.input
 			} else {
 				p.completion.Update(*p.buf.Document())
-				p.renderer.Render(p.buf, p.completion, p.lexer)
+				p.renderer.Renderer(p.buf, p.completion, p.lexer)
 			}
 		default:
 			time.Sleep(10 * time.Millisecond)
