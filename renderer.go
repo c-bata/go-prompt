@@ -360,8 +360,11 @@ func (r *Renderer) lex(lexer Lexer, input string) {
 	s := input
 
 	prefix := r.prefixCallback()
-	r.renderPrefix(prefix)
+	prefixWidth := istrings.GetWidth(prefix)
+	col := r.col - prefixWidth
 	multilinePrefix := r.getMultilinePrefix(prefix)
+	r.renderPrefix(prefix)
+	var lineCharIndex istrings.Width
 	for {
 		token, ok := lexer.Next()
 		if !ok {
@@ -372,15 +375,25 @@ func (r *Renderer) lex(lexer Lexer, input string) {
 		s = strings.TrimPrefix(s, text)
 
 		var lineBuffer strings.Builder
+
 		for _, char := range text {
-			lineBuffer.WriteRune(char)
-			if char != '\n' {
+			if lineCharIndex >= col || char == '\n' {
+				if char != '\n' {
+					lineBuffer.WriteByte('\n')
+				}
+				r.writeString(lineBuffer.String(), token.Color())
+				r.renderPrefix(multilinePrefix)
+				lineCharIndex = 0
+				lineBuffer.Reset()
+				if char != '\n' {
+					lineBuffer.WriteRune(char)
+					lineCharIndex += istrings.GetRuneWidth(char)
+				}
 				continue
 			}
 
-			r.writeString(lineBuffer.String(), token.Color())
-			r.renderPrefix(multilinePrefix)
-			lineBuffer.Reset()
+			lineBuffer.WriteRune(char)
+			lineCharIndex += istrings.GetRuneWidth(char)
 		}
 		r.writeString(lineBuffer.String(), token.Color())
 	}
@@ -395,8 +408,11 @@ func (r *Renderer) BreakLine(buffer *Buffer, lexer Lexer) {
 	cursor.X += prefixWidth
 	r.clear(cursor)
 
-	text := buffer.Document().Text + "\n"
+	text := buffer.Document().Text
 	r.renderText(lexer, text)
+	if _, err := r.out.WriteString("\n"); err != nil {
+		panic(err)
+	}
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 
