@@ -2,6 +2,8 @@ package prompt
 
 import (
 	"bytes"
+	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -50,7 +52,6 @@ type Prompt struct {
 	ASCIICodeBindings      []ASCIICodeBind
 	keyBindMode            KeyBindMode
 	completionOnDown       bool
-	indentSize             int // How many spaces constitute a single indentation level
 	exitChecker            ExitChecker
 	executeOnEnterCallback ExecuteOnEnterCallback
 	skipClose              bool
@@ -131,14 +132,14 @@ func (p *Prompt) Run() {
 	}
 }
 
-// func Log(format string, a ...any) {
-// 	f, err := os.OpenFile("log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-// 	if err != nil {
-// 		log.Fatalf("error opening file: %v", err)
-// 	}
-// 	defer f.Close()
-// 	fmt.Fprintf(f, format, a...)
-// }
+func Log(format string, a ...any) {
+	f, err := os.OpenFile("log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+	fmt.Fprintf(f, format, a...)
+}
 
 func (p *Prompt) feed(b []byte) (shouldExit bool, userInput *UserInput) {
 	key := GetKey(b)
@@ -150,11 +151,11 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, userInput *UserInput) {
 keySwitch:
 	switch key {
 	case Enter, ControlJ, ControlM:
-		indent, execute := p.executeOnEnterCallback(p.buf.Text(), p.indentSize)
+		indent, execute := p.executeOnEnterCallback(p.buf.Text(), p.renderer.indentSize)
 		if !execute {
 			p.buf.NewLine(false)
 			var indentStrBuilder strings.Builder
-			indentUnitCount := indent * p.indentSize
+			indentUnitCount := indent * p.renderer.indentSize
 			for i := 0; i < indentUnitCount; i++ {
 				indentStrBuilder.WriteRune(IndentUnit)
 			}
@@ -180,7 +181,7 @@ keySwitch:
 		for _, byt := range b {
 			switch byt {
 			case '\t':
-				for i := 0; i < p.indentSize; i++ {
+				for i := 0; i < p.renderer.indentSize; i++ {
 					newBytes = append(newBytes, IndentUnit)
 				}
 			default:
@@ -201,7 +202,7 @@ keySwitch:
 				break keySwitch
 			}
 		}
-		p.buf.DeleteBeforeCursor(istrings.RuneNumber(p.indentSize))
+		p.buf.DeleteBeforeCursor(istrings.RuneNumber(p.renderer.indentSize))
 	case ControlC:
 		p.renderer.BreakLine(p.buf, p.lexer)
 		p.buf = NewBuffer()
@@ -395,7 +396,7 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 					// translate \t into two spaces
 					// to avoid problems with cursor positions
 					case '\t':
-						for i := 0; i < p.indentSize; i++ {
+						for i := 0; i < p.renderer.indentSize; i++ {
 							newBytes = append(newBytes, IndentUnit)
 						}
 					default:

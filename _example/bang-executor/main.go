@@ -10,6 +10,7 @@ import (
 func main() {
 	p := prompt.New(
 		executor,
+		prompt.WithPrefix(">>> "),
 		prompt.WithExecuteOnEnterCallback(ExecuteOnEnter),
 	)
 
@@ -18,7 +19,7 @@ func main() {
 
 func ExecuteOnEnter(input string, indentSize int) (int, bool) {
 	char, _ := utf8.DecodeLastRuneInString(input)
-	return 1, char == '!'
+	return 0, char == '!'
 }
 
 func executor(s string) {

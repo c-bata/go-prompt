@@ -3,10 +3,13 @@ package prompt
 import (
 	"runtime"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/elk-language/go-prompt/debug"
 	istrings "github.com/elk-language/go-prompt/strings"
 )
+
+const multilinePrefixCharacter = '.'
 
 // Render to render prompt information from state of Buffer.
 type Render struct {
@@ -16,6 +19,7 @@ type Render struct {
 	title             string
 	row               uint16
 	col               istrings.Width
+	indentSize        int // How many spaces constitute a single indentation level
 
 	previousCursor Position
 
@@ -46,12 +50,12 @@ func (r *Render) Setup() {
 	}
 }
 
-func (r *Render) renderPrefix() {
+func (r *Render) renderPrefix(prefix string) {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
 	if _, err := r.out.WriteString("\r"); err != nil {
 		panic(err)
 	}
-	if _, err := r.out.WriteString(r.prefixCallback()); err != nil {
+	if _, err := r.out.WriteString(prefix); err != nil {
 		panic(err)
 	}
 	r.out.SetColor(DefaultColor, DefaultColor, false)
@@ -184,10 +188,11 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 	defer func() { debug.AssertNoError(r.out.Flush()) }()
 	r.clear(r.previousCursor)
 
-	line := buffer.Text()
+	text := buffer.Text()
 	prefix := r.prefixCallback()
 	prefixWidth := istrings.GetWidth(prefix)
-	cursor := positionAtEndOfString(prefix+line, r.col)
+	cursor := positionAtEndOfString(text, r.col)
+	cursor.X += prefixWidth
 
 	// prepare area
 	y := cursor.Y
@@ -202,25 +207,14 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 	r.out.HideCursor()
 	defer r.out.ShowCursor()
 
-	r.renderPrefix()
-
-	if lexer != nil {
-		r.lex(lexer, line)
-	} else {
-		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-		if _, err := r.out.WriteString(line); err != nil {
-			panic(err)
-		}
-	}
+	r.renderText(lexer, text)
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 
 	r.lineWrap(&cursor)
 
 	targetCursor := buffer.DisplayCursorPosition(r.col)
-	if targetCursor.Y == 0 {
-		targetCursor.X += prefixWidth
-	}
+	targetCursor.X += prefixWidth
 	cursor = r.move(cursor, targetCursor)
 
 	r.renderCompletion(buffer, completion)
@@ -237,13 +231,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 
 		rest := buffer.Document().TextAfterCursor()
 
-		if lexer != nil {
-			r.lex(lexer, rest)
-		} else {
-			if _, err := r.out.WriteString(rest); err != nil {
-				panic(err)
-			}
-		}
+		r.renderText(lexer, text)
 
 		r.out.SetColor(DefaultColor, DefaultColor, false)
 
@@ -256,25 +244,109 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager, lexer Lex
 	r.previousCursor = cursor
 }
 
+func (r *Render) renderText(lexer Lexer, text string) {
+	if lexer != nil {
+		r.lex(lexer, text)
+		return
+	}
+
+	prefix := r.prefixCallback()
+	multilinePrefix := r.getMultilinePrefix(prefix)
+	firstIteration := true
+	var lineBuffer strings.Builder
+	for _, char := range text {
+		lineBuffer.WriteRune(char)
+		if char != '\n' {
+			continue
+		}
+
+		r.renderLine(prefix, lineBuffer.String(), r.inputTextColor)
+		lineBuffer.Reset()
+		if firstIteration {
+			prefix = multilinePrefix
+			firstIteration = false
+		}
+	}
+
+	r.renderLine(prefix, lineBuffer.String(), r.inputTextColor)
+}
+
+func (r *Render) renderLine(prefix, line string, color Color) {
+	r.renderPrefix(prefix)
+	r.writeString(line, color)
+}
+
+func (r *Render) writeString(text string, color Color) {
+	r.out.SetColor(color, r.inputBGColor, false)
+	if _, err := r.out.WriteString(text); err != nil {
+		panic(err)
+	}
+}
+
+func (r *Render) getMultilinePrefix(prefix string) string {
+	var spaceCount int
+	var dotCount int
+	var nonSpaceCharSeen bool
+	for {
+		if len(prefix) == 0 {
+			break
+		}
+		char, size := utf8.DecodeLastRuneInString(prefix)
+		prefix = prefix[:len(prefix)-size]
+		if nonSpaceCharSeen {
+			dotCount++
+			continue
+		}
+		if char != ' ' {
+			nonSpaceCharSeen = true
+			dotCount++
+			continue
+		}
+		spaceCount++
+	}
+
+	var multilinePrefixBuilder strings.Builder
+
+	for i := 0; i < dotCount; i++ {
+		multilinePrefixBuilder.WriteByte(multilinePrefixCharacter)
+	}
+	for i := 0; i < spaceCount; i++ {
+		multilinePrefixBuilder.WriteByte(IndentUnit)
+	}
+
+	return multilinePrefixBuilder.String()
+}
+
 // lex processes the given input with the given lexer
 // and writes the result
 func (r *Render) lex(lexer Lexer, input string) {
 	lexer.Init(input)
 	s := input
 
+	prefix := r.prefixCallback()
+	r.renderPrefix(prefix)
+	multilinePrefix := r.getMultilinePrefix(prefix)
 	for {
 		token, ok := lexer.Next()
 		if !ok {
 			break
 		}
 
-		a := strings.SplitAfter(s, token.Lexeme())
-		s = strings.TrimPrefix(s, a[0])
+		text := strings.SplitAfter(s, token.Lexeme())[0]
+		s = strings.TrimPrefix(s, text)
 
-		r.out.SetColor(token.Color(), r.inputBGColor, false)
-		if _, err := r.out.WriteString(a[0]); err != nil {
-			panic(err)
+		var lineBuffer strings.Builder
+		for _, char := range text {
+			lineBuffer.WriteRune(char)
+			if char != '\n' {
+				continue
+			}
+
+			r.writeString(lineBuffer.String(), token.Color())
+			r.renderPrefix(multilinePrefix)
+			lineBuffer.Reset()
 		}
+		r.writeString(lineBuffer.String(), token.Color())
 	}
 }
 
@@ -284,16 +356,8 @@ func (r *Render) BreakLine(buffer *Buffer, lexer Lexer) {
 	cursor := positionAtEndOfString(buffer.Document().TextBeforeCursor()+r.prefixCallback(), r.col)
 	r.clear(cursor)
 
-	r.renderPrefix()
-
-	if lexer != nil {
-		r.lex(lexer, buffer.Document().Text+"\n")
-	} else {
-		r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
-		if _, err := r.out.WriteString(buffer.Document().Text + "\n"); err != nil {
-			panic(err)
-		}
-	}
+	text := buffer.Document().Text + "\n"
+	r.renderText(lexer, text)
 
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 

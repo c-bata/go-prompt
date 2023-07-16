@@ -13,7 +13,7 @@ const DefaultIndentSize = 2
 // that constitute a single indentation level.
 func WithIndentSize(i int) Option {
 	return func(p *Prompt) error {
-		p.indentSize = i
+		p.renderer.indentSize = i
 		return nil
 	}
 }
@@ -319,6 +319,7 @@ func New(executor Executor, opts ...Option) *Prompt {
 		reader: NewStdinReader(),
 		renderer: &Render{
 			out:                          defaultWriter,
+			indentSize:                   DefaultIndentSize,
 			prefixCallback:               DefaultPrefixCallback,
 			prefixTextColor:              Blue,
 			prefixBGColor:                DefaultColor,
@@ -342,7 +343,6 @@ func New(executor Executor, opts ...Option) *Prompt {
 		history:                NewHistory(),
 		completion:             NewCompletionManager(6),
 		executeOnEnterCallback: DefaultExecuteOnEnterCallback,
-		indentSize:             DefaultIndentSize,
 		keyBindMode:            EmacsKeyBind, // All the above assume that bash is running in the default Emacs setting
 	}
 
