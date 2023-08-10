@@ -10,18 +10,28 @@ import (
 )
 
 var (
-	saveTermios     *unix.Termios
+	saveTermios     unix.Termios
+	saveTermiosErr  error
 	saveTermiosFD   int
 	saveTermiosOnce sync.Once
 )
 
 func getOriginalTermios(fd int) (*unix.Termios, error) {
-	var err error
 	saveTermiosOnce.Do(func() {
 		saveTermiosFD = fd
-		saveTermios, err = termios.Tcgetattr(uintptr(fd))
+		var v *unix.Termios
+		v, saveTermiosErr = termios.Tcgetattr(uintptr(fd))
+		if saveTermiosErr == nil {
+			// save a copy
+			saveTermios = *v
+		}
 	})
-	return saveTermios, err
+	if saveTermiosErr != nil {
+		return nil, saveTermiosErr
+	}
+	// return a copy
+	v := saveTermios
+	return &v, nil
 }
 
 // Restore terminal's mode.
