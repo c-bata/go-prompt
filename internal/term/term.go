@@ -11,17 +11,17 @@ import (
 
 var (
 	saveTermios     *unix.Termios
+	saveTermiosErr  error
 	saveTermiosFD   int
 	saveTermiosOnce sync.Once
 )
 
 func getOriginalTermios(fd int) (*unix.Termios, error) {
-	var err error
 	saveTermiosOnce.Do(func() {
 		saveTermiosFD = fd
-		saveTermios, err = termios.Tcgetattr(uintptr(fd))
+		saveTermios, saveTermiosErr = termios.Tcgetattr(uintptr(fd))
 	})
-	return saveTermios, err
+	return saveTermios, saveTermiosErr
 }
 
 // Restore terminal's mode.
