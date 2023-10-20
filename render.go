@@ -2,11 +2,10 @@ package prompt
 
 import (
 	"fmt"
-	"runtime"
-	"strings"
-
 	"github.com/confluentinc/go-prompt/internal/debug"
 	runewidth "github.com/mattn/go-runewidth"
+	"runtime"
+	"strings"
 )
 
 // Render to render prompt information from state of Buffer.
@@ -19,7 +18,9 @@ type Render struct {
 	row                uint16
 	col                uint16
 
-	previousCursor int
+	previousCursor          int
+	renderCompletionRequest chan RenderCompletionRequest
+	renderDone              chan interface{}
 
 	// colors,
 	prefixTextColor              Color
@@ -91,6 +92,35 @@ func (r *Render) renderWindowTooSmall(msg string) {
 	r.out.WriteStr(msg)
 }
 
+// todo add validation
+type RenderCompletionRequest struct {
+	Completions *CompletionManager
+	CursorPos   int
+}
+
+// this start a background goroutine to render the completion
+func (r *Render) initAsyncRenderingCompletion() {
+	// don't like this, might be problematic if accessed form several gorouting
+	if r.renderCompletionRequest != nil {
+		return
+	}
+	r.renderCompletionRequest = make(chan RenderCompletionRequest)
+	r.renderDone = make(chan interface{})
+	go func() {
+		for {
+			select {
+			//todo add context for cancel this thing
+			case req := <-r.renderCompletionRequest:
+				// Handle the request
+				// to the render
+				r.renderCompletion(req.Completions, req.CursorPos)
+				//r.renderDone <- true
+			}
+		}
+	}()
+}
+
+// should find a way to lock this method
 func (r *Render) renderCompletion(completions *CompletionManager, cursorPos int) {
 	suggestions := completions.GetSuggestions()
 	if len(completions.GetSuggestions()) == 0 {
@@ -209,7 +239,8 @@ func (r *Render) Render(buffer *Buffer, previousText string, lastKeyStroke Key, 
 	}
 
 	// Clear screen
-	r.clear(r.previousCursor)
+	r.clear(r.previousCursor) //the clear can run only after the i've rendered the completion? but that would make things
+	// way too messy
 
 	// Render new text
 	r.renderPrefix()
@@ -221,6 +252,8 @@ func (r *Render) Render(buffer *Buffer, previousText string, lastKeyStroke Key, 
 	// We now need to find out where the console cursor would be if it had the same position as the buffer cursor.
 	translatedBufferCursorPos := r.getCursorEndPos(prefix+line[:buffer.Document().cursorPosition], 0)
 	cursorPos := r.move(cursorEndPos, translatedBufferCursorPos)
+
+	r.initAsyncRenderingCompletion()
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
 		cursorPos = r.backward(cursorPos, runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
 
@@ -251,8 +284,15 @@ func (r *Render) Render(buffer *Buffer, previousText string, lastKeyStroke Key, 
 
 		cursorPos = r.move(cursorEndPosWithInsertedSuggestion, cursorPosBehindSuggestion)
 	}
-	r.renderCompletion(completion, cursorPos)
+
+	r.renderCompletionRequest <- RenderCompletionRequest{Completions: completion, CursorPos: cursorPos}
+	//select {
+	//case <-r.renderDone:
+	//}
+
+	//r.renderCompletion(completion, cursorPos)
 	r.previousCursor = cursorPos
+	//time.Sleep(100 * time.Millisecond)
 
 	return traceBackLines
 }
