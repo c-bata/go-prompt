@@ -1,5 +1,10 @@
 package prompt
 
+import (
+	"bufio"
+	"os"
+)
+
 // Option is the type to replace default parameters.
 // prompt.New accepts any number of options (this is functional option pattern).
 type Option func(prompt *Prompt) error
@@ -33,6 +38,8 @@ func OptionTitle(x string) Option {
 func OptionPrefix(x string) Option {
 	return func(p *Prompt) error {
 		p.renderer.prefix = x
+		// Backup configured prefix
+		tmpMainPrefix = x
 		return nil
 	}
 }
@@ -59,6 +66,65 @@ func OptionLivePrefix(f func() (prefix string, useLivePrefix bool)) Option {
 		p.renderer.livePrefixCallback = f
 		return nil
 	}
+}
+
+func OptionCmdHistoryFile(file string) Option {
+	return func(p *Prompt) error {
+		p.renderer.cmdHistoryFile = file
+		t, _ := ReadCommandsFromFile(file)
+		if t != nil {
+			p.history.histories = t
+			p.history.Clear()
+		}
+		// Ignore if unable to read the file
+		return nil
+	}
+}
+
+// WriteCommandsToFile writes the commands to a file, each on a new line.
+func WriteCommandsToFile(commands []string, filename string) error {
+	cmdLen := len(commands)
+	if cmdLen > 100 {
+		commands = commands[cmdLen-100:]
+	}
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	for _, cmd := range commands {
+		_, err := writer.WriteString(cmd + "\n")
+		if err != nil {
+			return err
+		}
+	}
+	writer.Flush()
+
+	return nil
+}
+
+// ReadCommandsFromFile reads the commands from a file, assuming each command is on a new line.
+func ReadCommandsFromFile(filename string) ([]string, error) {
+	var commands []string
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		commands = append(commands, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return commands, nil
 }
 
 // OptionPrefixTextColor change a text color of prefix string
@@ -161,6 +227,13 @@ func OptionDescriptionBGColor(x Color) Option {
 func OptionSelectedDescriptionTextColor(x Color) Option {
 	return func(p *Prompt) error {
 		p.renderer.selectedDescriptionTextColor = x
+		return nil
+	}
+}
+
+func OptionDisplaySuggestions(autoSuggestionsEnabled bool) Option {
+	return func(p *Prompt) error {
+		p.renderer.autoSuggestionsEnabled = autoSuggestionsEnabled
 		return nil
 	}
 }
@@ -293,6 +366,7 @@ func New(executor Executor, completer Completer, opts ...Option) *Prompt {
 			selectedDescriptionBGColor:   Cyan,
 			scrollbarThumbColor:          DarkGray,
 			scrollbarBGColor:             Cyan,
+			autoSuggestionsEnabled:       true,
 		},
 		buf:         NewBuffer(),
 		executor:    executor,

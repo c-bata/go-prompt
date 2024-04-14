@@ -125,4 +125,5 @@ const (
 
 	// Key is not defined
 	NotDefined
+	QuestionMark
 )

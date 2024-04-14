@@ -1,7 +1,9 @@
 package prompt
 
 import (
+	"fmt"
 	"runtime"
+	"strings"
 
 	"github.com/c-bata/go-prompt/internal/debug"
 	runewidth "github.com/mattn/go-runewidth"
@@ -17,8 +19,11 @@ type Render struct {
 	row                uint16
 	col                uint16
 
-	previousCursor int
-
+	previousCursor         int
+	autoSuggestionsEnabled bool
+	cmdHistoryFile         string
+	isInteractiveSearch    bool
+	lastMatchedIndex       int
 	// colors,
 	prefixTextColor              Color
 	prefixBGColor                Color
@@ -177,6 +182,7 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	r.move(r.previousCursor, 0)
 
 	line := buffer.Text()
+
 	prefix := r.getCurrentPrefix()
 	cursor := runewidth.StringWidth(prefix) + runewidth.StringWidth(line)
 
@@ -202,8 +208,9 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 	r.out.EraseDown()
 
 	cursor = r.backward(cursor, runewidth.StringWidth(line)-buffer.DisplayCursorPosition())
-
-	r.renderCompletion(buffer, completion)
+	if r.autoSuggestionsEnabled || tmpAutoSuggestionsEnabled {
+		r.renderCompletion(buffer, completion)
+	}
 	if suggest, ok := completion.GetSelectedSuggestion(); ok {
 		cursor = r.backward(cursor, runewidth.StringWidth(buffer.Document().GetWordBeforeCursorUntilSeparator(completion.wordSeparator)))
 
@@ -220,6 +227,60 @@ func (r *Render) Render(buffer *Buffer, completion *CompletionManager) {
 		cursor = r.backward(cursor, runewidth.StringWidth(rest))
 	}
 	r.previousCursor = cursor
+}
+
+func (r *Render) RenderSearch(buffer *Buffer, completion *CompletionManager, cmdHistory []string) {
+	// In situations where a pseudo tty is allocated (e.g. within a docker container),
+	// window size via TIOCGWINSZ is not immediately available and will result in 0,0 dimensions.
+	if r.col == 0 {
+		return
+	}
+	defer func() { debug.AssertNoError(r.out.Flush()) }()
+	r.move(r.previousCursor, 0)
+
+	line := buffer.Text()
+	r.prefix = fmt.Sprintf(interactiveSearchPrompt, line)
+	matchedLine := r.getMatchingText(line, cmdHistory)
+	cursor := runewidth.StringWidth(r.prefix) + runewidth.StringWidth(matchedLine)
+	// prepare area
+	_, y := r.toPos(cursor)
+
+	h := y + 1 + int(completion.max)
+	if h > int(r.row) || completionMargin > int(r.col) {
+		r.renderWindowTooSmall()
+		return
+	}
+
+	// Rendering
+	r.out.HideCursor()
+	defer r.out.ShowCursor()
+
+	r.renderPrefix()
+	r.out.SetColor(r.inputTextColor, r.inputBGColor, false)
+	r.out.WriteStr(matchedLine)
+	r.out.SetColor(DefaultColor, DefaultColor, false)
+	r.lineWrap(cursor)
+	r.out.EraseDown()
+
+	cursor = r.backward(cursor, runewidth.StringWidth(line)-buffer.DisplayCursorPosition())
+	r.previousCursor = cursor
+}
+
+func (r *Render) getMatchingText(query string, cmdHistory []string) string {
+	if query == "" {
+		return ""
+	}
+	lastMatchedIndex := len(cmdHistory)
+	if r.lastMatchedIndex != -1 {
+		lastMatchedIndex = r.lastMatchedIndex
+	}
+	for i := lastMatchedIndex - 1; i >= 0; i-- {
+		if strings.Contains(cmdHistory[i], query) {
+			r.lastMatchedIndex = i
+			return cmdHistory[i]
+		}
+	}
+	return ""
 }
 
 // BreakLine to break line.

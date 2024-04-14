@@ -166,4 +166,5 @@ var ASCIISequences = []*ASCIICode{
 
 	{Key: Ignore, ASCIICode: []byte{0x1b, 0x5b, 0x45}}, // Xterm
 	{Key: Ignore, ASCIICode: []byte{0x1b, 0x5b, 0x46}}, // Linux console
+	{Key: QuestionMark, ASCIICode: []byte{0x3F}},
 }
