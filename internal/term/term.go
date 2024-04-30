@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package term
@@ -15,13 +16,13 @@ var (
 	saveTermiosOnce sync.Once
 )
 
-func getOriginalTermios(fd int) (*unix.Termios, error) {
+func getOriginalTermios(fd int) (unix.Termios, error) {
 	var err error
 	saveTermiosOnce.Do(func() {
 		saveTermiosFD = fd
 		saveTermios, err = termios.Tcgetattr(uintptr(fd))
 	})
-	return saveTermios, err
+	return *saveTermios, err
 }
 
 // Restore terminal's mode.
@@ -30,5 +31,5 @@ func Restore() error {
 	if err != nil {
 		return err
 	}
-	return termios.Tcsetattr(uintptr(saveTermiosFD), termios.TCSANOW, o)
+	return termios.Tcsetattr(uintptr(saveTermiosFD), termios.TCSANOW, &o)
 }

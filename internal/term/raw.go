@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package term
@@ -25,5 +26,5 @@ func SetRaw(fd int) error {
 	n.Cc[syscall.VMIN] = 1
 	n.Cc[syscall.VTIME] = 0
 
-	return termios.Tcsetattr(uintptr(fd), termios.TCSANOW, (*unix.Termios)(n))
+	return termios.Tcsetattr(uintptr(fd), termios.TCSANOW, (*unix.Termios)(&n))
 }
