@@ -21,6 +21,7 @@ type Render struct {
 
 	// colors,
 	prefixTextColor              Color
+	allowPrefixAnsiEscape        bool
 	prefixBGColor                Color
 	inputTextColor               Color
 	inputBGColor                 Color
@@ -57,7 +58,12 @@ func (r *Render) getCurrentPrefix() string {
 
 func (r *Render) renderPrefix() {
 	r.out.SetColor(r.prefixTextColor, r.prefixBGColor, false)
-	r.out.WriteStr(r.getCurrentPrefix())
+	strPrefix := r.getCurrentPrefix()
+	if r.allowPrefixAnsiEscape {
+		r.out.WriteRawStr(strPrefix)
+	} else {
+		r.out.WriteStr(strPrefix)
+	}
 	r.out.SetColor(DefaultColor, DefaultColor, false)
 }
 

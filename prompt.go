@@ -2,7 +2,11 @@ package prompt
 
 import (
 	"bytes"
+	"fmt"
 	"os"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/c-bata/go-prompt/internal/debug"
@@ -35,6 +39,9 @@ type Prompt struct {
 	completionOnDown  bool
 	exitChecker       ExitChecker
 	skipTearDown      bool
+
+	// whether to parse history number ('!' + number) in bash style or not
+	bShouldParseBashStyleHistoryNumber bool
 }
 
 // Exec is the struct contains user input context.
@@ -81,7 +88,21 @@ func (p *Prompt) Run() {
 				// Unset raw mode
 				// Reset to Blocking mode because returned EAGAIN when still set non-blocking mode.
 				debug.AssertNoError(p.in.TearDown())
-				p.executor(e.input)
+				if p.bShouldParseBashStyleHistoryNumber {
+					bIsHistoryNum, bFoundHistory, parsed := p.parseBashStyleHistoryNumber(e.input)
+					if !bIsHistoryNum {
+						p.executor(e.input)
+					} else {
+						if !bFoundHistory {
+							fmt.Fprintf(os.Stderr, "%s: history command not found\n", strings.TrimSpace(e.input))
+							p.executor("")
+						} else {
+							p.executor(parsed)
+						}
+					}
+				} else {
+					p.executor(e.input)
+				}
 
 				p.completion.Update(*p.buf.Document())
 
@@ -125,8 +146,17 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 
 		exec = &Exec{input: p.buf.Text()}
 		p.buf = NewBuffer()
-		if exec.input != "" {
-			p.history.Add(exec.input)
+		if strings.TrimSpace(exec.input) != "" {
+			if p.bShouldParseBashStyleHistoryNumber {
+				bIsHistoryNum, bFoundHistory, parsed := p.parseBashStyleHistoryNumber(exec.input)
+				if !bIsHistoryNum {
+					p.history.Add(exec.input)
+				} else if bFoundHistory && parsed != "" {
+					p.history.Add(parsed)
+				}
+			} else {
+				p.history.Add(exec.input)
+			}
 		}
 	case ControlC:
 		p.renderer.BreakLine(p.buf)
@@ -293,4 +323,20 @@ func (p *Prompt) tearDown() {
 		debug.AssertNoError(p.in.TearDown())
 	}
 	p.renderer.TearDown()
+}
+
+func (p *Prompt) History() *History {
+	return p.history
+}
+
+func (p *Prompt) parseBashStyleHistoryNumber(s string) (bIsBashHistoryNumber, bFoundHistory bool, historyCommand string) {
+	r := regexp.MustCompile(`^\s*!(?P<history_number>\d+)\s*$`)
+	tokens := r.FindStringSubmatch(s)
+	if len(tokens) <= 0 {
+		return false, false, ""
+	}
+	histNumIndex := r.SubexpIndex("history_number")
+	historyNumber, _ := strconv.Atoi(tokens[histNumIndex])
+	historyCommand = p.history.Get(historyNumber - 1)
+	return true, (len(historyCommand) > 0), historyCommand
 }

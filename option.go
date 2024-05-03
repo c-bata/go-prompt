@@ -1,5 +1,7 @@
 package prompt
 
+import "fmt"
+
 // Option is the type to replace default parameters.
 // prompt.New accepts any number of options (this is functional option pattern).
 type Option func(prompt *Prompt) error
@@ -37,6 +39,14 @@ func OptionPrefix(x string) Option {
 	}
 }
 
+func OptionPrefixWithAnsiEscape(x string) Option {
+	return func(p *Prompt) error {
+		p.renderer.prefix = x
+		p.renderer.allowPrefixAnsiEscape = true
+		return nil
+	}
+}
+
 // OptionInitialBufferText to set the initial buffer text
 func OptionInitialBufferText(x string) Option {
 	return func(p *Prompt) error {
@@ -57,6 +67,14 @@ func OptionCompletionWordSeparator(x string) Option {
 func OptionLivePrefix(f func() (prefix string, useLivePrefix bool)) Option {
 	return func(p *Prompt) error {
 		p.renderer.livePrefixCallback = f
+		return nil
+	}
+}
+
+func OptionLivePrefixWithAnsiEscape(f func() (prefix string, useLivePrefix bool)) Option {
+	return func(p *Prompt) error {
+		p.renderer.livePrefixCallback = f
+		p.renderer.allowPrefixAnsiEscape = true
 		return nil
 	}
 }
@@ -262,6 +280,23 @@ func OptionBreakLineCallback(fn func(*Document)) Option {
 func OptionSetExitCheckerOnInput(fn ExitChecker) Option {
 	return func(p *Prompt) error {
 		p.exitChecker = fn
+		return nil
+	}
+}
+
+func OptionHistorySize(size int) Option {
+	return func(p *Prompt) error {
+		if size < 0 {
+			return fmt.Errorf("history size should be greater than or equal to 0, but got %d", size)
+		}
+		p.history.size = size
+		return nil
+	}
+}
+
+func OptionParseBashStyleHistoryNumber() Option {
+	return func(p *Prompt) error {
+		(*p).bShouldParseBashStyleHistoryNumber = true
 		return nil
 	}
 }
