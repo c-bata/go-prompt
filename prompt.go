@@ -53,7 +53,7 @@ var singleArgClearCommands = map[string]bool{
 	"clean-hash":         true,
 	"submit-hash-tree":   true,
 	"checkout":           true,
-	"find-similar":       true,
+	"get-info":           true,
 	"cd":                 true,
 	"change-work-dir":    true,
 	"cwd":                true,
@@ -165,7 +165,7 @@ func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
 		//  • single-word unknown commands, or bare change-work-dir
 		//  • any fully-fledged invocation (3 tokens)
 		//  • two-token invocations for commands that only take one arg
-		if (len(parts) == 1 && (!contains(KnownCommands, cmd) || cmd == "change-work-dir")) ||
+		if (len(parts) == 1 && (!contains(KnownCommands, cmd) || cmd == "change-work-dir" || cmd == "info")) ||
 			len(parts) >= 3 ||
 			(len(parts) == 2 && singleArgClearCommands[cmd]) {
 			p.buf = NewBuffer()
