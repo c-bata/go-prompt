@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package term
@@ -19,7 +20,7 @@ func getOriginalTermios(fd int) (*unix.Termios, error) {
 	var err error
 	saveTermiosOnce.Do(func() {
 		saveTermiosFD = fd
-		saveTermios, err = termios.Tcgetattr(uintptr(fd))
+		err = termios.Tcgetattr(uintptr(fd), saveTermios)
 	})
 	return saveTermios, err
 }

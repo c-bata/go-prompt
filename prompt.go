@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/c-bata/go-prompt/internal/debug"
+	"github.com/asakatida/go-prompt/internal/debug"
 )
 
 // Executor is called when user input something text.
@@ -274,7 +274,7 @@ func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 			debug.Log("stop reading buffer")
 			return
 		default:
-			if b, err := p.in.Read(); err == nil && !(len(b) == 1 && b[0] == 0) {
+			if b, err := p.in.Read(); err == nil && (len(b) != 1 || b[0] != 0) {
 				bufCh <- b
 			}
 		}

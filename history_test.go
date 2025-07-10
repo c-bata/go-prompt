@@ -10,9 +10,8 @@ func TestHistoryClear(t *testing.T) {
 	h.Add("foo")
 	h.Clear()
 	expected := &History{
-		histories: []string{"foo"},
-		tmp:       []string{"foo", ""},
-		selected:  1,
+		histories: []string{},
+		selected:  -1,
 	}
 	if !reflect.DeepEqual(expected, h) {
 		t.Errorf("Should be %#v, but got %#v", expected, h)
@@ -24,8 +23,7 @@ func TestHistoryAdd(t *testing.T) {
 	h.Add("echo 1")
 	expected := &History{
 		histories: []string{"echo 1"},
-		tmp:       []string{"echo 1", ""},
-		selected:  1,
+		selected:  0,
 	}
 	if !reflect.DeepEqual(h, expected) {
 		t.Errorf("Should be %v, but got %v", expected, h)

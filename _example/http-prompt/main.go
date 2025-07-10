@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -10,7 +10,7 @@ import (
 	"path"
 	"strings"
 
-	prompt "github.com/c-bata/go-prompt"
+	prompt "github.com/asakatida/go-prompt"
 )
 
 type RequestContext struct {
@@ -137,7 +137,7 @@ func executor(in string) {
 			fmt.Println("err: " + err.Error())
 			return
 		}
-		result, err := ioutil.ReadAll(res.Body)
+		result, err := io.ReadAll(res.Body)
 		if err != nil {
 			fmt.Println("err: " + err.Error())
 			return

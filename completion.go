@@ -3,7 +3,7 @@ package prompt
 import (
 	"strings"
 
-	"github.com/c-bata/go-prompt/internal/debug"
+	"github.com/asakatida/go-prompt/internal/debug"
 	runewidth "github.com/mattn/go-runewidth"
 )
 
@@ -106,8 +106,8 @@ func (c *CompletionManager) update() {
 }
 
 func deleteBreakLineCharacters(s string) string {
-	s = strings.Replace(s, "\n", "", -1)
-	s = strings.Replace(s, "\r", "", -1)
+	s = strings.ReplaceAll(s, "\n", "")
+	s = strings.ReplaceAll(s, "\r", "")
 	return s
 }
 

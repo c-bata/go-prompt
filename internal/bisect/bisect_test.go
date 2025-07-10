@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/c-bata/go-prompt/internal/bisect"
+	"github.com/asakatida/go-prompt/internal/bisect"
 )
 
 func Example() {
@@ -34,8 +34,6 @@ func TestBisectRight(t *testing.T) {
 }
 
 func BenchmarkRight(b *testing.B) {
-	rand.Seed(0)
-
 	for _, l := range []int{10, 1e2, 1e3, 1e4} {
 		x := rand.Perm(l)
 		insertion := rand.Int()

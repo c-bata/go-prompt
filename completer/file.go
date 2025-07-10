@@ -1,14 +1,13 @@
 package completer
 
 import (
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
 	"runtime"
 
-	prompt "github.com/c-bata/go-prompt"
-	"github.com/c-bata/go-prompt/internal/debug"
+	prompt "github.com/asakatida/go-prompt"
+	"github.com/asakatida/go-prompt/internal/debug"
 )
 
 var (
@@ -70,7 +69,7 @@ func (c *FilePathCompleter) Complete(d prompt.Document) []prompt.Suggest {
 		return prompt.FilterHasPrefix(cached, base, c.IgnoreCase)
 	}
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil && os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
@@ -79,7 +78,12 @@ func (c *FilePathCompleter) Complete(d prompt.Document) []prompt.Suggest {
 	}
 
 	suggests := make([]prompt.Suggest, 0, len(files))
-	for _, f := range files {
+	for _, node := range files {
+		f, err := node.Info()
+		if err != nil {
+			debug.Log("completer: cannot get file info:" + err.Error())
+			continue
+		}
 		if c.Filter != nil && !c.Filter(f) {
 			continue
 		}

@@ -1,8 +1,13 @@
 #!/bin/sh
 
-export GO111MODULE=on
-DIR=$(cd $(dirname $0); pwd)
-BIN_DIR=$(cd $(dirname $(dirname $0)); pwd)/bin
+DIR=$(
+    cd $(dirname $0)
+    pwd
+)
+BIN_DIR=$(
+    cd $(dirname $(dirname $0))
+    pwd
+)/bin
 
 mkdir -p ${BIN_DIR}
 go build -o ${BIN_DIR}/exec-command ${DIR}/exec-command/main.go

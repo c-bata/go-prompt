@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package prompt
@@ -5,7 +6,7 @@ package prompt
 import (
 	"syscall"
 
-	"github.com/c-bata/go-prompt/internal/term"
+	"github.com/asakatida/go-prompt/internal/term"
 	"golang.org/x/sys/unix"
 )
 
@@ -13,8 +14,7 @@ const maxReadBytes = 1024
 
 // PosixParser is a ConsoleParser implementation for POSIX environment.
 type PosixParser struct {
-	fd          int
-	origTermios syscall.Termios
+	fd int
 }
 
 // Setup should be called before starting input
