@@ -255,6 +255,14 @@ func (p *Prompt) Input() string {
 	p.setUp()
 	defer p.tearDown()
 
+	if p.keyParser == nil {
+		p.keyParser = NewKeyParser()
+	}
+	if p.sequenceTimeout == 0 {
+		p.sequenceTimeout = 50 * time.Millisecond // default timeout
+	}
+	p.inputBuffer = nil
+
 	if p.completion.showAtStart {
 		p.completion.Update(*p.buf.Document())
 	}
