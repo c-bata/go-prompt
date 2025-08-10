@@ -35,6 +35,8 @@ type Prompt struct {
 	completionOnDown  bool
 	exitChecker       ExitChecker
 	skipTearDown      bool
+
+	keyParser *KeyParser
 }
 
 // Exec is the struct contains user input context.
@@ -58,6 +60,9 @@ func (p *Prompt) Run() {
 
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
+	if p.keyParser == nil {
+		p.keyParser = NewKeyParser()
+	}
 	go p.readBuffer(bufCh, stopReadBufCh)
 
 	exitCh := make(chan int)
@@ -113,51 +118,60 @@ func (p *Prompt) Run() {
 }
 
 func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
-	key := GetKey(b)
-	p.buf.lastKeyStroke = key
-	// completion
-	completing := p.completion.Completing()
-	p.handleCompletionKeyBinding(key, completing)
+	// Phase 3: Use KeyParser to parse key events from input bytes
+	events := p.keyParser.Feed(b)
+	for _, event := range events {
+		key := event.Key
+		p.buf.lastKeyStroke = key
+		completing := p.completion.Completing()
+		p.handleCompletionKeyBinding(key, completing)
 
-	switch key {
-	case Enter, ControlJ, ControlM:
-		p.renderer.BreakLine(p.buf)
-
-		exec = &Exec{input: p.buf.Text()}
-		p.buf = NewBuffer()
-		if exec.input != "" {
-			p.history.Add(exec.input)
-		}
-	case ControlC:
-		p.renderer.BreakLine(p.buf)
-		p.buf = NewBuffer()
-		p.history.Clear()
-	case Up, ControlP:
-		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
-			if newBuf, changed := p.history.Older(p.buf); changed {
-				p.buf = newBuf
+		switch key {
+		case Enter, ControlJ, ControlM:
+			p.renderer.BreakLine(p.buf)
+			exec = &Exec{input: p.buf.Text()}
+			p.buf = NewBuffer()
+			if exec.input != "" {
+				p.history.Add(exec.input)
+			}
+		case ControlC:
+			p.renderer.BreakLine(p.buf)
+			p.buf = NewBuffer()
+			p.history.Clear()
+		case Up, ControlP:
+			if !completing {
+				if newBuf, changed := p.history.Older(p.buf); changed {
+					p.buf = newBuf
+				}
+			}
+		case Down, ControlN:
+			if !completing {
+				if newBuf, changed := p.history.Newer(p.buf); changed {
+					p.buf = newBuf
+				}
+				return
+			}
+		case ControlD:
+			if p.buf.Text() == "" {
+				shouldExit = true
+				return
+			}
+		case NotDefined:
+			if p.handleASCIICodeBinding(event.RawBytes) {
+				return
+			}
+			if event.Text != "" {
+				p.buf.InsertText(event.Text, false, true)
+			} else {
+				p.buf.InsertText(string(event.RawBytes), false, true)
 			}
 		}
-	case Down, ControlN:
-		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
-			if newBuf, changed := p.history.Newer(p.buf); changed {
-				p.buf = newBuf
-			}
+
+		shouldExit = p.handleKeyBinding(key)
+		if shouldExit {
 			return
 		}
-	case ControlD:
-		if p.buf.Text() == "" {
-			shouldExit = true
-			return
-		}
-	case NotDefined:
-		if p.handleASCIICodeBinding(b) {
-			return
-		}
-		p.buf.InsertText(string(b), false, true)
 	}
-
-	shouldExit = p.handleKeyBinding(key)
 	return
 }
 
