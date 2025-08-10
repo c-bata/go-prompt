@@ -36,7 +36,9 @@ type Prompt struct {
 	exitChecker       ExitChecker
 	skipTearDown      bool
 
-	keyParser *KeyParser
+	keyParser       *KeyParser
+	inputBuffer     []byte
+	sequenceTimeout time.Duration
 }
 
 // Exec is the struct contains user input context.
@@ -63,6 +65,10 @@ func (p *Prompt) Run() {
 	if p.keyParser == nil {
 		p.keyParser = NewKeyParser()
 	}
+	if p.sequenceTimeout == 0 {
+		p.sequenceTimeout = 50 * time.Millisecond // default timeout
+	}
+	p.inputBuffer = nil
 	go p.readBuffer(bufCh, stopReadBufCh)
 
 	exitCh := make(chan int)
@@ -118,7 +124,6 @@ func (p *Prompt) Run() {
 }
 
 func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
-	// Phase 3: Use KeyParser to parse key events from input bytes
 	events := p.keyParser.Feed(b)
 	for _, event := range events {
 		key := event.Key
@@ -282,14 +287,27 @@ func (p *Prompt) Input() string {
 
 func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	debug.Log("start reading buffer")
+	ticker := time.NewTicker(p.sequenceTimeout)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-stopCh:
 			debug.Log("stop reading buffer")
 			return
+		case <-ticker.C:
+			// Timeout: process buffer if not empty
+			if len(p.inputBuffer) > 0 {
+				bufCh <- p.inputBuffer
+				p.inputBuffer = nil
+			}
 		default:
 			if b, err := p.in.Read(); err == nil && !(len(b) == 1 && b[0] == 0) {
-				bufCh <- b
+				p.inputBuffer = append(p.inputBuffer, b...)
+				// Try to parse if buffer is likely complete (single byte or known prefix)
+				if len(b) == 1 || len(p.inputBuffer) > 4 {
+					bufCh <- p.inputBuffer
+					p.inputBuffer = nil
+				}
 			}
 		}
 		time.Sleep(10 * time.Millisecond)
