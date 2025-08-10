@@ -9,6 +9,7 @@ import (
 
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/c-bata/go-prompt/internal/term"
+	"golang.org/x/sys/unix"
 )
 
 func main() {
@@ -56,10 +57,18 @@ func main() {
 
 func readBuffer(bufCh chan []byte) {
 	buf := make([]byte, 1024)
-
+	fd := int(syscall.Stdin)
 	for {
-		if n, err := syscall.Read(syscall.Stdin, buf); err == nil {
-			bufCh <- buf[:n]
+		var readfds unix.FdSet
+		readfds.Set(fd)
+		n, err := unix.Select(fd+1, &readfds, nil, nil, nil)
+		if err != nil {
+			continue
+		}
+		if n > 0 && readfds.IsSet(fd) {
+			if rn, err := syscall.Read(syscall.Stdin, buf); err == nil && rn > 0 {
+				bufCh <- buf[:rn]
+			}
 		}
 	}
 }
