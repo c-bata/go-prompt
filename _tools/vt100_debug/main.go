@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package main
@@ -17,22 +18,39 @@ func main() {
 	}
 	defer term.Restore()
 
+	matcher := prompt.NewSequenceMatcher()
 	bufCh := make(chan []byte, 128)
 	go readBuffer(bufCh)
 	fmt.Print("> ")
 
+	inputBuffer := make([]byte, 0, 32)
 	for {
 		b := <-bufCh
-		if key := prompt.GetKey(b); key == prompt.NotDefined {
-			fmt.Printf("Key '%s' data:'%#v'\n", string(b), b)
-		} else {
-			if key == prompt.ControlC {
-				fmt.Println("exit.")
+		inputBuffer = append(inputBuffer, b...)
+		for len(inputBuffer) > 0 {
+			result, key := matcher.MatchSequence(inputBuffer)
+			switch result {
+			case prompt.Exact:
+				if key != nil && *key == prompt.ControlC {
+					fmt.Println("exit.")
+					return
+				}
+				fmt.Printf("Key '%s' data:'%#v'\n", key, inputBuffer[:])
+				inputBuffer = inputBuffer[:0]
+			case prompt.Prefix:
+				// Wait for more bytes
+				// Wait for more bytes, exit inner loop
 				return
+			case prompt.NoMatch:
+				fmt.Printf("Key '%s' data:'%#v'\n", string(inputBuffer[0]), inputBuffer[:1])
+				inputBuffer = inputBuffer[1:]
 			}
-			fmt.Printf("Key '%s' data:'%#v'\n", key, b)
+			fmt.Print("> ")
+			// If Prefix, break to wait for more input
+			if result == prompt.Prefix {
+				break
+			}
 		}
-		fmt.Print("> ")
 	}
 }
 
