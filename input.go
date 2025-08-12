@@ -20,7 +20,9 @@ type ConsoleParser interface {
 	Read() ([]byte, error)
 }
 
+// Deprecated: Use SequenceMatcher.MatchSequence or KeyParser.Feed instead for robust key parsing.
 // GetKey returns Key correspond to input byte codes.
+// This function is deprecated and will be removed in future versions.
 func GetKey(b []byte) Key {
 	for _, k := range ASCIISequences {
 		if bytes.Equal(k.ASCIICode, b) {
@@ -30,7 +32,9 @@ func GetKey(b []byte) Key {
 	return NotDefined
 }
 
+// Deprecated: Use SequenceMatcher or KeyParser for key sequence mapping.
 // ASCIISequences holds mappings of the key and byte array.
+// This variable is deprecated and will be removed in future versions.
 var ASCIISequences = []*ASCIICode{
 	{Key: Escape, ASCIICode: []byte{0x1b}},
 

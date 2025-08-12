@@ -35,6 +35,10 @@ type Prompt struct {
 	completionOnDown  bool
 	exitChecker       ExitChecker
 	skipTearDown      bool
+
+	keyParser       *KeyParser
+	inputBuffer     []byte
+	sequenceTimeout time.Duration
 }
 
 // Exec is the struct contains user input context.
@@ -58,6 +62,13 @@ func (p *Prompt) Run() {
 
 	bufCh := make(chan []byte, 128)
 	stopReadBufCh := make(chan struct{})
+	if p.keyParser == nil {
+		p.keyParser = NewKeyParser()
+	}
+	if p.sequenceTimeout == 0 {
+		p.sequenceTimeout = 50 * time.Millisecond // default timeout
+	}
+	p.inputBuffer = nil
 	go p.readBuffer(bufCh, stopReadBufCh)
 
 	exitCh := make(chan int)
@@ -113,51 +124,59 @@ func (p *Prompt) Run() {
 }
 
 func (p *Prompt) feed(b []byte) (shouldExit bool, exec *Exec) {
-	key := GetKey(b)
-	p.buf.lastKeyStroke = key
-	// completion
-	completing := p.completion.Completing()
-	p.handleCompletionKeyBinding(key, completing)
+	events := p.keyParser.Feed(b)
+	for _, event := range events {
+		key := event.Key
+		p.buf.lastKeyStroke = key
+		completing := p.completion.Completing()
+		p.handleCompletionKeyBinding(key, completing)
 
-	switch key {
-	case Enter, ControlJ, ControlM:
-		p.renderer.BreakLine(p.buf)
-
-		exec = &Exec{input: p.buf.Text()}
-		p.buf = NewBuffer()
-		if exec.input != "" {
-			p.history.Add(exec.input)
-		}
-	case ControlC:
-		p.renderer.BreakLine(p.buf)
-		p.buf = NewBuffer()
-		p.history.Clear()
-	case Up, ControlP:
-		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
-			if newBuf, changed := p.history.Older(p.buf); changed {
-				p.buf = newBuf
+		switch key {
+		case Enter, ControlJ, ControlM:
+			p.renderer.BreakLine(p.buf)
+			exec = &Exec{input: p.buf.Text()}
+			p.buf = NewBuffer()
+			if exec.input != "" {
+				p.history.Add(exec.input)
+			}
+		case ControlC:
+			p.renderer.BreakLine(p.buf)
+			p.buf = NewBuffer()
+			p.history.Clear()
+		case Up, ControlP:
+			if !completing {
+				if newBuf, changed := p.history.Older(p.buf); changed {
+					p.buf = newBuf
+				}
+			}
+		case Down, ControlN:
+			if !completing {
+				if newBuf, changed := p.history.Newer(p.buf); changed {
+					p.buf = newBuf
+				}
+				return
+			}
+		case ControlD:
+			if p.buf.Text() == "" {
+				shouldExit = true
+				return
+			}
+		case NotDefined:
+			if p.handleASCIICodeBinding(event.RawBytes) {
+				return
+			}
+			if event.Text != "" {
+				p.buf.InsertText(event.Text, false, true)
+			} else {
+				p.buf.InsertText(string(event.RawBytes), false, true)
 			}
 		}
-	case Down, ControlN:
-		if !completing { // Don't use p.completion.Completing() because it takes double operation when switch to selected=-1.
-			if newBuf, changed := p.history.Newer(p.buf); changed {
-				p.buf = newBuf
-			}
+
+		shouldExit = p.handleKeyBinding(key)
+		if shouldExit {
 			return
 		}
-	case ControlD:
-		if p.buf.Text() == "" {
-			shouldExit = true
-			return
-		}
-	case NotDefined:
-		if p.handleASCIICodeBinding(b) {
-			return
-		}
-		p.buf.InsertText(string(b), false, true)
 	}
-
-	shouldExit = p.handleKeyBinding(key)
 	return
 }
 
@@ -236,6 +255,14 @@ func (p *Prompt) Input() string {
 	p.setUp()
 	defer p.tearDown()
 
+	if p.keyParser == nil {
+		p.keyParser = NewKeyParser()
+	}
+	if p.sequenceTimeout == 0 {
+		p.sequenceTimeout = 50 * time.Millisecond // default timeout
+	}
+	p.inputBuffer = nil
+
 	if p.completion.showAtStart {
 		p.completion.Update(*p.buf.Document())
 	}
@@ -268,14 +295,27 @@ func (p *Prompt) Input() string {
 
 func (p *Prompt) readBuffer(bufCh chan []byte, stopCh chan struct{}) {
 	debug.Log("start reading buffer")
+	ticker := time.NewTicker(p.sequenceTimeout)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-stopCh:
 			debug.Log("stop reading buffer")
 			return
+		case <-ticker.C:
+			// Timeout: process buffer if not empty
+			if len(p.inputBuffer) > 0 {
+				bufCh <- p.inputBuffer
+				p.inputBuffer = nil
+			}
 		default:
 			if b, err := p.in.Read(); err == nil && !(len(b) == 1 && b[0] == 0) {
-				bufCh <- b
+				p.inputBuffer = append(p.inputBuffer, b...)
+				// Try to parse if buffer is likely complete (single byte or known prefix)
+				if len(b) == 1 || len(p.inputBuffer) > 4 {
+					bufCh <- p.inputBuffer
+					p.inputBuffer = nil
+				}
 			}
 		}
 		time.Sleep(10 * time.Millisecond)
