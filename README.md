@@ -53,6 +53,7 @@ func main() {
 * [qingstor/qsctl: Advanced command line tool for QingStor Object Storage.](https://github.com/qingstor/qsctl)
 * [segmentio/topicctl: Tool for declarative management of Kafka topics](https://github.com/segmentio/topicctl)
 * [chriswalz/bit: Bit is a modern Git CLI](https://github.com/chriswalz/bit)
+* [romance-dev/browser: Terminal based web browser](https://github.com/romance-dev/browser)
 * (If you create a CLI utility using go-prompt and want your own project to be listed here, please submit a GitHub issue.)
 
 ## Features
