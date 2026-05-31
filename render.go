@@ -266,11 +266,20 @@ func (r *Render) move(from, to int) int {
 // toPos returns the relative position from the beginning of the string.
 func (r *Render) toPos(cursor int) (x, y int) {
 	col := int(r.col)
+	// A size-0 terminal column count (seen when UpdateWinSize has not
+	// yet been called, or when the TTY reports no size at all, e.g.
+	// under some CI runners or piped-in input) used to trip 'integer
+	// divide by zero' on the next keystroke (#277). Treat it as a
+	// single column so the prompt renders on the first row and
+	// recovers cleanly when the real size arrives.
+	if col <= 0 {
+		col = 1
+	}
 	return cursor % col, cursor / col
 }
 
 func (r *Render) lineWrap(cursor int) {
-	if runtime.GOOS != "windows" && cursor > 0 && cursor%int(r.col) == 0 {
+	if runtime.GOOS != "windows" && cursor > 0 && int(r.col) > 0 && cursor%int(r.col) == 0 {
 		r.out.WriteRaw([]byte{'\n'})
 	}
 }
