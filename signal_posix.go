@@ -13,6 +13,7 @@ import (
 func (p *Prompt) handleSignals(exitCh chan int, winSizeCh chan *WinSize, stop chan struct{}) {
 	in := p.in
 	sigCh := make(chan os.Signal, 1)
+	defer signal.Stop(sigCh)
 	signal.Notify(
 		sigCh,
 		syscall.SIGINT,
@@ -42,7 +43,10 @@ func (p *Prompt) handleSignals(exitCh chan int, winSizeCh chan *WinSize, stop ch
 
 			case syscall.SIGWINCH:
 				debug.Log("Catch SIGWINCH")
-				winSizeCh <- in.GetWinSize()
+				select {
+				case winSizeCh <- in.GetWinSize():
+				default:
+				}
 			}
 		}
 	}
