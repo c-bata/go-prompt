@@ -12,6 +12,7 @@ import (
 
 func (p *Prompt) handleSignals(exitCh chan int, winSizeCh chan *WinSize, stop chan struct{}) {
 	sigCh := make(chan os.Signal, 1)
+	defer signal.Stop(sigCh)
 	signal.Notify(
 		sigCh,
 		syscall.SIGINT,
