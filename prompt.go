@@ -407,42 +407,31 @@ func (p *Prompt) updateSuggestions(fn func()) {
 
 func (p *Prompt) handleKeyBinding(key Key, cols istrings.Width, rows int) (shouldExit bool, rerender bool) {
 	var executed bool
-	for i := range commonKeyBindings {
-		kb := commonKeyBindings[i]
-		if kb.Key == key {
-			result := kb.Fn(p)
-			executed = true
-			if !rerender {
-				rerender = result
-			}
-		}
-	}
 
 	switch p.keyBindMode {
 	case EmacsKeyBind:
-		for i := range emacsKeyBindings {
-			kb := emacsKeyBindings[i]
-			if kb.Key == key {
-				result := kb.Fn(p)
-				executed = true
-				if !rerender {
-					rerender = result
-				}
-			}
+		p.handleKeyBind(commonKeyBindings, key, &executed, &rerender)
+		p.handleKeyBind(emacsKeyBindings, key, &executed, &rerender)
+		p.handleKeyBind(p.keyBindings, key, &executed, &rerender)
+	case CommonKeyBind:
+		p.handleKeyBind(commonKeyBindings, key, &executed, &rerender)
+		p.handleKeyBind(p.keyBindings, key, &executed, &rerender)
+	case CustomOverrideCommonKeyBind:
+		p.handleKeyBind(p.keyBindings, key, &executed, &rerender)
+		if !executed {
+			p.handleKeyBind(commonKeyBindings, key, &executed, &rerender)
+		}
+	case CustomOverrideEmacsKeyBind:
+		p.handleKeyBind(p.keyBindings, key, &executed, &rerender)
+		if !executed {
+			p.handleKeyBind(emacsKeyBindings, key, &executed, &rerender)
+		}
+		if !executed {
+			p.handleKeyBind(commonKeyBindings, key, &executed, &rerender)
 		}
 	}
 
 	// Custom key bindings
-	for i := range p.keyBindings {
-		kb := p.keyBindings[i]
-		if kb.Key == key {
-			result := kb.Fn(p)
-			executed = true
-			if !rerender {
-				rerender = result
-			}
-		}
-	}
 	if p.exitChecker != nil && p.exitChecker(p.buffer.Text(), false) {
 		shouldExit = true
 	}
@@ -450,6 +439,18 @@ func (p *Prompt) handleKeyBinding(key Key, cols istrings.Width, rows int) (shoul
 		rerender = true
 	}
 	return shouldExit, rerender
+}
+
+func (p *Prompt) handleKeyBind(keyBinds []KeyBind, key Key, executed, rerender *bool) {
+	for _, kb := range keyBinds {
+		if kb.Key == key {
+			result := kb.Fn(p)
+			*executed = true
+			if !*rerender {
+				*rerender = result
+			}
+		}
+	}
 }
 
 func (p *Prompt) handleASCIICodeBinding(b []byte, cols istrings.Width, rows int) (checked, rerender bool) {

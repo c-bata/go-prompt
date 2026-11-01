@@ -23,10 +23,10 @@ const (
 	CommonKeyBind KeyBindMode = iota
 	// EmacsKeyBind is a mode to use emacs-like keyboard shortcut
 	EmacsKeyBind
-	// CustomOverrideCommon is a mode that make custom keybindings override common key bindings
-	CustomOverrideCommon
-	// CustomOverrideEmacs is a mode that make custom keybindings override emacs key bindings
-	CustomOverrideEmacs
+	// CustomOverrideCommonKeyBind is a mode that make custom keybindings override common key bindings
+	CustomOverrideCommonKeyBind
+	// CustomOverrideEmacsKeyBind is a mode that make custom keybindings override emacs and common key bindings
+	CustomOverrideEmacsKeyBind
 )
 
 var commonKeyBindings = []KeyBind{
