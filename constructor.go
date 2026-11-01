@@ -283,6 +283,18 @@ func WithHistorySize(size int) Option {
 	}
 }
 
+// WithFSHistory stores history in the file at path.
+func WithFSHistory(path string) Option {
+	return func(p *Prompt) error {
+		history, err := NewFSHistory(path)
+		if err != nil {
+			return err
+		}
+		p.history = history
+		return nil
+	}
+}
+
 // WithCustomHistory to set use of own history implementation.
 func WithCustomHistory(history HistoryInterface) Option {
 	return func(p *Prompt) error {

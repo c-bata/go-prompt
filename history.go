@@ -4,23 +4,21 @@ import (
 	istrings "github.com/elk-language/go-prompt/strings"
 )
 
-// HistoryInterface lets users replace the builtin history.
-type HistoryInterface interface {
-	Add(string)
-	Clear()
-	Older(*Buffer, istrings.Width, int) (*Buffer, bool)
-	Newer(*Buffer, istrings.Width, int) (*Buffer, bool)
-	Get(i int) (string, bool)
-	Entries() []string
-	DeleteAll()
-}
-
-// History stores the texts that are entered.
+// History is the default implementation of HistoryInterface.
+// Stores the texts that are entered in RAM.
 type History struct {
 	histories []string
 	tmp       []string
 	selected  int
 	size      int
+}
+
+var _ HistoryInterface = &History{}
+
+// AtMaxSize returns `true` if the history is at its
+// full/max size.
+func (h *History) AtMaxSize() bool {
+	return len(h.histories) == h.size
 }
 
 // Add to add text in history.
