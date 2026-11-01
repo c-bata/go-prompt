@@ -154,6 +154,12 @@ func (b *Buffer) CursorLeftRunes(count istrings.RuneNumber, columns istrings.Wid
 	return b.cursorHorizontalMove(b.Document().GetCursorLeftPositionRunes(count), columns, rows)
 }
 
+// Move to the left on the current line by the given amount of bytes.
+// Returns true when the view should be rerendered.
+func (b *Buffer) CursorLeftBytes(count istrings.ByteNumber, columns istrings.Width, rows int) bool {
+	return b.cursorHorizontalMove(b.Document().GetCursorLeftPositionBytes(count), columns, rows)
+}
+
 // Move to the right on the current line by the given amount of graphemes.
 // Returns true when the view should be rerendered.
 func (b *Buffer) CursorRight(count istrings.GraphemeNumber, columns istrings.Width, rows int) bool {
@@ -164,6 +170,12 @@ func (b *Buffer) CursorRight(count istrings.GraphemeNumber, columns istrings.Wid
 // Returns true when the view should be rerendered.
 func (b *Buffer) CursorRightRunes(count istrings.RuneNumber, columns istrings.Width, rows int) bool {
 	return b.cursorHorizontalMove(b.Document().GetCursorRightPositionRunes(count), columns, rows)
+}
+
+// Move to the right on the current line by the given amount of bytes.
+// Returns true when the view should be rerendered.
+func (b *Buffer) CursorRightBytes(count istrings.ByteNumber, columns istrings.Width, rows int) bool {
+	return b.cursorHorizontalMove(b.Document().GetCursorRightPositionBytes(count), columns, rows)
 }
 
 func (b *Buffer) cursorHorizontalMove(count istrings.RuneNumber, columns istrings.Width, rows int) bool {

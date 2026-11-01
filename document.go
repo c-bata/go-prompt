@@ -227,6 +227,25 @@ func (d *Document) FindStartOfPreviousWordWithSpace() istrings.ByteNumber {
 	return startOfPartBefore(d.TextBeforeCursor(), true)
 }
 
+func (d *Document) CursorByteOffset() istrings.ByteNumber {
+	var byteIndex istrings.ByteNumber
+	text := d.Text
+
+	for range d.cursorPosition {
+		_, size := utf8.DecodeRuneInString(text)
+		if size == 0 {
+			break
+		}
+		byteIndex += istrings.ByteNumber(size)
+		text = text[size:]
+	}
+	return byteIndex
+}
+
+func (d *Document) CursorRuneOffset() istrings.RuneNumber {
+	return d.cursorPosition
+}
+
 // FindStartOfPreviousWordUntilSeparator is almost the same as FindStartOfPreviousWord.
 // But this can specify Separator. Return 0 if nothing was found.
 func (d *Document) FindStartOfPreviousWordUntilSeparator(sep string) istrings.ByteNumber {
@@ -554,6 +573,26 @@ func (d *Document) GetCursorLeftPositionRunes(count istrings.RuneNumber) istring
 	return counter
 }
 
+// Returns the amount of runes that the cursor should be moved by.
+// The `count` argument tells this function by how many bytes
+// the cursor should be moved (to the left).
+func (d *Document) GetCursorLeftPositionBytes(count istrings.ByteNumber) istrings.RuneNumber {
+	if count < 0 {
+		return d.GetCursorRightPositionBytes(-count)
+	}
+
+	text := d.TextBeforeCursor()
+	var runesMoved istrings.RuneNumber
+	var bytesMoved istrings.ByteNumber
+	for len(text) > 0 && bytesMoved < count {
+		_, size := utf8.DecodeLastRuneInString(text)
+		text = text[:len(text)-size]
+		bytesMoved += istrings.ByteNumber(size)
+		runesMoved++
+	}
+	return -runesMoved
+}
+
 // Returns the amount of runes that the cursors should be moved by.
 // The `count` argument tells this function by how many graphemes (visible characters)
 // the cursor should be moved (to the right).
@@ -587,6 +626,26 @@ func (d *Document) GetCursorRightPositionRunes(count istrings.RuneNumber) istrin
 	}
 
 	return counter
+}
+
+// Returns the amount of bytes that the cursors should be moved by.
+// The `count` argument tells this function by how many bytes
+// the cursor should be moved (to the right).
+func (d *Document) GetCursorRightPositionBytes(count istrings.ByteNumber) istrings.RuneNumber {
+	if count < 0 {
+		return d.GetCursorLeftPositionBytes(-count)
+	}
+
+	text := d.TextAfterCursor()
+	var runesMoved istrings.RuneNumber
+	var bytesMoved istrings.ByteNumber
+	for len(text) > 0 && bytesMoved < count {
+		_, size := utf8.DecodeRuneInString(text)
+		text = text[size:]
+		bytesMoved += istrings.ByteNumber(size)
+		runesMoved++
+	}
+	return runesMoved
 }
 
 // Get the current cursor position.

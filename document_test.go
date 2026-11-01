@@ -1239,6 +1239,92 @@ func TestDocument_GetCursorDownPosition(t *testing.T) {
 	}
 }
 
+func TestDocument_GetCursorLeftPositionBytes(t *testing.T) {
+	const text = "a日bうc"
+	// byte offsets: a=1, 日=3, b=1, う=3, c=1
+	d := &Document{
+		Text:           text,
+		cursorPosition: istrings.RuneCountInString(text),
+	}
+
+	if ac := d.GetCursorLeftPositionBytes(0); ac != 0 {
+		t.Errorf("zero move: got %#v, want 0", ac)
+	}
+	if ac := d.GetCursorLeftPositionBytes(1); ac != -1 {
+		t.Errorf("one ASCII byte: got %#v, want -1", ac)
+	}
+	// 1 byte of 'c' plus 1 byte into 'う' consumes the whole rune.
+	if ac := d.GetCursorLeftPositionBytes(2); ac != -2 {
+		t.Errorf("byte inside multibyte rune: got %#v, want -2", ac)
+	}
+	if ac := d.GetCursorLeftPositionBytes(1+3); ac != -2 {
+		t.Errorf("exact rune boundary: got %#v, want -2", ac)
+	}
+	if ac := d.GetCursorLeftPositionBytes(100); ac != -istrings.RuneCountInString(text) {
+		t.Errorf("clamp to start: got %#v, want %d", ac, -istrings.RuneCountInString(text))
+	}
+
+	d.cursorPosition = 0
+	if ac := d.GetCursorLeftPositionBytes(1); ac != 0 {
+		t.Errorf("already at start: got %#v, want 0", ac)
+	}
+
+	d.cursorPosition = istrings.RuneCountInString("a日")
+	if ac := d.GetCursorLeftPositionBytes(-1); ac != 1 {
+		t.Errorf("negative count moves right: got %#v, want 1", ac)
+	}
+}
+
+func TestDocument_GetCursorRightPositionBytes(t *testing.T) {
+	const text = "a日bうc"
+	d := &Document{
+		Text:           text,
+		cursorPosition: 0,
+	}
+
+	if ac := d.GetCursorRightPositionBytes(0); ac != 0 {
+		t.Errorf("zero move: got %#v, want 0", ac)
+	}
+	if ac := d.GetCursorRightPositionBytes(1); ac != 1 {
+		t.Errorf("one ASCII byte: got %#v, want 1", ac)
+	}
+	// 1 byte of 'a' plus 1 byte into '日' consumes the whole rune.
+	if ac := d.GetCursorRightPositionBytes(2); ac != 2 {
+		t.Errorf("byte inside multibyte rune: got %#v, want 2", ac)
+	}
+	if ac := d.GetCursorRightPositionBytes(1+3); ac != 2 {
+		t.Errorf("exact rune boundary: got %#v, want 2", ac)
+	}
+	if ac := d.GetCursorRightPositionBytes(100); ac != istrings.RuneCountInString(text) {
+		t.Errorf("clamp to end: got %#v, want %d", ac, istrings.RuneCountInString(text))
+	}
+
+	d.cursorPosition = istrings.RuneCountInString(text)
+	if ac := d.GetCursorRightPositionBytes(1); ac != 0 {
+		t.Errorf("already at end: got %#v, want 0", ac)
+	}
+
+	d.cursorPosition = istrings.RuneCountInString("a日")
+	if ac := d.GetCursorRightPositionBytes(-1); ac != -1 {
+		t.Errorf("negative count moves left: got %#v, want -1", ac)
+	}
+}
+
+func TestDocument_CursorByteOffset(t *testing.T) {
+	d := &Document{
+		Text:           "a日b",
+		cursorPosition: istrings.RuneCountInString("a日"),
+	}
+	if ac := d.CursorByteOffset(); ac != istrings.ByteNumber(len("a日")) {
+		t.Errorf("got %#v, want %d", ac, len("a日"))
+	}
+
+	d.cursorPosition = 0
+	if ac := d.CursorByteOffset(); ac != 0 {
+		t.Errorf("cursor at start: got %#v, want 0", ac)
+	}
+}
+
 func TestDocument_GetCursorRightPosition(t *testing.T) {
 	d := &Document{
 		Text:           "line 1\nline 2\nline 3\nline 4\n",

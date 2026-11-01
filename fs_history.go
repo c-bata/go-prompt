@@ -18,6 +18,8 @@ type FSHistory struct {
 
 var _ HistoryInterface = &FSHistory{}
 
+const fsHistoryFileFormatVersion = 1
+
 // NewFSHistory loads history from the file at path.
 // A missing file starts an empty history.
 func NewFSHistory(path string) (*FSHistory, error) {
@@ -87,6 +89,32 @@ func (h *FSHistory) load() error {
 		return err
 	}
 
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	if fileInfo.Size() == 0 {
+		h.save()
+		h.Clear()
+		return nil
+	}
+
+	formatVersionBytes := make([]byte, 1)
+	_, err = file.Read(formatVersionBytes)
+	if err != nil {
+		return err
+	}
+
+	if formatVersionBytes[0] != fsHistoryFileFormatVersion {
+		h.save()
+		h.Clear()
+		return nil
+	}
+
+	// skip the first two bytes with the file format version
+	file.Seek(2, 0)
+
 	entries := make([]string, 0)
 	for {
 		entry, err := h.readEntry(file)
@@ -105,6 +133,9 @@ func (h *FSHistory) load() error {
 }
 
 func (h *FSHistory) readEntry(file *os.File) (string, error) {
+	// move the cursor 1 byte forward for the newline before the length
+	file.Seek(1, 1)
+
 	entryLengthBytes := make([]byte, fsHistoryLengthBytes)
 	_, err := file.Read(entryLengthBytes)
 	if err != nil {
@@ -135,6 +166,7 @@ func (h *FSHistory) serializeEntry(entry string) ([]byte, error) {
 }
 
 func (h *FSHistory) serializeEntryToBuffer(buf *bytes.Buffer, entry string) error {
+	buf.WriteByte('\n')
 	lengthBytes := make([]byte, fsHistoryLengthBytes)
 	binary.BigEndian.PutUint32(lengthBytes, uint32(len(entry)))
 	_, err := buf.Write(lengthBytes)
@@ -153,6 +185,9 @@ func (h *FSHistory) save() error {
 	}
 
 	var buf bytes.Buffer
+
+	buf.WriteByte(fsHistoryFileFormatVersion)
+	buf.WriteByte('\n')
 
 	for _, entry := range entries {
 		h.serializeEntryToBuffer(&buf, entry)

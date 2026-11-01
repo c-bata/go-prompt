@@ -570,6 +570,12 @@ func (p *Prompt) CursorLeftRunes(count istrings.RuneNumber) bool {
 	return promptCursorHorizontalMove(p, p.buffer.CursorLeftRunes, count)
 }
 
+// Move to the left on the current line by the given amount of bytes.
+// Returns true when the view should be rerendered.
+func (p *Prompt) CursorLeftBytes(count istrings.ByteNumber) bool {
+	return promptCursorHorizontalMove(p, p.buffer.CursorLeftBytes, count)
+}
+
 // Move the cursor to the right on the current line by the given amount of graphemes (visible characters).
 // Returns true when the view should be rerendered.
 func (p *Prompt) CursorRight(count istrings.GraphemeNumber) bool {
@@ -580,6 +586,12 @@ func (p *Prompt) CursorRight(count istrings.GraphemeNumber) bool {
 // Returns true when the view should be rerendered.
 func (p *Prompt) CursorRightRunes(count istrings.RuneNumber) bool {
 	return promptCursorHorizontalMove(p, p.buffer.CursorRightRunes, count)
+}
+
+// Move the cursor to the right on the current line by the given amount of bytes.
+// Returns true when the view should be rerendered.
+func (p *Prompt) CursorRightBytes(count istrings.ByteNumber) bool {
+	return promptCursorHorizontalMove(p, p.buffer.CursorRightBytes, count)
 }
 
 type horizontalCursorModifier[CountT ~int] func(CountT, istrings.Width, int) bool
