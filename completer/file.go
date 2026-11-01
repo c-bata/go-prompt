@@ -58,7 +58,8 @@ func (c *FilePathCompleter) Complete(d prompt.Document) []prompt.Suggest {
 		c.fileListCache = make(map[string][]prompt.Suggest, 4)
 	}
 
-	path := d.GetWordBeforeCursor()
+	// Whitespace separates arguments. '/' and '.' stay inside the path.
+	path := d.GetWordBeforeCursorUntilSeparator(" \n")
 	dir, base, err := cleanFilePath(path)
 	if err != nil {
 		debug.Log("completer: cannot get current user:" + err.Error())

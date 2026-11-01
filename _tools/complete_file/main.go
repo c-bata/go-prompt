@@ -21,7 +21,7 @@ func executor(in string) {
 }
 
 func completerFunc(d prompt.Document) []prompt.Suggest {
-	t := d.GetWordBeforeCursor()
+	t := d.GetWordBeforeCursorUntilSeparator(" ")
 	if strings.HasPrefix(t, "--") {
 		return []prompt.Suggest{
 			{"--foo", ""},

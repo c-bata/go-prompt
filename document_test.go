@@ -1351,3 +1351,78 @@ func TestDocument_GetEndOfLinePosition(t *testing.T) {
 		t.Errorf("Should be %#v, got %#v", ex, ac)
 	}
 }
+
+func TestDocument_WordPartCursorStops(t *testing.T) {
+	const text = "foo.bar(elo, dupa)"
+	// Ends of foo, ., bar, (, elo, ,, dupa, and ). The space is not a stop.
+	stops := []istrings.RuneNumber{3, 4, 7, 8, 11, 12, 17, 18}
+
+	d := &Document{Text: text}
+	for _, stop := range stops {
+		n := d.FindRuneNumberUntilEndOfCurrentWord()
+		d.cursorPosition += n
+		if d.cursorPosition != stop {
+			t.Fatalf("forward: cursor %d, want %d", d.cursorPosition, stop)
+		}
+	}
+	if n := d.FindRuneNumberUntilEndOfCurrentWord(); n != 0 {
+		t.Fatalf("forward at end: moved %d", n)
+	}
+
+	for i := len(stops) - 2; i >= 0; i-- {
+		n := d.FindRuneNumberUntilStartOfPreviousWord()
+		d.cursorPosition -= n
+		if d.cursorPosition != stops[i] {
+			t.Fatalf("backward: cursor %d, want %d", d.cursorPosition, stops[i])
+		}
+	}
+	n := d.FindRuneNumberUntilStartOfPreviousWord()
+	d.cursorPosition -= n
+	if d.cursorPosition != 0 {
+		t.Fatalf("backward to start: cursor %d", d.cursorPosition)
+	}
+}
+
+func TestDocument_WordPartBoundaries(t *testing.T) {
+	const text = "foo.bar(elo, dupa)"
+	parts := []struct {
+		start istrings.RuneNumber
+		end   istrings.RuneNumber
+		text  string
+	}{
+		{0, 3, "foo"},
+		{3, 4, "."},
+		{4, 7, "bar"},
+		{7, 8, "("},
+		{8, 11, "elo"},
+		{11, 12, ","},
+		{13, 17, "dupa"},
+		{17, 18, ")"},
+	}
+
+	for _, part := range parts {
+		d := &Document{Text: text, cursorPosition: part.end}
+		if got := d.GetWordBeforeCursor(); got != part.text {
+			t.Errorf("before %q: got %q", part.text, got)
+		}
+		d.cursorPosition = part.start
+		if got := d.GetWordAfterCursor(); got != part.text {
+			t.Errorf("after %q: got %q", part.text, got)
+		}
+	}
+
+	d := &Document{Text: text, cursorPosition: 13}
+	if got := d.GetWordBeforeCursor(); got != "" {
+		t.Errorf("before space: got %q", got)
+	}
+	if got := d.GetWordBeforeCursorWithSpace(); got != ", " {
+		t.Errorf("before space with space: got %q", got)
+	}
+	d.cursorPosition = 12
+	if got := d.GetWordAfterCursor(); got != "" {
+		t.Errorf("after comma: got %q", got)
+	}
+	if got := d.GetWordAfterCursorWithSpace(); got != " dupa" {
+		t.Errorf("after comma with space: got %q", got)
+	}
+}

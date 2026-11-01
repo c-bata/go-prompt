@@ -108,7 +108,8 @@ func WithInitialText(text string) Option {
 	}
 }
 
-// WithCompletionWordSeparator can be used to set word separators. Enable only ' ' if empty.
+// WithCompletionWordSeparator can be used to set word separators.
+// An empty separator splits on identifier and punctuation parts.
 func WithCompletionWordSeparator(sep string) Option {
 	return func(p *Prompt) error {
 		p.completion.wordSeparator = sep

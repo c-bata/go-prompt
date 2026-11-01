@@ -140,15 +140,15 @@ func (d *Document) TextAfterCursor() string {
 	return string(r[d.cursorPosition:])
 }
 
-// GetWordBeforeCursor returns the word before the cursor.
-// If we have whitespace before the cursor this returns an empty string.
+// GetWordBeforeCursor returns the identifier or punctuation run before the cursor.
+// Whitespace immediately before the cursor produces an empty string.
 func (d *Document) GetWordBeforeCursor() string {
 	x := d.TextBeforeCursor()
 	return x[d.FindStartOfPreviousWord():]
 }
 
-// GetWordAfterCursor returns the word after the cursor.
-// If we have whitespace after the cursor this returns an empty string.
+// GetWordAfterCursor returns the identifier or punctuation run after the cursor.
+// Whitespace immediately after the cursor produces an empty string.
 func (d *Document) GetWordAfterCursor() string {
 	x := d.TextAfterCursor()
 	return x[:d.FindEndOfCurrentWord()]
@@ -194,38 +194,37 @@ func (d *Document) GetWordAfterCursorUntilSeparatorIgnoreNextToCursor(sep string
 	return x[:d.FindEndOfCurrentWordUntilSeparatorIgnoreNextToCursor(sep)]
 }
 
-// FindStartOfPreviousWord returns an index relative to the cursor position
-// pointing to the start of the previous word. Return 0 if nothing was found.
+// FindStartOfPreviousWord returns a byte index in the text before the cursor
+// pointing at the start of the part that ends at the cursor.
+// The index is the end of that text when whitespace is immediately before the cursor.
 func (d *Document) FindStartOfPreviousWord() istrings.ByteNumber {
-	x := d.TextBeforeCursor()
-	i := istrings.ByteNumber(strings.LastIndexAny(x, " \n"))
-	if i != -1 {
-		return i + 1
-	}
-	return 0
+	return startOfPartBefore(d.TextBeforeCursor(), false)
 }
 
-// Returns the rune count
-// of the text before the cursor until the start of the previous word.
+// Returns how many runes the cursor must move left to reach the end of the
+// previous part. Parts are identifier runs and punctuation runs. Whitespace
+// is skipped, so the stops in foo.bar(elo, dupa) are the ends of
+// foo, ., bar, (, elo, ,, dupa, and ).
 func (d *Document) FindRuneNumberUntilStartOfPreviousWord() istrings.RuneNumber {
-	x := d.TextBeforeCursor()
-	return istrings.RuneCountInString(x[d.FindStartOfPreviousWordWithSpace():])
+	s := d.TextBeforeCursor()
+	if s == "" {
+		return 0
+	}
+
+	r, _ := utf8.DecodeLastRuneInString(s)
+	var prevEnd string
+	if classifyWordPart(r) == wordPartSpace {
+		prevEnd = strings.TrimRightFunc(s, isWordPartSpace)
+	} else {
+		prevEnd = strings.TrimRightFunc(s[:startOfPartBefore(s, false)], isWordPartSpace)
+	}
+	return istrings.RuneCountInString(s) - istrings.RuneCountInString(prevEnd)
 }
 
 // FindStartOfPreviousWordWithSpace is almost the same as FindStartOfPreviousWord.
-// The only difference is to ignore contiguous spaces.
+// Whitespace immediately before the cursor is kept, and the part before that whitespace is used.
 func (d *Document) FindStartOfPreviousWordWithSpace() istrings.ByteNumber {
-	x := d.TextBeforeCursor()
-	end := istrings.LastIndexNotByte(x, ' ')
-	if end == -1 {
-		return 0
-	}
-
-	start := istrings.ByteNumber(strings.LastIndexByte(x[:end], ' '))
-	if start == -1 {
-		return 0
-	}
-	return start + 1
+	return startOfPartBefore(d.TextBeforeCursor(), true)
 }
 
 // FindStartOfPreviousWordUntilSeparator is almost the same as FindStartOfPreviousWord.
@@ -262,56 +261,121 @@ func (d *Document) FindStartOfPreviousWordUntilSeparatorIgnoreNextToCursor(sep s
 	return start + 1
 }
 
-// FindEndOfCurrentWord returns a byte index relative to the cursor position.
-// pointing to the end of the current word. Return 0 if nothing was found.
+// FindEndOfCurrentWord returns a byte index in the text after the cursor
+// pointing at the end of the part that starts at the cursor.
+// The index is 0 when whitespace is immediately after the cursor.
 func (d *Document) FindEndOfCurrentWord() istrings.ByteNumber {
-	x := d.TextAfterCursor()
-	i := istrings.ByteNumber(strings.IndexByte(x, ' '))
-	if i != -1 {
-		return i
-	}
-	return istrings.ByteNumber(len(x))
+	return endOfPartAfter(d.TextAfterCursor(), false)
 }
 
 // FindEndOfCurrentWordWithSpace is almost the same as FindEndOfCurrentWord.
-// The only difference is to ignore contiguous spaces.
+// Whitespace immediately after the cursor is kept, and the part after that whitespace is used.
 func (d *Document) FindEndOfCurrentWordWithSpace() istrings.ByteNumber {
-	x := d.TextAfterCursor()
-
-	start := istrings.IndexNotByte(x, ' ')
-	if start == -1 {
-		return istrings.ByteNumber(len(x))
-	}
-
-	end := istrings.ByteNumber(strings.IndexByte(x[start:], ' '))
-	if end == -1 {
-		return istrings.ByteNumber(len(x))
-	}
-
-	return start + end
+	return endOfPartAfter(d.TextAfterCursor(), true)
 }
 
-// Returns the number of runes
-// of the text after the cursor until the end of the current word.
-func (d *Document) FindRuneNumberUntilEndOfCurrentWord() istrings.RuneNumber {
-	t := d.TextAfterCursor()
-	var count istrings.RuneNumber
-	nonSpaceCharSeen := false
-	for _, char := range t {
-		if !nonSpaceCharSeen && char == ' ' {
-			count += 1
+// isWordCharacter reports whether char is part of an identifier.
+// A run of these characters is one part, such as foo or dupa.
+func isWordCharacter(char rune) bool {
+	return char == '_' || unicode.IsLetter(char) || unicode.IsDigit(char)
+}
+
+type wordPartClass uint8
+
+const (
+	wordPartWord wordPartClass = iota
+	wordPartPunct
+	wordPartSpace
+)
+
+// classifyWordPart groups a character into an identifier, punctuation, or whitespace.
+// Consecutive characters of the same non-space class form one word.
+func classifyWordPart(char rune) wordPartClass {
+	switch {
+	case unicode.IsSpace(char):
+		return wordPartSpace
+	case isWordCharacter(char):
+		return wordPartWord
+	default:
+		return wordPartPunct
+	}
+}
+
+func isWordPartSpace(char rune) bool {
+	return classifyWordPart(char) == wordPartSpace
+}
+
+// startOfPartBefore returns the byte index where the part at the end of s begins.
+// When skipSpace is set and s ends in whitespace, that whitespace stays in the
+// returned span and the part before it is used. When s is only whitespace, the index is 0.
+// When skipSpace is unset and s ends in whitespace, the index is len(s).
+func startOfPartBefore(s string, skipSpace bool) istrings.ByteNumber {
+	i := len(s)
+	var class wordPartClass
+	started := false
+	for i > 0 {
+		char, size := utf8.DecodeLastRuneInString(s[:i])
+		charClass := classifyWordPart(char)
+		if !started {
+			if charClass == wordPartSpace {
+				if !skipSpace {
+					return istrings.ByteNumber(len(s))
+				}
+				i -= size
+				continue
+			}
+			class = charClass
+			started = true
+			i -= size
 			continue
 		}
-
-		if nonSpaceCharSeen && char == ' ' {
+		if charClass != class {
 			break
 		}
-
-		nonSpaceCharSeen = true
-		count += 1
+		i -= size
 	}
+	return istrings.ByteNumber(i)
+}
 
-	return count
+// endOfPartAfter returns the byte index where the part at the start of s ends.
+// When skipSpace is set and s starts with whitespace, that whitespace stays in the
+// returned span and the part after it is used. When s is only whitespace, the index is len(s).
+// When skipSpace is unset and s starts with whitespace, the index is 0.
+func endOfPartAfter(s string, skipSpace bool) istrings.ByteNumber {
+	i := 0
+	var class wordPartClass
+	started := false
+	for i < len(s) {
+		char, size := utf8.DecodeRuneInString(s[i:])
+		charClass := classifyWordPart(char)
+		if !started {
+			if charClass == wordPartSpace {
+				if !skipSpace {
+					return 0
+				}
+				i += size
+				continue
+			}
+			class = charClass
+			started = true
+			i += size
+			continue
+		}
+		if charClass != class {
+			break
+		}
+		i += size
+	}
+	return istrings.ByteNumber(i)
+}
+
+// Returns how many runes the cursor must move right to reach the end of the
+// current part. Parts are identifier runs and punctuation runs. Whitespace
+// is skipped, so the stops in foo.bar(elo, dupa) are the ends of
+// foo, ., bar, (, elo, ,, dupa, and ).
+func (d *Document) FindRuneNumberUntilEndOfCurrentWord() istrings.RuneNumber {
+	s := d.TextAfterCursor()
+	return istrings.RuneCountInString(s[:endOfPartAfter(s, true)])
 }
 
 // FindEndOfCurrentWordUntilSeparator is almost the same as FindEndOfCurrentWord.
@@ -627,27 +691,16 @@ func (d *Document) GetStartOfLinePosition() istrings.RuneNumber {
 	return istrings.RuneCountInString(d.CurrentLineBeforeCursor())
 }
 
-// GetStartOfLinePosition returns relative position for the start of this line.
+// FindStartOfFirstWordOfLine returns how many runes the cursor must move left
+// to reach the first part on this line. From inside the leading whitespace it
+// returns the distance to the start of the line.
 func (d *Document) FindStartOfFirstWordOfLine() istrings.RuneNumber {
 	line := d.CurrentLineBeforeCursor()
-	var counter istrings.RuneNumber
-	var nonSpaceCharSeen bool
-	for _, char := range line {
-		if !nonSpaceCharSeen && unicode.IsSpace(char) {
-			continue
-		}
-
-		if !nonSpaceCharSeen {
-			nonSpaceCharSeen = true
-		}
-		counter++
-	}
-
-	if counter == 0 {
+	trimmed := strings.TrimLeftFunc(line, isWordPartSpace)
+	if trimmed == "" {
 		return istrings.RuneCountInString(line)
 	}
-
-	return counter
+	return istrings.RuneCountInString(trimmed)
 }
 
 func (d *Document) leadingWhitespaceInCurrentLine() (margin string) {
